@@ -23,6 +23,24 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home');
+        // Check user role
+        if (auth()->user()->hasRole('superadmin')) {
+            dd('superadmin');
+        } elseif (auth()->user()->hasRole('member')) {
+            // if(auth()->user()->email_verified_at == null){
+            //     return view('auth.verify');
+            // }
+            return view('ROLE/MEMBER/index');
+        } elseif (auth()->user()->hasRole('teknisi')) {
+            dd('teknisi');
+        } elseif (auth()->user()->hasRole('penagih')) {
+            dd('penagih');
+        }elseif (auth()->user()->hasRole('cs')) {
+            dd('cs');
+        }
+    
+        // // Default view if no role matches
+        // return view('home');
     }
+    
 }

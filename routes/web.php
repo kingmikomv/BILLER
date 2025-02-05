@@ -21,44 +21,33 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Auth routes with email verification
 Auth::routes(['verify' => true]);
 
-// Resend verification email
-Route::get('/email/verify/resend', [App\Http\Controllers\Auth\VerificationController::class, 'resend'])->middleware('auth')->name('verification.send');
-
-
-
-
-
-
-
-
-
-
-
-
+// Route to home page after login
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
-
-Route::middleware(['role:superadmin'])->group(function() {
+// Middleware for SUPERADMIN, requires authentication and superadmin role
+Route::middleware(['auth', 'role:superadmin'])->group(function() {
     Route::get('/admin/manage-users', [AdminController::class, 'manageUsers']);
-
-    // Route lainnya untuk SUPERADMIN
-});
-
-// Route untuk MEMBER
-Route::middleware(['role:member'])->group(function() {
-   
-    // Route lainnya untuk MEMBER
-});
-
-// Route untuk TEKNISI
-Route::middleware(['role:teknisi'])->group(function() {
  
-    // Route lainnya untuk TEKNISI
+    // Add other routes for SUPERADMIN
 });
 
-// Route untuk PENAGIH
-Route::middleware(['role:penagih'])->group(function() {
-    // Route lainnya untuk PENAGIH
+// Middleware for MEMBER, requires authentication and member role
+Route::middleware(['auth', 'role:member'])->group(function() {
+    Route::get('/home/crot', function() {
+        return 'crot';
+    });
+    // Add routes for MEMBER
+});
+
+// Middleware for TEKNISI, requires authentication and teknisi role
+Route::middleware(['auth', 'role:teknisi'])->group(function() {
+    // Add routes for TEKNISI
+});
+
+// Middleware for PENAGIH, requires authentication and penagih role
+Route::middleware(['auth', 'role:penagih'])->group(function() {
+    // Add routes for PENAGIH
 });
