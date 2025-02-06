@@ -50,11 +50,46 @@
                                 <div class="card-body p-0">
                                     <div class="d-md-flex">
                                         <div class="p-1 flex-fill" style="overflow: hidden">
-                                            asd
+                                            <!-- Tabel Responsif -->
+                                            <div class="table-responsive">
+                                                <table class="table table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>Nama Paket</th>
+                                                            <th>Harga Paket</th>
+                                                            <th>Site</th>
+                                                            <th>Profil</th>
+                                                            <th>Username</th>
+                                                            <th>Aksi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <!-- Contoh data tabel -->
+                                                        @php $no = 1; @endphp
+                                                        @foreach($paket as $pkt)
+                                                        <tr>
+                                                            <td>{{$no++}}</td>
+                                                            <td>{{$pkt->nama_paket}}</td>
+                                                            <td>Rp. {{ number_format($pkt->harga_paket, 0, ',', '.') }}</td>
+                                                                                                                                                                    <td>{{$pkt->site}}</td>
+                                                            <td>{{$pkt->profile}}</td>
+                                                            <td>{{$pkt->username}}</td>
+                                                            <td>
+                                                                <button class="btn btn-primary">Edit</button>
+                                                                <button class="btn btn-danger">Hapus</button>
+                                                            </td>
+                                                        </tr>
+                                                       @endforeach
+                                                        <!-- Tambahkan baris data lainnya di sini -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <!-- /Tabel Responsif -->
                                         </div>
-
                                     </div><!-- /.d-md-flex -->
                                 </div>
+                                
                                 <!-- /.card-body -->
                             </div>
 
@@ -69,9 +104,7 @@
             </section>
             <!-- /.content -->
         </div>
-        <!-- Modal Tambah Profil PPPoE -->
-        <!-- Modal Tambah Profil PPPoE -->
-        <!-- Modal Tambah Profil PPPoE -->
+      
         <div class="modal fade" id="tambahRouterModal" tabindex="-1" aria-labelledby="tambahRouterModalLabel"
             aria-hidden="true">
             <div class="modal-dialog">
@@ -82,7 +115,7 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form id="formTambahProfilPPPoE" method="POST">
+                    <form action="{{route('tambahpaket')}}" method="post">
                         @csrf
                         <div class="modal-body">
                             <!-- Pilihan MikroTik -->
@@ -138,6 +171,7 @@
     <!-- ./wrapper -->
 
     <x-dhs.scripts />
+    <x-dhs.alert />
     <script>
         $(document).ready(function () {
             $('#username').on('change', function () {

@@ -1,11 +1,14 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\MemberController;
-use App\Http\Controllers\MikrotikController;
 use App\Http\Controllers\PenagihController;
 use App\Http\Controllers\TeknisiController;
+use App\Http\Controllers\MikrotikController;
+use App\Http\Controllers\PelangganController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,7 +41,17 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
 // Middleware for MEMBER, requires authentication and member role
 Route::middleware(['auth', 'role:member'])->prefix('home')->group(function () {
 
-   
+     // SIDEBAR MENU DATA PELANGGAN
+     Route::middleware(['auth', 'role:member,teknisi'])->prefix('pelanggan')->group(function () {
+        Route::prefix('/')->controller(PelangganController::class)->group(function(){
+            Route::get('/', 'index')->name('pelanggan');
+            Route::get('/formulir', 'formulir')->name('formulir');
+            Route::post('/formulir/add', 'addPelanggan')->name('addPelanggan');
+        });
+
+    });
+
+
 
     // SIDEBAR MENU NETWORK
     Route::middleware(['auth', 'role:member,teknisi'])->prefix('network')->group(function () {
@@ -57,8 +70,8 @@ Route::middleware(['auth', 'role:member'])->prefix('home')->group(function () {
         // PPPOE 
         Route::prefix('pppoe')->controller(MikrotikController::class)->group(function(){
             Route::get('/', 'pppoe')->name('member.pppoe');
-            Route::get('/get-mikrotik-profiles', [MikroTikController::class, 'getMikrotikProfiles'])->name('getMikrotikProfiles');
-
+            Route::get('/get-mikrotik-profiles', 'getMikrotikProfiles')->name('getMikrotikProfiles');
+            Route::post('/tambahpaket', 'tambahpaket')->name('tambahpaket');
         }); 
 
     });

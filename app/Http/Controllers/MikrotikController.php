@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use RouterOS\Query;
 use RouterOS\Client;
 use App\Models\Mikrotik;
+use App\Models\PaketPppoe;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -234,83 +236,125 @@ class MikrotikController extends Controller
     // PPPOE
 
     public function pppoe()
-{
-    $uniqueId = auth()->user()->unique_id;
-    $mikrotik = Mikrotik::where('unique_id', $uniqueId)->get();
+    {
+        $uniqueId = auth()->user()->unique_id;
+        $mikrotik = Mikrotik::where('unique_id', $uniqueId)->get();
 
-    // Membuat koneksi API MikroTik
-    $client = new Client([
-        'host' => 'id-1.aqtnetwork.my.id',
-        'user' => 'admin',
-        'pass' => 'bakpao1922',
-    ]);
-
-    $query = new Query('/ppp/active/print');
-    $response = $client->query($query)->read();
-
-    // Array untuk menyimpan router yang online
-    $onlineRouters = [];
-
-    // Loop untuk mengecek koneksi di active-connection
-    foreach ($mikrotik as $router) {
-        $vpnUsername = $router->vpn_username; // Ambil vpn_username dari database
-
-        // Loop untuk mengecek apakah vpn_username ada di active-connection
-        foreach ($response as $connection) {
-            if (isset($connection['name']) && $connection['name'] === $vpnUsername) {
-                // Jika vpn_username ditemukan di active-connection, router dianggap online
-                $onlineRouters[] = $router; // Menyimpan router yang statusnya Online
-                break;
-            }
-        }
-    }
-
-    // Mengirim hanya router yang online ke view
-    return view('ROLE/MEMBER/IPLAN/PPPOE/index', compact('onlineRouters'));
-}
-
-    public function getMikrotikProfiles(Request $request)
-{
-    $username = $request->input('username');
-
-    // Cari data MikroTik berdasarkan unique_id
-    $mikrotik = MikroTik::where('username', $username)->first();
-
-    if (!$mikrotik) {
-        return response()->json(['status' => 'error', 'message' => 'MikroTik tidak ditemukan']);
-    }
-
-    $portApi = $mikrotik->port_api;
-    $Username = $mikrotik->username;
-    $Password = $mikrotik->password;
-
-    try {
+        // Membuat koneksi API MikroTik
         $client = new Client([
-            'host' => 'id-1.aqtnetwork.my.id:' . $portApi,
-            'user' => $Username,
-            'pass' => $Password,
+            'host' => 'id-1.aqtnetwork.my.id',
+            'user' => 'admin',
+            'pass' => 'bakpao1922',
         ]);
 
-        // Query untuk mendapatkan profil PPPoE
-        $query = new Query('/ppp/profile/print');
-        $profiles = $client->query($query)->read();
+        $query = new Query('/ppp/active/print');
+        $response = $client->query($query)->read();
 
-        if (empty($profiles)) {
-            return response()->json(['status' => 'error', 'message' => 'Tidak ada profil PPPoE ditemukan']);
+        // Array untuk menyimpan router yang online
+        $onlineRouters = [];
+
+        // Loop untuk mengecek koneksi di active-connection
+        foreach ($mikrotik as $router) {
+            $vpnUsername = $router->vpn_username; // Ambil vpn_username dari database
+
+            // Loop untuk mengecek apakah vpn_username ada di active-connection
+            foreach ($response as $connection) {
+                if (isset($connection['name']) && $connection['name'] === $vpnUsername) {
+                    // Jika vpn_username ditemukan di active-connection, router dianggap online
+                    $onlineRouters[] = $router; // Menyimpan router yang statusnya Online
+                    break;
+                }
+            }
         }
 
-        // Format ulang respons untuk memastikan hanya data yang dibutuhkan
-        $formattedProfiles = array_map(function ($profile) {
-            return [
-                'name' => $profile['name'] ?? 'Unknown',
-            ];
-        }, $profiles);
-
-        return response()->json(['status' => 'success', 'profiles' => $formattedProfiles]);
-    } catch (\Exception $e) {
-        // Menangkap kesalahan koneksi dengan MikroTik dan mengirim pesan yang jelas
-        return response()->json(['status' => 'error', 'message' => 'Gagal terhubung ke MikroTik. Pastikan kredensial dan koneksi API sudah benar.']);
+        $paket = PaketPppoe::where('unique_id', auth()->user()->unique_id)->get();
+        // Mengirim hanya router yang online ke view
+        return view('ROLE/MEMBER/IPLAN/PPPOE/index', compact('onlineRouters', 'paket'));
     }
-}
 
+    public function getMikrotikProfiles(Request $request)
+    {
+        $username = $request->input('username');
+
+        // Cari data MikroTik berdasarkan unique_id
+        $mikrotik = MikroTik::where('username', $username)->first();
+
+        if (!$mikrotik) {
+            return response()->json(['status' => 'error', 'message' => 'MikroTik tidak ditemukan']);
+        }
+
+        $portApi = $mikrotik->port_api;
+        $Username = $mikrotik->username;
+        $Password = $mikrotik->password;
+
+        try {
+            $client = new Client([
+                'host' => 'id-1.aqtnetwork.my.id:' . $portApi,
+                'user' => $Username,
+                'pass' => $Password,
+            ]);
+
+            // Query untuk mendapatkan profil PPPoE
+            $query = new Query('/ppp/profile/print');
+            $profiles = $client->query($query)->read();
+
+            if (empty($profiles)) {
+                return response()->json(['status' => 'error', 'message' => 'Tidak ada profil PPPoE ditemukan']);
+            }
+
+            // Format ulang respons untuk memastikan hanya data yang dibutuhkan
+            $formattedProfiles = array_map(function ($profile) {
+                return [
+                    'name' => $profile['name'] ?? 'Unknown',
+                ];
+            }, $profiles);
+
+            return response()->json(['status' => 'success', 'profiles' => $formattedProfiles]);
+        } catch (\Exception $e) {
+            // Menangkap kesalahan koneksi dengan MikroTik dan mengirim pesan yang jelas
+            return response()->json(['status' => 'error', 'message' => 'Gagal terhubung ke MikroTik. Pastikan kredensial dan koneksi API sudah benar.']);
+        }
+    }
+
+    public function tambahpaket(Request $request)
+    {
+        // Mendapatkan unique_id dari pengguna yang sedang login
+        $uniqueId = auth()->user()->unique_id;
+
+        // Mendapatkan input dari form
+        $kode_paket = Str::random(10); // Anda bisa menyesuaikan dengan input yang ada
+        $username = $request->input('username');
+
+        $dataMikrotik = Mikrotik::where('username', $username)->first();
+        $site = $dataMikrotik->site;
+        
+        $profile = $request->input('profile');
+        $harga_paket = $request->input('hargaPaket'); // Mengambil data hargaPaket dari form
+        $nama_paket = $request->input('namaPaket'); // Mengambil data namaPaket dari form
+
+        // Validasi data jika diperlukan
+        $validated = $request->validate([
+            'username' => 'required|string',
+            'profile' => 'required|string',
+            'namaPaket' => 'required|string',
+            'hargaPaket' => 'required|numeric|max:1000000',
+        ]);
+
+        // Menyimpan data ke dalam database
+        DB::table('paketpppoe')->insert([
+            'unique_id' => $uniqueId,
+            'kode_paket' => $kode_paket,
+            'site' => $site,
+            'username' => $username,
+            'profile' => $profile,
+            'harga_paket' => $harga_paket,
+            'nama_paket' => $nama_paket,
+            'created_at' => now(),
+            'updated_at' => now()
+
+        ]);
+
+        // Redirect atau memberikan respon sesuai kebutuhan
+        return redirect()->route('member.pppoe')->with('success', 'Paket berhasil ditambahkan');
+    }
 }

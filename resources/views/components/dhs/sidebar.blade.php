@@ -55,7 +55,7 @@
             </ul>
           </li> --}}
           <li class="nav-item">
-            <a href="{{route('home')}}" class="nav-link">
+            <a href="{{route('pelanggan')}}" class="nav-link">
               <i class="nav-icon fas fa-user-plus"></i>
               <p>
                 Data Pelanggan
