@@ -45,7 +45,44 @@
                                 </div>
                                 <!-- /.card-header -->
                                 <div class="card-body">
-                                    asd
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Status Koneksi</th>
+                                                <th>Nama Pelanggan</th>
+                                                <th>Paket</th>
+                                                <th>Akun</th>
+                                                <th>Tanggal Pendaftaran</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($plg as $index => $pelanggan)
+                                                <tr>
+                                                    <td>{{ $index + 1 }}</td>
+                                                    <td>
+                                                        @if ($pelanggan->status === 'Online')
+                                                            <span class="badge badge-success">Online</span>
+                                                        @else
+                                                            <span class="badge badge-danger">Offline</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $pelanggan->nama_pelanggan }}</td>
+                                                    <td>{{ $pelanggan->paket->nama_paket ?? 'Tidak Ada Paket' }}</td>
+                                                    <td>{{ $pelanggan->akun_pppoe }}</td>
+                                                    <td>{{ $pelanggan->created_at->format('d-m-Y') }}</td>
+                                                    <td>
+                                                        <!-- Link atau tombol untuk action -->
+                                                        <a href="" class="btn btn-primary btn-sm">
+                                                            Lihat Invoice
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                    
                                 </div>
                                 <!-- /.card-body -->
                             </div>

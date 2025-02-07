@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('mikrotik', function (Blueprint $table) {
             $table->id();
             $table->string('unique_id');
+            $table->string('router_id');
             $table->string('site');
             $table->string('port_api');
             $table->string('port_winbox');

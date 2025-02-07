@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('paketpppoe', function (Blueprint $table) {
             $table->id();
             $table->string('unique_id');
+            $table->string('router_id');
             $table->string('kode_paket');
             $table->string('site');
             $table->string('username'); // dari mikrotik

@@ -10,4 +10,9 @@ class Pelanggan extends Model
     use HasFactory;
     protected $table = 'pelanggan';
     protected $guarded = [];
+
+    public function paket()
+    {
+        return $this->belongsTo(PaketPppoe::class, 'kode_paket', 'kode_paket');
+    }
 }

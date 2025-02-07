@@ -13,8 +13,59 @@ class PelangganController extends Controller
 {
     public function index()
     {
-        return view('ROLE.MEMBER.PELANGGAN.index');
+        $uniqueId = auth()->user()->unique_id;
+    
+        // Ambil semua router yang dimiliki oleh user
+        $mikrotikRouters = Mikrotik::where('unique_id', $uniqueId)->get();
+    
+        // Ambil semua pelanggan terkait router yang dimiliki user
+        $plg = Pelanggan::whereIn('router_id', $mikrotikRouters->pluck('router_id'))
+        ->with('paket')->get();
+
+        $onlineStatus = [];
+    
+        foreach ($mikrotikRouters as $mikrotik) {
+            try {
+                // Membuat koneksi ke MikroTik API
+                $client = new Client([
+                    'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
+                    'user' => $mikrotik->username,
+                    'pass' => $mikrotik->password,
+                ]);
+    
+                // Ambil daftar active connections
+                $query = new Query('/ppp/active/print');
+                $activeConnections = $client->query($query)->read();
+    
+                // Cek status online pelanggan
+                foreach ($plg as $pelanggan) {
+                    if ($pelanggan->router_id == $mikrotik->router_id) {
+                        $isOnline = collect($activeConnections)->contains(function ($connection) use ($pelanggan) {
+                            return isset($connection['name']) && $connection['name'] === $pelanggan->akun_pppoe;
+                        });
+                        $onlineStatus[$pelanggan->akun_pppoe] = $isOnline ? 'Online' : 'Offline';
+                    }
+                }
+            } catch (\Exception $e) {
+                // Jika gagal koneksi, tandai semua pelanggan pada router ini offline
+                foreach ($plg as $pelanggan) {
+                    if ($pelanggan->router_id == $mikrotik->router_id) {
+                        $onlineStatus[$pelanggan->akun_pppoe] = 'Offline';
+                    }
+                }
+            }
+        }
+    
+        // Gabungkan data pelanggan dengan status online
+        foreach ($plg as $pelanggan) {
+            $pelanggan->status = $onlineStatus[$pelanggan->akun_pppoe] ?? 'Offline';
+        }
+        //dd($plg);
+        // Return ke view dengan data pelanggan
+        return view('ROLE.MEMBER.PELANGGAN.index', compact('plg'));
     }
+    
+    
     public function formulir()
     {
         $uniqueId = auth()->user()->unique_id;
@@ -66,55 +117,53 @@ class PelangganController extends Controller
 
     public function addPelanggan(Request $request)
     {
-        //dd($request->input('pilihPaket'));
         $a = PaketPppoe::where('kode_paket', $request->input('kodePaket'))->first();
-        //dd($a);
-
+    
         $uniqueId = auth()->user()->unique_id;
         $kdpkt = $request->input('kodePaket');
-        // Ambil data paket berdasarkan kode paket yang dipilih
         $kode_paket = PaketPppoe::where('kode_paket', $kdpkt)->first();
-        //dd($kode_paket);
-        $routerUsername = $kode_paket->username;  // Ambil username router dari paket
-        $mikrotik = Mikrotik::where('username', $routerUsername)->first(); // Ambil data MikroTik
-
-
+    
+        $routerUsername = $kode_paket->username;
+        $mikrotik = Mikrotik::where('username', $routerUsername)->first();
+    
         $namaPelanggan = $request->input('namaPelanggan');
         $akunPppoe = $request->input('akunPppoe');
         $passPppoe = $request->input('passwordPppoe');
         $alamat = $request->input('alamat');
         $telepon = $request->input('telepon');
-
+    
         $portApi = $mikrotik->port_api;
         $Username = $mikrotik->username;
         $Password = $mikrotik->password;
         $profil = $kode_paket->profile;
         $kode_paket2 = $kode_paket->kode_paket;
-        //dd($kode_paket->profile);
-        // Membuat koneksi API MikroTik
-    try {
+    
+        try {
             $client = new Client([
                 'host' => 'id-1.aqtnetwork.my.id:' . $portApi,
                 'user' => $Username,
                 'pass' => $Password,
             ]);
-
+    
             $query = new Query('/ppp/secret/add');
             $query->equal('name', $akunPppoe);
             $query->equal('password', $passPppoe);
             $query->equal('service', 'pppoe');
-            $query->equal('profile', $profil); // Profile paket
-
-            // Kirim perintah untuk menambahkan PPPoE secret
-            $profiles = $client->query($query)->read();
-            //dd($profiles);
+            $query->equal('profile', $profil);
+    
+            $client->query($query)->read();
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['mikrotik_pppoe' => 'Gagal menambahkan akun PPPoE: ' . $e->getMessage()]);
         }
-
-        // Jika berhasil, simpan data pelanggan ke database
+    
+        // Status pembayaran
+        $tanggalDaftar = now(); // Tanggal pendaftaran
+        $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth(); // Pembayaran selanjutnya bulan depan
+        $statusPembayaran = now()->format('Y-m') === $tanggalDaftar->format('Y-m') ? 'Sudah Dibayar' : 'Belum Dibayar';
+    
         $pelanggan = Pelanggan::create([
-            'pelanggan_id' => 'PEL_'.rand(100, 9999999),
+            'pelanggan_id' => 'PEL_' . rand(100, 9999999),
+            'router_id' => $mikrotik->router_id,
             'unique_id' => $uniqueId,
             'router_username' => $Username,
             'kode_paket' => $kode_paket2,
@@ -123,8 +172,12 @@ class PelangganController extends Controller
             'password_pppoe' => $passPppoe,
             'alamat' => $alamat,
             'nomor_telepon' => $telepon,
+            'tanggal_daftar' => $tanggalDaftar,
+            'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
+            'status_pembayaran' => $statusPembayaran,
         ]);
-
+    
         return redirect()->route('pelanggan')->with('success', 'Pelanggan berhasil ditambahkan');
     }
+    
 }

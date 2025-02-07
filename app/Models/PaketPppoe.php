@@ -10,4 +10,6 @@ class PaketPppoe extends Model
     use HasFactory;
     protected $table = 'paketpppoe';
     protected $guarded = [];
+    // Di model Pelanggan
+
 }

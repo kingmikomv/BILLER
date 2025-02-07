@@ -166,7 +166,9 @@ class MikrotikController extends Controller
             $natResponse2 = $client->query($natQuery2)->read();
 
             $mikrotik = Mikrotik::create([
+                
                 'unique_id' => $uniqueId,
+                'router_id' => 'RO_'.Str::random(3).Str::random(10),
                 'site' => $request->site,
                 'port_api' => $portApi,
                 'port_winbox' => $portWinbox,
@@ -340,9 +342,11 @@ class MikrotikController extends Controller
             'hargaPaket' => 'required|numeric|max:1000000',
         ]);
 
+        
         // Menyimpan data ke dalam database
         DB::table('paketpppoe')->insert([
             'unique_id' => $uniqueId,
+            'router_id' => $dataMikrotik->router_id,
             'kode_paket' => $kode_paket,
             'site' => $site,
             'username' => $username,

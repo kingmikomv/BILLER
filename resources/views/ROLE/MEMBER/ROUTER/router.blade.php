@@ -42,65 +42,70 @@
                                 </div>
                                 <!-- /.card-header -->
                                 <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <!-- Router Table -->
-                                        <table class="table table-striped">
-                                          <thead>
-                                              <tr>
-                                                  <th style="width: 10px">#</th>
-                                                  <th>Status</th>
-                                                  <th>Nama Router</th>
-                                                  <th>Port API</th>
-                                                  <th>Port Winbox</th>
-                                                  <th>Username</th>
-                                                  <th>Actions</th>
-                                              </tr>
-                                          </thead>
-                                          <tbody>
-                                              @foreach ($mikrotik as $router)
-                                                  <tr>
-                                                      <td>{{ $loop->iteration }}</td>
-                                                      <td>
-                                                          @if (isset($routerStatuses[$router->id]) && $routerStatuses[$router->id] == 'Online')
-                                                              <span class="badge badge-success">Online</span>
-                                                          @else
-                                                              <span class="badge badge-danger">Offline</span>
-                                                          @endif
-                                                      </td>
-                                                      <td>{{ $router->site }}</td>
-                                                      <td>{{ "id-1.aqtnetwork.my.id:".$router->port_api }}</td>
-                                                      <td>{{ "id-1.aqtnetwork.my.id:".$router->port_winbox }}</td>
-                                                      <td>{{ $router->username }}</td>
-                                                      <td>
-                                                          <div class="dropdown">
-                                                              <button class="btn btn-sm btn-primary dropdown-toggle"
-                                                                      type="button" id="dropdownMenuButton"
-                                                                      data-toggle="dropdown" aria-haspopup="true"
-                                                                      aria-expanded="false">
-                                                                  Actions
-                                                              </button>
-                                                              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                                  <a class="dropdown-item" href="{{ route('cek-koneksi', $router->id) }}">
-                                                                      <i class="fas fa-plug mr-2"></i> Cek Koneksi
-                                                                  </a>
-                                                                  <a class="dropdown-item copy-script" href="#"
-                                                                     data-router="{{ $router->id }}">
-                                                                      <i class="fas fa-copy mr-2"></i> Copy Script
-                                                                  </a>
-                                                                  <a class="dropdown-item" href="#">
-                                                                      <i class="fas fa-redo mr-2"></i> Reset Koneksi
-                                                                  </a>
-                                                              </div>
-                                                          </div>
-                                                      </td>
-                                                  </tr>
-                                              @endforeach
-                                          </tbody>
-                                      </table>
-                                      
+                                    <div class="d-md-flex">
+                                        <div class="p-1 flex-fill" style="overflow: hidden">
+                                            <div class="table-responsive">
+                                                <table class="table table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style="width: 10px">#</th>
+                                                            <th>Status</th>
+                                                            <th>Nama Router</th>
+                                                            <th>Port API</th>
+                                                            <th>Port Winbox</th>
+                                                            <th>Username</th>
+                                                            <th>Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach ($mikrotik as $router)
+                                                            <tr>
+                                                                <td>{{ $loop->iteration }}</td>
+                                                                <td>
+                                                                    @if (isset($routerStatuses[$router->id]) && $routerStatuses[$router->id] == 'Online')
+                                                                        <span class="badge badge-success">Online</span>
+                                                                    @else
+                                                                        <span class="badge badge-danger">Offline</span>
+                                                                    @endif
+                                                                </td>
+                                                                <td>{{ $router->site }}</td>
+                                                                <td>{{ "id-1.aqtnetwork.my.id:".$router->port_api }}</td>
+                                                                <td>{{ "id-1.aqtnetwork.my.id:".$router->port_winbox }}</td>
+                                                                <td>{{ $router->username }}</td>
+                                                                <td>
+                                                                    <div class="dropdown">
+                                                                        <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
+                                                                            id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                                                                            aria-expanded="false">
+                                                                            Actions
+                                                                        </button>
+                                                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                                            <!-- Cek Koneksi -->
+                                                                            <a class="dropdown-item" href="{{ route('cek-koneksi', $router->id) }}">
+                                                                                <i class="fas fa-plug mr-2"></i> Cek Koneksi
+                                                                            </a>
+                                                                            <!-- Copy Script -->
+                                                                            <a class="dropdown-item copy-script" href="#"
+                                                                                data-router="{{ $router->id }}">
+                                                                                <i class="fas fa-copy mr-2"></i> Copy Script
+                                                                            </a>
+                                                                            <!-- Reset Koneksi -->
+                                                                            <a class="dropdown-item" href="#">
+                                                                                <i class="fas fa-redo mr-2"></i> Reset Koneksi
+                                                                            </a>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <!-- Router Table -->
+                                        </div>
                                     </div>
                                 </div>
-                                <!-- /.card-body -->
+                                
                             </div>
                         </div>
                     </div>
@@ -158,7 +163,7 @@
 
                     // Ambil data router menggunakan AJAX atau data yang sudah ada
                     const routerData = @json(
-                    $mikrotik); // Menyertakan data router dari server ke dalam JavaScript
+                        $mikrotik); // Menyertakan data router dari server ke dalam JavaScript
 
                     // Cari data router yang sesuai dengan id
                     const router = routerData.find(r => r.id == routerId);
@@ -188,7 +193,7 @@
         });
 
     </script>
-  <x-dhs.alert />
+    <x-dhs.alert />
 </body>
 
 </html>
