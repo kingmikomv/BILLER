@@ -1,4 +1,5 @@
 <x-login.header />
+
  <div class="login-box">
    <!-- /.login-logo -->
    <div class="card card-outline card-primary">

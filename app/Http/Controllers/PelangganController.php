@@ -184,12 +184,151 @@ class PelangganController extends Controller
     public function showPelanggan($id)
     {
         $pelanggan = Pelanggan::with('paket')->find($id);
-
+    
         if (!$pelanggan) {
             return response()->json(['error' => 'Pelanggan tidak ditemukan'], 404);
         }
-
+    
         $routerId = $pelanggan->router_id;
+        $mikrotik = Mikrotik::where('router_id', $routerId)->first();
+        $akunPelanggan = $pelanggan->akun_pppoe;
+    
+        try {
+            // Membuat koneksi ke MikroTik API
+            $client = new Client([
+                'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api, // Pastikan port benar
+                'user' => $mikrotik->username, // Username MikroTik
+                'pass' => $mikrotik->password, // Password MikroTik
+            ]);
+    
+            // Query untuk mengambil data koneksi PPPoE
+            $query = new Query('/interface/pppoe-server/print');
+            $activeConnections = $client->query($query)->read();
+    
+            // Filter data untuk mencari koneksi dengan nama yang sesuai dengan akun PPPoE
+            $filteredConnections = array_filter($activeConnections, function ($connection) use ($akunPelanggan) {
+                return isset($connection['name']) && $connection['name'] === "<pppoe-" . $akunPelanggan . ">";
+            });
+    
+            if (empty($filteredConnections)) {
+                return response()->json(['error' => 'Tidak ada koneksi PPPoE yang ditemukan untuk akun ini'], 404);
+            }
+    
+            $uptime = $filteredConnections[0]['uptime'];
+            $formattedUptime = $this->formatUptime($uptime); // Format uptime
+    
+            // Jika diminta untuk menampilkan halaman, kirimkan data pelanggan
+            return view('ROLE.MEMBER.PELANGGAN.data', [
+                'pelanggan' => $pelanggan,
+                'mikrotik' => $mikrotik,
+                'formattedUptime' => $formattedUptime,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan saat menghubungkan ke MikroTik API: ' . $e->getMessage()], 500);
+        }
+    }
+    
+    public function getBandwidth($id)
+    {
+        $pelanggan = Pelanggan::find($id);
+        $akunPelanggan = $pelanggan->akun_pppoe;
+    
+        try {
+            $mikrotik = Mikrotik::where('router_id', $pelanggan->router_id)->first();
+    
+            $client = new Client([
+                'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
+                'user' => $mikrotik->username,
+                'pass' => $mikrotik->password,
+            ]);
+    
+            // Query untuk mengambil data interface
+            $query = new Query('/interface/print');
+            $data = $client->query($query)->read();
+    
+            // Filter data untuk mencari koneksi sesuai dengan akun PPPoE
+            $filteredConnections = array_filter($data, function ($connection) use ($akunPelanggan) {
+                return isset($connection['name']) && $connection['name'] === "<pppoe-" . $akunPelanggan . ">";
+            });
+    
+            // Menghitung RX dan TX bytes
+            $totalRxBytes = 0;
+            $totalTxBytes = 0;
+    
+            foreach ($filteredConnections as $interface) {
+                if (isset($interface['rx-byte']) && isset($interface['tx-byte'])) {
+                    $totalRxBytes += $interface['rx-byte'];
+                    $totalTxBytes += $interface['tx-byte'];
+                }
+            }
+    
+            $totRx = $this->formatBytes($totalRxBytes); // Konversi RX bytes
+            $totTx = $this->formatBytes($totalTxBytes); // Konversi TX bytes
+    
+            return response()->json([
+                'totRx' => $totRx,
+                'totTx' => $totTx,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan saat menghubungkan ke MikroTik API: ' . $e->getMessage()], 500);
+        }
+    }
+    
+    private function formatBytes($bytes)
+    {
+        if ($bytes >= 1073741824) {
+            return number_format($bytes / 1073741824, 2) . ' GB';
+        } elseif ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 2) . ' MB';
+        } elseif ($bytes >= 1024) {
+            return number_format($bytes / 1024, 2) . ' KB';
+        } else {
+            return $bytes . ' Bytes';
+        }
+    }
+    
+
+    private function formatUptime($uptime)
+    {
+        $days = $hours = $minutes = 0;
+
+        // Mencari jumlah hari, jam, dan menit dari string uptime
+        if (preg_match('/(\d+)d/', $uptime, $matches)) {
+            $days = (int)$matches[1];
+        }
+        if (preg_match('/(\d+)h/', $uptime, $matches)) {
+            $hours = (int)$matches[1];
+        }
+        if (preg_match('/(\d+)m/', $uptime, $matches)) {
+            $minutes = (int)$matches[1];
+        }
+
+        $formatted = [];
+        if ($days > 0) {
+            $formatted[] = "{$days} Hari";
+        }
+        if ($hours > 0) {
+            $formatted[] = "{$hours} Jam";
+        }
+        if ($minutes > 0) {
+            $formatted[] = "{$minutes} Menit";
+        }
+
+        return implode(' ', $formatted);  // Gabungkan dengan spasi
+    }
+
+
+
+
+
+    public function getTrafficData(Request $request)
+    {
+        $routerId = $request->input('router_id');
+        $akunPppoe = $request->input('akun_pppoe');
+
+        if (!$routerId || !$akunPppoe) {
+            return response()->json(['error' => 'Parameter router_id dan akun_pppoe wajib diisi'], 400);
+        }
 
         $mikrotik = Mikrotik::where('router_id', $routerId)->first();
 
@@ -197,54 +336,33 @@ class PelangganController extends Controller
             return response()->json(['error' => 'Router tidak ditemukan'], 404);
         }
 
-        return view('ROLE.MEMBER.PELANGGAN.data', [
-            'pelanggan' => $pelanggan,
-            'mikrotik' => $mikrotik,
-        ]);
-    }
+        try {
+            $client = new Client([
+                'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
+                'user' => $mikrotik->username,
+                'pass' => $mikrotik->password,
+            ]);
 
-    public function getTrafficData(Request $request)
-{
-    $routerId = $request->input('router_id');
-    $akunPppoe = $request->input('akun_pppoe');
+            $response = $client->query(
+                (new Query('/interface/monitor-traffic'))
+                    ->equal('interface', "<pppoe-" . $akunPppoe . ">")
+                    ->equal('once')
+            )->read();
 
-    if (!$routerId || !$akunPppoe) {
-        return response()->json(['error' => 'Parameter router_id dan akun_pppoe wajib diisi'], 400);
-    }
+            if (empty($response) || !isset($response[0]['tx-bits-per-second'], $response[0]['rx-bits-per-second'])) {
+                return response()->json(['error' => 'Tidak dapat mengambil data traffic'], 500);
+            }
 
-    $mikrotik = Mikrotik::where('router_id', $routerId)->first();
-
-    if (!$mikrotik) {
-        return response()->json(['error' => 'Router tidak ditemukan'], 404);
-    }
-
-    try {
-        $client = new Client([
-            'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
-            'user' => $mikrotik->username,
-            'pass' => $mikrotik->password,
-        ]);
-
-        $response = $client->query(
-            (new Query('/interface/monitor-traffic'))
-                ->equal('interface', "<pppoe-" . $akunPppoe . ">")
-                ->equal('once')
-        )->read();
-
-        if (empty($response) || !isset($response[0]['tx-bits-per-second'], $response[0]['rx-bits-per-second'])) {
-            return response()->json(['error' => 'Tidak dapat mengambil data traffic'], 500);
+            return response()->json([
+                'tx' => (int) ($response[0]['tx-bits-per-second'] ?? 0),
+                'rx' => (int) ($response[0]['rx-bits-per-second'] ?? 0),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
-
-        return response()->json([
-            'tx' => (int) ($response[0]['tx-bits-per-second'] ?? 0),
-            'rx' => (int) ($response[0]['rx-bits-per-second'] ?? 0),
-        ]);
-    } catch (\Exception $e) {
-        return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
     }
-}
 
-    
+
 
 
 
