@@ -22,19 +22,15 @@
             <section class="content">
                 <div class="container-fluid">
                     <!-- Info boxes -->
-
                     <div class="row">
-
                         <div class="col-md-12">
-
                             <div class="card">
                                 <div class="card-header">
                                     <h3 class="card-title">Data Pelanggan</h3>
-
                                     <div class="card-tools">
-                                        <a class="btn btn-primary" href="{{route('formulir')}}">
-                                        <i class="fas fa-plus"></i> Tambah Pelanggan
-                                    </a>
+                                        <a class="btn btn-primary" href="{{ route('formulir') }}">
+                                            <i class="fas fa-plus"></i> Tambah Pelanggan
+                                        </a>
                                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
                                             <i class="fas fa-minus"></i>
                                         </button>
@@ -53,8 +49,8 @@
                                                 <th>Nama Pelanggan</th>
                                                 <th>Paket</th>
                                                 <th>Akun</th>
-                                                <th>Tanggal Pendaftaran</th>
                                                 <th>Action</th>
+                                                <th>Informasi</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -71,38 +67,40 @@
                                                     <td>{{ $pelanggan->nama_pelanggan }}</td>
                                                     <td>{{ $pelanggan->paket->nama_paket ?? 'Tidak Ada Paket' }}</td>
                                                     <td>{{ $pelanggan->akun_pppoe }}</td>
-                                                    <td>{{ $pelanggan->created_at->format('d-m-Y') }}</td>
                                                     <td>
-                                                        <!-- Link atau tombol untuk action -->
-                                                        <a href="" class="btn btn-primary btn-sm">
-                                                            Lihat Invoice
-                                                        </a>
+                                                        <a href="#" class="btn btn-primary btn-sm">Lihat Invoice</a>
+                                                    </td>
+                                                    <td>
+                                                        <!-- Tombol untuk membuka modal -->
+                                                        <a href="{{route('pelanggan.show', $pelanggan->id)}}" 
+                                                        class="btn btn-primary btn-sm" 
+                                                        >
+                                                         <i class="fas fa-eye"></i> Lihat Informasi
+                                                     </a>
+                                                     
+
                                                     </td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
                                     </table>
-                                    
                                 </div>
                                 <!-- /.card-body -->
                             </div>
-
                         </div>
-
                     </div>
-
                 </div>
-
             </section>
             <!-- /.content -->
         </div>
+        
 
         <x-dhs.footer />
     </div>
     <!-- ./wrapper -->
 
     <x-dhs.scripts />
-
+   
 </body>
 
 </html>

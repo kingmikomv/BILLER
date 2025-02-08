@@ -47,6 +47,10 @@ Route::middleware(['auth', 'role:member'])->prefix('home')->group(function () {
             Route::get('/', 'index')->name('pelanggan');
             Route::get('/formulir', 'formulir')->name('formulir');
             Route::post('/formulir/add', 'addPelanggan')->name('addPelanggan');
+            Route::get('/{id}', [PelangganController::class, 'showPelanggan'])->name('pelanggan.show');
+
+            // api.php
+            Route::get('{id}/api/traffic-data', [PelangganController::class, 'getTrafficData'])->name('traffic.data');
         });
 
     });
