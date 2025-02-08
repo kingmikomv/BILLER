@@ -40,16 +40,15 @@
                                     </div>
                                 </div>
                                 <!-- /.card-header -->
-                                <div class="card-body">
-                                    <table class="table table-striped">
-                                        <thead>
+                                <div class="card-body table-responsive">
+                                    <table class="table table-striped table-bordered table-hover">
+                                        <thead class="thead-dark">
                                             <tr>
                                                 <th>#</th>
                                                 <th>Status Koneksi</th>
                                                 <th>Nama Pelanggan</th>
                                                 <th>Paket</th>
                                                 <th>Akun</th>
-                                                <th>Action</th>
                                                 <th>Informasi</th>
                                             </tr>
                                         </thead>
@@ -68,17 +67,14 @@
                                                     <td>{{ $pelanggan->paket->nama_paket ?? 'Tidak Ada Paket' }}</td>
                                                     <td>{{ $pelanggan->akun_pppoe }}</td>
                                                     <td>
-                                                        <a href="#" class="btn btn-primary btn-sm">Lihat Invoice</a>
-                                                    </td>
-                                                    <td>
                                                         <!-- Tombol untuk membuka modal -->
-                                                        <a href="{{route('pelanggan.show', $pelanggan->id)}}" 
-                                                        class="btn btn-primary btn-sm" 
-                                                        >
-                                                         <i class="fas fa-eye"></i> Lihat Informasi
-                                                     </a>
-                                                     
-
+                                                        <a href="{{ route('pelanggan.show', $pelanggan->id) }}" 
+                                                           class="btn btn-primary btn-sm" 
+                                                           data-toggle="tooltip" 
+                                                           data-placement="top" 
+                                                           title="Lihat Informasi">
+                                                           <i class="fas fa-eye"></i>
+                                                        </a>
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -96,11 +92,12 @@
         
 
         <x-dhs.footer />
+        <x-dhs.alert />
+
     </div>
     <!-- ./wrapper -->
 
     <x-dhs.scripts />
-   
 </body>
 
 </html>

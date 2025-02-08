@@ -20,10 +20,9 @@
                                     <h3 class="card-title">Data Pelanggan</h3>
                                 </div>
                                 <div class="card-body">
-                                    <h4>Detail Pelanggan</h4>
                                     <table class="table table-bordered">
                                         <tr>
-                                            <th>Nama</th>
+                                            <th>Nama Pelanggan</th>
                                             <td>{{ $pelanggan->nama_pelanggan }}</td>
                                         </tr>
                                         <tr>
@@ -39,7 +38,7 @@
                                             <td>{{ $pelanggan->akun_pppoe }}</td>
                                         </tr>
                                         <tr>
-                                            <th>Traffic Upload / Download</th>
+                                            <th>Traffic Data Up / Down</th>
                                             <td id="traffic-combined">Memuat...</td>
                                         </tr>
                                         <tr>
@@ -47,8 +46,15 @@
                                             <td>{{$formattedUptime}}</td>
                                         </tr>
                                         <tr>
-                                            <th>Total BW Upload / Download</th>
-    <td id="total-bw-upload-download">Memuat...</td>
+                                            <th>Total BW Up / Down</th>
+                                            <td id="total-bw-upload-download">Memuat...</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Cek Ping</th>
+                                            <td>
+                                                <a href="javascript:void(0);" class="btn btn-primary"
+                                                    onclick="cekPing('{{ $pelanggan->akun_pppoe }}')">Cek Ping !</a>
+                                            </td>
                                         </tr>
                                     </table>
 
@@ -217,7 +223,7 @@
                     ]);
 
                     // Update tabel untuk upload/download
-                    document.getElementById('traffic-combined').textContent = 
+                    document.getElementById('traffic-combined').textContent =
                         `${formatSpeed(rxInBps)} / ${formatSpeed(txInBps)}`;
                 } catch (error) {
                     console.error("Gagal mengambil data:", error);
@@ -238,28 +244,128 @@
 
             setInterval(fetchTrafficData, 1000);
         });
+
     </script>
-<script>
-    function updateBandwidth() {
-        const pelangganId = "{{ $pelanggan->id }}";  // ID Pelanggan
+    <script>
+        function updateBandwidth() {
+            const pelangganId = "{{ $pelanggan->id }}"; // ID Pelanggan
+
+            $.ajax({
+                url: "{{ route('getBandwidth', ':id') }}".replace(':id',
+                    pelangganId), // Mengganti :id dengan pelangganId
+                method: 'GET',
+                success: function (response) {
+                    // Update Total Bandwidth
+                    $('#total-bw-upload-download').text(`${response.totTx} / ${response.totRx}`);
+                },
+                error: function (error) {
+                    console.log("Gagal mengambil data bandwidth:", error);
+                    $('#total-bw-upload-download').text('Gagal memuat data');
+                }
+            });
+        }
+
+        // Update setiap 2 detik
+        setInterval(updateBandwidth, 2000);
+
+    </script>
+ <script>
+    const akunPppoe = "{{ $pelanggan->akun_pppoe }}";
+
+    // Fungsi untuk mengecek ping
+    function cekPing(akunPppoe) {
+        Swal.fire({
+            title: 'Sedang melakukan Cek Ping...',
+            text: 'Mohon tunggu sebentar...',
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+            customClass: {
+                popup: 'swal-popup-small'
+            }
+        });
 
         $.ajax({
-            url: "{{ route('getBandwidth', ':id') }}".replace(':id', pelangganId),  // Mengganti :id dengan pelangganId
+            url: `{{ route('cekPing', ['akun' => '__akun_pppoe__']) }}`.replace('__akun_pppoe__', akunPppoe),
             method: 'GET',
-            success: function(response) {
-                // Update Total Bandwidth
-                $('#total-bw-upload-download').text(`${response.totTx} / ${response.totRx}`);
+            success: function (response) {
+                Swal.close(); // Menutup loading indicator
+
+                if (response.success) {
+                    // Tampilkan hasil ping
+                    let pingResults = response.pingResults;
+                    let ipAddress = response.ip;  // Ambil IP address dari response
+
+                    // Fungsi untuk format waktu (jam:menit:detik)
+                    function formatTime(date) {
+                        let hours = date.getHours().toString().padStart(2, '0');
+                        let minutes = date.getMinutes().toString().padStart(2, '0');
+                        let seconds = date.getSeconds().toString().padStart(2, '0');
+                        return `${hours}:${minutes}:${seconds}`;
+                    }
+
+                    // Membuat HTML untuk hasil ping dengan tabel
+                    let pingText = '<table style="width:100%; text-align: center; border-collapse: collapse; table-border: 1px;">';
+                    pingText += '<tr><th>Test </th><th>Waktu</th><th>Hasil</th></tr>';  // Menambahkan header tabel
+                    pingResults.forEach(function (result, index) {
+                        // Mendapatkan waktu saat ping dilakukan
+                        let pingTime = formatTime(new Date());
+
+                        // Cek apakah hasil ping adalah timeout
+                        if (result.includes("Timeout")) {
+                            pingText += `<tr><td>Tes ${index + 1}</td><td>${pingTime}</td><td style="color: red;">Timeout</td></tr>`;
+                        } else {
+                            pingText += `<tr><td>Tes ${index + 1}</td><td>${pingTime}</td><td style="color: green;">${result}</td></tr>`;
+                        }
+                    });
+                    pingText += '</table>';
+
+                    Swal.fire({
+                        title: `Hasil Ping Ke Ip  ${ipAddress}`,  // Menampilkan IP address di title
+                        html: pingText, // Menampilkan hasil ping dalam format HTML
+                        icon: 'info',
+                        showConfirmButton: true,
+                        customClass: {
+                            popup: 'swal-popup-small'
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Terjadi kesalahan saat melakukan ping.',
+                        icon: 'error',
+                        showConfirmButton: true,
+                        customClass: {
+                            popup: 'swal-popup-small'
+                        }
+                    });
+                }
             },
-            error: function(error) {
-                console.log("Gagal mengambil data bandwidth:", error);
-                $('#total-bw-upload-download').text('Gagal memuat data');
+            error: function (error) {
+                Swal.close();
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Tidak dapat menghubungi server untuk melakukan ping.',
+                    icon: 'error',
+                    showConfirmButton: true,
+                    customClass: {
+                        popup: 'swal-popup-small'
+                    }
+                });
             }
         });
     }
 
-    // Update setiap 2 detik
-    setInterval(updateBandwidth, 2000);
+    // Panggil fungsi cekPing saat tombol diklik
+    $(document).ready(function () {
+        $("a[data-action='cekPing']").on('click', function () {
+            cekPing(akunPppoe);
+        });
+    });
 </script>
+
+
 
 </body>
 

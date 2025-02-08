@@ -184,15 +184,15 @@ class PelangganController extends Controller
     public function showPelanggan($id)
     {
         $pelanggan = Pelanggan::with('paket')->find($id);
-    
+
         if (!$pelanggan) {
             return response()->json(['error' => 'Pelanggan tidak ditemukan'], 404);
         }
-    
+
         $routerId = $pelanggan->router_id;
         $mikrotik = Mikrotik::where('router_id', $routerId)->first();
         $akunPelanggan = $pelanggan->akun_pppoe;
-    
+
         try {
             // Membuat koneksi ke MikroTik API
             $client = new Client([
@@ -200,23 +200,23 @@ class PelangganController extends Controller
                 'user' => $mikrotik->username, // Username MikroTik
                 'pass' => $mikrotik->password, // Password MikroTik
             ]);
-    
+
             // Query untuk mengambil data koneksi PPPoE
             $query = new Query('/interface/pppoe-server/print');
             $activeConnections = $client->query($query)->read();
-    
+
             // Filter data untuk mencari koneksi dengan nama yang sesuai dengan akun PPPoE
             $filteredConnections = array_filter($activeConnections, function ($connection) use ($akunPelanggan) {
                 return isset($connection['name']) && $connection['name'] === "<pppoe-" . $akunPelanggan . ">";
             });
-    
+
             if (empty($filteredConnections)) {
-                return response()->json(['error' => 'Tidak ada koneksi PPPoE yang ditemukan untuk akun ini'], 404);
+                return redirect()->back()->with('error', 'Akun Ini Tidak Terhubung Dengan Server !');
             }
-    
+
             $uptime = $filteredConnections[0]['uptime'];
             $formattedUptime = $this->formatUptime($uptime); // Format uptime
-    
+
             // Jika diminta untuk menampilkan halaman, kirimkan data pelanggan
             return view('ROLE.MEMBER.PELANGGAN.data', [
                 'pelanggan' => $pelanggan,
@@ -227,44 +227,44 @@ class PelangganController extends Controller
             return response()->json(['error' => 'Terjadi kesalahan saat menghubungkan ke MikroTik API: ' . $e->getMessage()], 500);
         }
     }
-    
+
     public function getBandwidth($id)
     {
         $pelanggan = Pelanggan::find($id);
         $akunPelanggan = $pelanggan->akun_pppoe;
-    
+
         try {
             $mikrotik = Mikrotik::where('router_id', $pelanggan->router_id)->first();
-    
+
             $client = new Client([
                 'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
                 'user' => $mikrotik->username,
                 'pass' => $mikrotik->password,
             ]);
-    
+
             // Query untuk mengambil data interface
             $query = new Query('/interface/print');
             $data = $client->query($query)->read();
-    
+
             // Filter data untuk mencari koneksi sesuai dengan akun PPPoE
             $filteredConnections = array_filter($data, function ($connection) use ($akunPelanggan) {
                 return isset($connection['name']) && $connection['name'] === "<pppoe-" . $akunPelanggan . ">";
             });
-    
+
             // Menghitung RX dan TX bytes
             $totalRxBytes = 0;
             $totalTxBytes = 0;
-    
+
             foreach ($filteredConnections as $interface) {
                 if (isset($interface['rx-byte']) && isset($interface['tx-byte'])) {
                     $totalRxBytes += $interface['rx-byte'];
                     $totalTxBytes += $interface['tx-byte'];
                 }
             }
-    
+
             $totRx = $this->formatBytes($totalRxBytes); // Konversi RX bytes
             $totTx = $this->formatBytes($totalTxBytes); // Konversi TX bytes
-    
+
             return response()->json([
                 'totRx' => $totRx,
                 'totTx' => $totTx,
@@ -273,7 +273,7 @@ class PelangganController extends Controller
             return response()->json(['error' => 'Terjadi kesalahan saat menghubungkan ke MikroTik API: ' . $e->getMessage()], 500);
         }
     }
-    
+
     private function formatBytes($bytes)
     {
         if ($bytes >= 1073741824) {
@@ -286,7 +286,7 @@ class PelangganController extends Controller
             return $bytes . ' Bytes';
         }
     }
-    
+
 
     private function formatUptime($uptime)
     {
@@ -362,92 +362,89 @@ class PelangganController extends Controller
         }
     }
 
+    public function cekPing($akunPppoe)
+    {
+        try {
+            $pelanggan = Pelanggan::where('akun_pppoe', $akunPppoe)->first();
+            $mikrotik = Mikrotik::where('router_id', $pelanggan->router_id)->first();
+    
+            if (!$pelanggan) {
+                return response()->json(['error' => 'Pelanggan tidak ditemukan'], 404);
+            }
+    
+            $akunPelanggan = $pelanggan->akun_pppoe;
+            $client = new Client([
+                'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api, // Pastikan port benar
+                'user' => $mikrotik->username, // Username MikroTik
+                'pass' => $mikrotik->password, // Password MikroTik
+            ]);
+    
+            // Query untuk mengambil data koneksi PPPoE
+            $query = new Query('/ppp/active/print');
+            $activeConnections = $client->query($query)->read();
+    
+            // Periksa apakah query mengembalikan array atau objek yang valid
+            if (!is_array($activeConnections)) {
+                return response()->json(['error' => 'Gagal mendapatkan data koneksi PPPoE'], 500);
+            }
+    
+            // Filter data untuk mencari koneksi dengan nama yang sesuai dengan akun PPPoE
+            $filteredConnections = array_filter($activeConnections, function ($connection) use ($akunPelanggan) {
+                return isset($connection['name']) && $connection['name'] === $akunPelanggan;
+            });
+    
+            // Periksa apakah koneksi ditemukan
+            if (empty($filteredConnections)) {
+                return response()->json(['error' => 'Koneksi PPPoE tidak ditemukan untuk akun ' . $akunPelanggan], 404);
+            }
+    
+            // Ambil IP address dari koneksi yang ditemukan
+            $ipAddress = null;
+            foreach ($filteredConnections as $connection) {
+                if (isset($connection['address'])) {
+                    $ipAddress = $connection['address'];
+                   // $ipAddress = '192.168.9.4';
 
-
-
-
-
-    // public function getPelangganData($id)
-    // {
-    //     $pelanggan = Pelanggan::with('paket')->find($id);
-
-    //     if (!$pelanggan) {
-    //         return response()->json(['error' => 'Pelanggan tidak ditemukan'], 404);
-    //     }
-
-    //     $pelId = $pelanggan->pelanggan_id;
-    //     $routerId = $pelanggan->router_id;
-    //     $akunPppoe = $pelanggan->akun_pppoe;
-    //     $namaPelanggan = $pelanggan->nama_pelanggan;
-    //     $alamat = $pelanggan->alamat;
-
-    //     $mikrotik = Mikrotik::where('router_id', $routerId)->first();
-
-    //     if (!$mikrotik) {
-    //         return response()->json(['error' => 'Router tidak ditemukan'], 404);
-    //     }
-
-
-
-    //     try {
-
-    //         $client = new Client([
-    //             'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
-    //             'user' => $mikrotik->username,
-    //             'pass' => $mikrotik->password,
-    //         ]);
-
-    //         if (!$client->connect()) {
-    //             return response()->json(['error' => 'Tidak dapat terhubung ke MikroTik'], 500);
-    //         }
-
-    //         // Ambil data akun PPPoE aktif
-    //         $response = $client->query(
-    //             (new Query('/ppp/active/print'))
-    //         )->read();
-
-    //         // Filter data berdasarkan 'name'
-    //         $filteredResponse = array_filter($response, function ($item) use ($akunPppoe) {
-    //             return isset($item['name']) && $item['name'] === $akunPppoe;
-    //         });
-
-
-
-    //         if (empty($filteredResponse)) {
-    //             return response()->json(['error' => 'Akun PPPoE tidak ditemukan di MikroTik'], 404);
-    //         }
-
-    //         $ipAddress = $filteredResponse[0]['address'] ?? null;
-
-    //         if (!$ipAddress) {
-    //             return response()->json(['error' => 'IP Address untuk akun PPPoE tidak ditemukan'], 404);
-    //         }
-
-    //         // Ping ke IP address akun PPPoE
-    //         $pingResponse = $client->query(
-    //             (new Query('/ping'))
-    //                 ->equal('address', 'youtube.com')
-    //                 ->equal('count', 10)
-    //         )->read();
-    //             dd($pingResponse);
-    //         // $ping = isset($pingResponse[0]['time']) ? $pingResponse[0]['time'] : null;
-    //         // $packetLoss = isset($pingResponse[0]['packet-loss']) ? $pingResponse[0]['packet-loss'] : null;
-
-    //         // $data = [
-    //         //     'pelanggan_id' => $pelId,
-    //         //     'nama_pelanggan' => $namaPelanggan,
-    //         //     'alamat' => $alamat,
-    //         //     'ping_stats' => [
-    //         //         'ip_address' => $ipAddress,
-    //         //         'ping' => $ping,
-    //         //         'packet_loss' => $packetLoss,
-    //         //     ],
-    //         // ];
-
-    //         return view('ROLE/MEMBER/PELANGGAN/data', compact('data'));
-    //     } catch (\Exception $e) {
-    //         return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
-    //     }
-    // }
-
+                    break;
+                }
+            }
+    
+            $ip = $ipAddress;
+    
+            if ($ipAddress) {
+                // Melakukan ping ke IP address yang ditemukan
+                $query = new Query('/ping');
+                $query->equal('address', $ipAddress);
+                $query->equal('count', 10);  // Mengatur jumlah ping yang akan dilakukan
+    
+                $pingResults = $client->query($query)->read();
+    
+                $formattedPingResults = [];
+                foreach ($pingResults as $result) {
+                    // Cek apakah ada 'time' atau status 'timeout'
+                    if (isset($result['time'])) {
+                        // Jika statusnya ada, tambahkan "time"
+                        $formattedPingResults[] = "{$result['time']}";
+                    } elseif (isset($result['status']) && $result['status'] == 'timeout') {
+                        // Jika status adalah timeout, tambahkan "Timeout"
+                        $formattedPingResults[] = "Timeout";
+                    }
+                }
+    
+                if (!empty($formattedPingResults)) {
+                    // Mengembalikan hasil ping beserta IP address
+                    return response()->json(['success' => true, 'pingResults' => $formattedPingResults, 'ip' => $ipAddress]);
+                } else {
+                    return response()->json(['success' => false, 'error' => 'Gagal melakukan ping ke IP address']);
+                }
+            } else {
+                return response()->json(['success' => false, 'error' => 'IP address tidak ditemukan']);
+            }
+    
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+    
+    
 }
