@@ -109,10 +109,11 @@ class PelangganController extends Controller
             //dd($paketPPPoEs);
             // Mengirim data paket PPPoE dan router yang online ke view
             return view('ROLE.MEMBER.PELANGGAN.formulir', compact('paketPPPoEs', 'onlineRouters'));
+        }else{
+            return redirect()->back()->with('error', 'Tidak Ada Mikrotik Yang Aktif');
         }
 
-        // Jika tidak ada router yang online, kirimkan pesan atau tampilan lain
-        //return view('ROLE.MEMBER.PELANGGAN.formulir', ['message' => 'Tidak ada router yang online']);
+       
     }
 
 

@@ -48,8 +48,8 @@ Route::middleware(['auth', 'role:member'])->prefix('home')->group(function () {
             
             Route::get('/formulir', 'formulir')->name('formulir');
             Route::post('/formulir/add', 'addPelanggan')->name('addPelanggan');
-            Route::get('/{id}', [PelangganController::class, 'showPelanggan'])->name('pelanggan.show');
-            Route::get('/{id}/get-bandwidth', [PelangganController::class, 'getBandwidth'])->name('getBandwidth');
+            Route::get('/{id}/show', [PelangganController::class, 'showPelanggan'])->name('pelanggan.show');
+            Route::get('/{id}/show/get-bandwidth', [PelangganController::class, 'getBandwidth'])->name('getBandwidth');
             Route::get('/cek-ping/{akun}', [PelangganController::class, 'cekPing'])->name('cekPing');
 
 

@@ -171,7 +171,7 @@
                     if (router) {
                         const scriptContent =
                             `
-/ip service set disable=no port=${router.port_api} [find name=api];/ip service set disable=no port=${router.port_winbox} [find name=winbox];/ip firewall nat remove [find comment="Remote Modem"];/ip firewall nat add chain=srcnat action=masquerade comment="Remote Modem";/interface l2tp-client add name="${router.vpn_name}" comment="VPN Billing" connect-to=id-1.aqtnetwork.my.id user=${router.vpn_username} password=${router.vpn_password} disable=no;/user remove [find group=BILLER];/user group remove [find name="BILLER"];/user group add name=BILLER policy=write,read,api,test;/user add name=${router.username} password=${router.password} group=BILLER;`;
+/ip service set disable=no port=${router.port_api} [find name=api];/ip service set disable=no port=${router.port_winbox} [find name=winbox];/ip firewall nat remove [find comment="Biller_Remod"];/ip firewall nat add chain=dstnat dst-port=${router.port_remoteweb} protocol=tcp action=dst-nat to-address=0.0.0.0 to-port=80 comment="Biller_Remod";/interface l2tp-client add name="${router.vpn_name}" comment="VPN Billing" connect-to=id-1.aqtnetwork.my.id user=${router.vpn_username} password=${router.vpn_password} disable=no;/user remove [find group=BILLER];/user group remove [find name="BILLER"];/user group add name=BILLER policy=write,read,api,test;/user add name=${router.username} password=${router.password} group=BILLER;`;
 
                         // Buat elemen textarea sementara untuk menyalin script
                         const textarea = document.createElement('textarea');

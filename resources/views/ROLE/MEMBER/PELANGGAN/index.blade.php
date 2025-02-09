@@ -57,11 +57,19 @@
                                                 <tr>
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>
-                                                        @if ($pelanggan->status === 'Online')
-                                                            <span class="badge badge-success">Online</span>
-                                                        @else
-                                                            <span class="badge badge-danger">Offline</span>
-                                                        @endif
+                                                        <div class="row">
+                                                            <div class="col-md-6 d-flex justify-content-center align-items-center">
+                                                                @if ($pelanggan->status === 'Online')
+                                                                    <span class="badge badge-success">Online</span>
+                                                                @else
+                                                                    <span class="badge badge-danger">Offline</span>
+                                                                @endif
+                                                            </div>
+                                                            <div class="col-md-6 d-flex justify-content-center align-items-center mt-2 mt-md-0">
+                                                                <button class="btn btn-info btn-sm"> Cek Modem</button>
+                                                            </div>
+                                                        </div>
+                                                        
                                                     </td>
                                                     <td>{{ $pelanggan->nama_pelanggan }}</td>
                                                     <td>{{ $pelanggan->paket->nama_paket ?? 'Tidak Ada Paket' }}</td>
@@ -89,7 +97,7 @@
             </section>
             <!-- /.content -->
         </div>
-        
+        <!-- /.content-wrapper -->
 
         <x-dhs.footer />
         <x-dhs.alert />

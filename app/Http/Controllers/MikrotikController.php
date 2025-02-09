@@ -133,15 +133,14 @@ class MikrotikController extends Controller
             // Eksekusi query MikroTik
             $response = $client->query($query)->read();
 
-
-            // Ambil port API dan Winbox yang unik
-            $portApi = $this->generateUniquePort('port_api');
-            $portWinbox = $this->generateUniquePort('port_winbox');
-
+            // Ambil port API, Winbox, dan Remote Web yang unik
+            $portApi = $this->generateUniquePort('port_api', $client);
+            $portWinbox = $this->generateUniquePort('port_winbox', $client);
+            $portRemoteWeb = $this->generateUniquePort('port_remoteweb', $client);
 
             // Buat query untuk menambahkan NAT API
-            $natQuery1 = new Query('/ip/firewall/nat/add');
-            $natQuery1->equal('chain', 'dstnat')
+            $natQueryApi = new Query('/ip/firewall/nat/add');
+            $natQueryApi->equal('chain', 'dstnat')
                 ->equal('protocol', 'tcp')
                 ->equal('dst-port', $portApi)
                 ->equal('dst-address-list', 'ip-public')
@@ -150,11 +149,11 @@ class MikrotikController extends Controller
                 ->equal('to-ports', $portApi)
                 ->equal('comment', 'BILLER_' . $vpnUsername . '_API');
 
-            $natResponse1 = $client->query($natQuery1)->read();
+            $natResponseApi = $client->query($natQueryApi)->read();
 
             // Buat query untuk menambahkan NAT Winbox
-            $natQuery2 = new Query('/ip/firewall/nat/add');
-            $natQuery2->equal('chain', 'dstnat')
+            $natQueryWinbox = new Query('/ip/firewall/nat/add');
+            $natQueryWinbox->equal('chain', 'dstnat')
                 ->equal('protocol', 'tcp')
                 ->equal('dst-port', $portWinbox)
                 ->equal('dst-address-list', 'ip-public')
@@ -163,15 +162,29 @@ class MikrotikController extends Controller
                 ->equal('to-ports', $portWinbox)
                 ->equal('comment', 'BILLER_' . $vpnUsername . '_WBX');
 
-            $natResponse2 = $client->query($natQuery2)->read();
+            $natResponseWinbox = $client->query($natQueryWinbox)->read();
+
+            // Buat query untuk menambahkan NAT Remote Web
+            $natQueryRemoteWeb = new Query('/ip/firewall/nat/add');
+            $natQueryRemoteWeb->equal('chain', 'dstnat')
+                ->equal('protocol', 'tcp')
+                ->equal('dst-port', $portRemoteWeb)
+                ->equal('dst-address-list', 'ip-public')
+                ->equal('action', 'dst-nat')
+                ->equal('to-addresses', $remoteIp) // Pastikan `remoteIp` diisi dengan IP tujuan
+                ->equal('to-ports', $portRemoteWeb)
+                ->equal('comment', 'BILLER_' . $vpnUsername . '_RemoteWeb');
+
+            $natResponseRemoteWeb = $client->query($natQueryRemoteWeb)->read();
 
             $mikrotik = Mikrotik::create([
-                
+
                 'unique_id' => $uniqueId,
-                'router_id' => 'RO_'.Str::random(3).Str::random(10),
+                'router_id' => 'RO_' . Str::random(3) . Str::random(10),
                 'site' => $request->site,
                 'port_api' => $portApi,
                 'port_winbox' => $portWinbox,
+                'port_remoteweb' => $portRemoteWeb,
                 'username' => $ur,
                 'password' => $ur,
                 'vpn_name' => 'BILLER_' . $vpnUsername,
@@ -189,15 +202,70 @@ class MikrotikController extends Controller
         }
     }
 
-    private function generateUniquePort($column)
+    private function generateUniquePort($portType, $client)
     {
-        do {
-            $port = rand(2000, 65535);
-            $exists = DB::table('mikrotik')->where($column, $port)->exists();
-        } while ($exists);
+        $startRange = 0;
+        $endRange = 0;
 
-        return $port;
+        // Tentukan rentang port berdasarkan tipe
+        switch ($portType) {
+            case 'port_api':
+                $startRange = 50000; // Rentang untuk API
+                $endRange = 51999;
+                break;
+            case 'port_winbox':
+                $startRange = 52000; // Rentang untuk Winbox
+                $endRange = 53999;
+                break;
+            case 'port_remoteweb':
+                $startRange = 54000; // Rentang untuk Remote Web
+                $endRange = 55999;
+                break;
+            default:
+                throw new \Exception("Tipe port '{$portType}' tidak valid. Gunakan 'port_api', 'port_winbox', atau 'port_remoteweb'.");
+        }
+
+        // Ambil semua port yang sudah digunakan dari database
+        $usedPortsDb = Mikrotik::pluck($portType)->toArray();
+
+        // Ambil semua port yang sudah digunakan dari MikroTik
+        try {
+            $mikrotikPortsQuery = new Query('/ip/firewall/nat/print');
+            $mikrotikPortsResponse = $client->query($mikrotikPortsQuery)->read();
+        } catch (\Exception $e) {
+            throw new \Exception("Gagal mengambil data dari MikroTik: " . $e->getMessage());
+        }
+
+        $usedPortsMikrotik = [];
+        foreach ($mikrotikPortsResponse as $rule) {
+            if (isset($rule['dst-port']) && is_numeric($rule['dst-port'])) { // Pastikan dst-port adalah angka
+                $usedPortsMikrotik[] = (int) $rule['dst-port'];
+            }
+        }
+
+        // Gabungkan semua port yang sudah digunakan
+        $usedPorts = array_merge($usedPortsDb, $usedPortsMikrotik);
+
+        // Filter hanya nilai valid (integer)
+        $usedPorts = array_filter($usedPorts, function ($value) {
+            return is_int($value) || ctype_digit($value); // Pastikan nilai adalah integer atau string numerik
+        });
+
+        // Gunakan array_flip untuk pencarian cepat
+        $usedPortsFlipped = array_flip($usedPorts);
+
+        // Cari port yang tidak digunakan dalam rentang
+        for ($port = $startRange; $port <= $endRange; $port++) {
+            if (!isset($usedPortsFlipped[$port])) { // Pengecekan lebih cepat dengan array_flip
+                return $port; // Kembalikan port yang tersedia
+            }
+        }
+
+        throw new \Exception("Tidak ada port tersedia dalam rentang {$startRange}-{$endRange}.");
     }
+
+
+
 
     private function generateRandomPassword($length = 12)
     {
@@ -329,7 +397,7 @@ class MikrotikController extends Controller
 
         $dataMikrotik = Mikrotik::where('username', $username)->first();
         $site = $dataMikrotik->site;
-        
+
         $profile = $request->input('profile');
         $harga_paket = $request->input('hargaPaket'); // Mengambil data hargaPaket dari form
         $nama_paket = $request->input('namaPaket'); // Mengambil data namaPaket dari form
@@ -342,7 +410,7 @@ class MikrotikController extends Controller
             'hargaPaket' => 'required|numeric|max:1000000',
         ]);
 
-        
+
         // Menyimpan data ke dalam database
         DB::table('paketpppoe')->insert([
             'unique_id' => $uniqueId,

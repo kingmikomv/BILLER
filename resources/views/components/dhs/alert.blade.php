@@ -2,7 +2,7 @@
 <script>
     Swal.fire({
         icon: 'success',
-        title: 'Koneksi Berhasil',
+        title: 'Success',
         text: "{!! session('success') !!}",
         confirmButtonText: 'OK'
     });
@@ -13,7 +13,7 @@
 <script>
     Swal.fire({
         icon: 'error',
-        title: 'Koneksi Gagal',
+        title: 'Error',
         text: "{{ session('error') }}",
         confirmButtonText: 'Coba Lagi'
     });

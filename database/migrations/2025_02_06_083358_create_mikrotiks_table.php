@@ -16,8 +16,10 @@ return new class extends Migration
             $table->string('unique_id');
             $table->string('router_id');
             $table->string('site');
-            $table->string('port_api');
-            $table->string('port_winbox');
+            $table->string('port_api')->nullable();
+            $table->string('port_winbox')->nullable();
+            $table->string('port_olt')->nullable();
+            $table->string('port_remoteweb')->nullable();
 
             //group untuk login api
             $table->string('username');
