@@ -4,20 +4,20 @@
     <div class="wrapper">
 
         <x-dhs.preload />
-
+    
         <!-- Navbar -->
         <x-dhs.nav />
         <!-- /.navbar -->
-
+    
         <!-- Main Sidebar Container -->
         <x-dhs.sidebar />
-
+    
         <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
+        <div class="content-wrapper" style="margin-bottom: 50px">
             <!-- Content Header (Page header) -->
             <x-dhs.content-header />
             <!-- /.content-header -->
-
+    
             <!-- Main content -->
             <section class="content">
                 <div class="container-fluid">
@@ -28,24 +28,19 @@
                                 <div class="card-header">
                                     <h3 class="card-title">Daftar Router</h3>
                                     <div class="card-tools">
-                                        <button type="button" class="btn btn-primary" data-toggle="modal"
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal"
                                             data-target="#tambahRouterModal">
                                             <i class="fas fa-plus"></i> Tambah Router
                                         </button>
-                                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-tool" data-card-widget="remove">
-                                            <i class="fas fa-times"></i>
-                                        </button>
+                                      
                                     </div>
                                 </div>
                                 <!-- /.card-header -->
-                                <div class="card-body p-0">
+                                <div class="card-body">
                                     <div class="d-md-flex">
                                         <div class="p-1 flex-fill" style="overflow: hidden">
                                             <div class="table-responsive">
-                                                <table class="table table-striped">
+                                                <table id="routerTable" class="table">
                                                     <thead>
                                                         <tr>
                                                             <th style="width: 10px">#</th>
@@ -105,7 +100,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                
                             </div>
                         </div>
                     </div>
@@ -114,7 +108,7 @@
             <!-- /.content -->
         </div>
         <!-- /.content-wrapper -->
-
+    
         <!-- Modal to Add Router -->
         <div class="modal fade" id="tambahRouterModal" tabindex="-1" aria-labelledby="tambahRouterModalLabel"
             aria-hidden="true">
@@ -144,7 +138,7 @@
                 </div>
             </div>
         </div>
-
+    
         <x-dhs.footer />
     </div>
     <!-- ./wrapper -->
@@ -193,6 +187,19 @@
         });
 
     </script>
+    <!-- DataTables Initialization -->
+<script>
+    $(document).ready(function () {
+        $('#routerTable').DataTable({
+            responsive: true,
+            autoWidth: false,
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.13.5/i18n/id.json" // Bahasa Indonesia (optional)
+            }
+        });
+    });
+</script>
+
     <x-dhs.alert />
 </body>
 

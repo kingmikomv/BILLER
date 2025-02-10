@@ -32,7 +32,8 @@ class HomeController extends Controller
             // }
             return view('ROLE/MEMBER/index');
         } elseif (auth()->user()->hasRole('teknisi')) {
-            dd('teknisi');
+            return view('ROLE/PEKERJA/index');
+
         } elseif (auth()->user()->hasRole('penagih')) {
             dd('penagih');
         }elseif (auth()->user()->hasRole('cs')) {

@@ -13,7 +13,7 @@
         <x-dhs.sidebar />
 
         <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
+        <div class="content-wrapper" style="margin-bottom: 50px">
             <!-- Content Header (Page header) -->
             <x-dhs.content-header />
             <!-- /.content-header -->

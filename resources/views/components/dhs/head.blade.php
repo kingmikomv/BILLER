@@ -14,5 +14,6 @@
   <!-- Theme style -->
   <link rel="stylesheet" href="{{asset('assetlogin/dist/css/adminlte.min.css')}}">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 
 </head>

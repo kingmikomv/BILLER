@@ -8,7 +8,7 @@
         <x-dhs.nav />
         <x-dhs.sidebar />
 
-        <div class="content-wrapper">
+        <div class="content-wrapper" style="margin-bottom: 50px">
             <x-dhs.content-header title="Data Pelanggan" />
 
             <section class="content">
@@ -19,7 +19,8 @@
                                 <div class="card-header">
                                     <h3 class="card-title">Data Pelanggan</h3>
                                     <div class="card-tools">
-                                        <a href="{{route('pelanggan')}}" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left"></i> Kembali</a>
+                                        <a href="{{route('pelanggan')}}" class="btn btn-sm btn-secondary"><i
+                                                class="fas fa-arrow-left"></i> Kembali</a>
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -62,7 +63,12 @@
                                     </table>
 
                                     <h4 class="mt-4">Traffic Monitoring</h4>
-                                    <div id="traffic-chart"></div>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-5">
+                                            <div id="traffic-chart"></div>
+
+                                        </div>
+                                    </div>
 
                                 </div>
                             </div>
@@ -70,9 +76,10 @@
                     </div>
                 </div>
             </section>
+            
         </div>
+        <x-dhs.footer style="margin-top 50px"/>
 
-        <x-dhs.footer />
     </div>
 
     <x-dhs.scripts />
@@ -272,71 +279,89 @@
         setInterval(updateBandwidth, 2000);
 
     </script>
- <script>
-    const akunPppoe = "{{ $pelanggan->akun_pppoe }}";
+    <script>
+        const akunPppoe = "{{ $pelanggan->akun_pppoe }}";
 
-    // Fungsi untuk mengecek ping
-    function cekPing(akunPppoe) {
-        Swal.fire({
-            title: 'Sedang melakukan Cek Ping...',
-            text: 'Mohon tunggu sebentar...',
-            showConfirmButton: false,
-            didOpen: () => {
-                Swal.showLoading();
-            },
-            customClass: {
-                popup: 'swal-popup-small'
-            }
-        });
+        // Fungsi untuk mengecek ping
+        function cekPing(akunPppoe) {
+            Swal.fire({
+                title: 'Sedang melakukan Cek Ping...',
+                text: 'Mohon tunggu sebentar...',
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+                customClass: {
+                    popup: 'swal-popup-small'
+                }
+            });
 
-        $.ajax({
-            url: `{{ route('cekPing', ['akun' => '__akun_pppoe__']) }}`.replace('__akun_pppoe__', akunPppoe),
-            method: 'GET',
-            success: function (response) {
-                Swal.close(); // Menutup loading indicator
+            $.ajax({
+                url: `{{ route('cekPing', ['akun' => '__akun_pppoe__']) }}`.replace('__akun_pppoe__',
+                    akunPppoe),
+                method: 'GET',
+                success: function (response) {
+                    Swal.close(); // Menutup loading indicator
 
-                if (response.success) {
-                    // Tampilkan hasil ping
-                    let pingResults = response.pingResults;
-                    let ipAddress = response.ip;  // Ambil IP address dari response
+                    if (response.success) {
+                        // Tampilkan hasil ping
+                        let pingResults = response.pingResults;
+                        let ipAddress = response.ip; // Ambil IP address dari response
 
-                    // Fungsi untuk format waktu (jam:menit:detik)
-                    function formatTime(date) {
-                        let hours = date.getHours().toString().padStart(2, '0');
-                        let minutes = date.getMinutes().toString().padStart(2, '0');
-                        let seconds = date.getSeconds().toString().padStart(2, '0');
-                        return `${hours}:${minutes}:${seconds}`;
+                        // Fungsi untuk format waktu (jam:menit:detik)
+                        function formatTime(date) {
+                            let hours = date.getHours().toString().padStart(2, '0');
+                            let minutes = date.getMinutes().toString().padStart(2, '0');
+                            let seconds = date.getSeconds().toString().padStart(2, '0');
+                            return `${hours}:${minutes}:${seconds}`;
+                        }
+
+                        // Membuat HTML untuk hasil ping dengan tabel
+                        let pingText =
+                            '<table style="width:100%; text-align: center; border-collapse: collapse; table-border: 1px;">';
+                        pingText +=
+                        '<tr><th>Test </th><th>Waktu</th><th>Hasil</th></tr>'; // Menambahkan header tabel
+                        pingResults.forEach(function (result, index) {
+                            // Mendapatkan waktu saat ping dilakukan
+                            let pingTime = formatTime(new Date());
+
+                            // Cek apakah hasil ping adalah timeout
+                            if (result.includes("Timeout")) {
+                                pingText +=
+                                    `<tr><td>Tes ${index + 1}</td><td>${pingTime}</td><td style="color: red;">Timeout</td></tr>`;
+                            } else {
+                                pingText +=
+                                    `<tr><td>Tes ${index + 1}</td><td>${pingTime}</td><td style="color: green;">${result}</td></tr>`;
+                            }
+                        });
+                        pingText += '</table>';
+
+                        Swal.fire({
+                            title: `Hasil Ping Ke Ip  ${ipAddress}`, // Menampilkan IP address di title
+                            html: pingText, // Menampilkan hasil ping dalam format HTML
+                            icon: 'info',
+                            showConfirmButton: true,
+                            customClass: {
+                                popup: 'swal-popup-small'
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Terjadi kesalahan saat melakukan ping.',
+                            icon: 'error',
+                            showConfirmButton: true,
+                            customClass: {
+                                popup: 'swal-popup-small'
+                            }
+                        });
                     }
-
-                    // Membuat HTML untuk hasil ping dengan tabel
-                    let pingText = '<table style="width:100%; text-align: center; border-collapse: collapse; table-border: 1px;">';
-                    pingText += '<tr><th>Test </th><th>Waktu</th><th>Hasil</th></tr>';  // Menambahkan header tabel
-                    pingResults.forEach(function (result, index) {
-                        // Mendapatkan waktu saat ping dilakukan
-                        let pingTime = formatTime(new Date());
-
-                        // Cek apakah hasil ping adalah timeout
-                        if (result.includes("Timeout")) {
-                            pingText += `<tr><td>Tes ${index + 1}</td><td>${pingTime}</td><td style="color: red;">Timeout</td></tr>`;
-                        } else {
-                            pingText += `<tr><td>Tes ${index + 1}</td><td>${pingTime}</td><td style="color: green;">${result}</td></tr>`;
-                        }
-                    });
-                    pingText += '</table>';
-
-                    Swal.fire({
-                        title: `Hasil Ping Ke Ip  ${ipAddress}`,  // Menampilkan IP address di title
-                        html: pingText, // Menampilkan hasil ping dalam format HTML
-                        icon: 'info',
-                        showConfirmButton: true,
-                        customClass: {
-                            popup: 'swal-popup-small'
-                        }
-                    });
-                } else {
+                },
+                error: function (error) {
+                    Swal.close();
                     Swal.fire({
                         title: 'Error',
-                        text: 'Terjadi kesalahan saat melakukan ping.',
+                        text: 'Tidak dapat menghubungi server untuk melakukan ping.',
                         icon: 'error',
                         showConfirmButton: true,
                         customClass: {
@@ -344,29 +369,17 @@
                         }
                     });
                 }
-            },
-            error: function (error) {
-                Swal.close();
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Tidak dapat menghubungi server untuk melakukan ping.',
-                    icon: 'error',
-                    showConfirmButton: true,
-                    customClass: {
-                        popup: 'swal-popup-small'
-                    }
-                });
-            }
-        });
-    }
+            });
+        }
 
-    // Panggil fungsi cekPing saat tombol diklik
-    $(document).ready(function () {
-        $("a[data-action='cekPing']").on('click', function () {
-            cekPing(akunPppoe);
+        // Panggil fungsi cekPing saat tombol diklik
+        $(document).ready(function () {
+            $("a[data-action='cekPing']").on('click', function () {
+                cekPing(akunPppoe);
+            });
         });
-    });
-</script>
+
+    </script>
 
 
 

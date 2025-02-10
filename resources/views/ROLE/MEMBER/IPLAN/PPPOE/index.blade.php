@@ -13,7 +13,7 @@
         <x-dhs.sidebar />
 
         <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
+        <div class="content-wrapper" style="margin-bottom: 50px">
             <!-- Content Header (Page header) -->
             <x-dhs.content-header />
             <!-- /.content-header -->
@@ -24,87 +24,69 @@
                     <!-- Info boxes -->
 
                     <div class="row">
-
                         <div class="col-md-12">
-
-
-
                             <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">PPPoE Paket</h3>
 
+                                <div class="card-header">
+                                    <h3 class="card-title">Data Paket PPPoE</h3>
                                     <div class="card-tools">
-                                        <button type="button" class="btn btn-primary" data-toggle="modal"
+                                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal"
                                             data-target="#tambahRouterModal">
                                             <i class="fas fa-plus"></i> Tambah Paket
                                         </button>
-                                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-tool" data-card-widget="remove">
-                                            <i class="fas fa-times"></i>
-                                        </button>
                                     </div>
                                 </div>
+
                                 <!-- /.card-header -->
-                                <div class="card-body p-0">
-                                    <div class="d-md-flex">
-                                        <div class="p-1 flex-fill" style="overflow: hidden">
-                                            <!-- Tabel Responsif -->
-                                            <div class="table-responsive">
-                                                <table class="table table-striped">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>#</th>
-                                                            <th>Nama Paket</th>
-                                                            <th>Harga Paket</th>
-                                                            <th>Site</th>
-                                                            <th>Profil</th>
-                                                            <th>Username</th>
-                                                            <th>Aksi</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <!-- Contoh data tabel -->
-                                                        @php $no = 1; @endphp
-                                                        @foreach($paket as $pkt)
-                                                        <tr>
-                                                            <td>{{$no++}}</td>
-                                                            <td>{{$pkt->nama_paket}}</td>
-                                                            <td>Rp. {{ number_format($pkt->harga_paket, 0, ',', '.') }}</td>
-                                                                                                                                                                    <td>{{$pkt->site}}</td>
-                                                            <td>{{$pkt->profile}}</td>
-                                                            <td>{{$pkt->username}}</td>
-                                                            <td>
-                                                                <button class="btn btn-primary">Edit</button>
-                                                                <button class="btn btn-danger">Hapus</button>
-                                                            </td>
-                                                        </tr>
-                                                       @endforeach
-                                                        <!-- Tambahkan baris data lainnya di sini -->
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                            <!-- /Tabel Responsif -->
-                                        </div>
-                                    </div><!-- /.d-md-flex -->
+
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table id="pppoeTable" class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Nama Paket</th>
+                                                    <th>Harga Paket</th>
+                                                    <th>Site</th>
+                                                    <th>Profil</th>
+                                                    <th hidden>Username</th>
+                                                    <th>Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @php $no = 1; @endphp
+                                                @foreach($paket as $pkt)
+                                                <tr>
+                                                    <td>{{ $no++ }}</td>
+                                                    <td>{{ $pkt->nama_paket }}</td>
+                                                    <td>Rp. {{ number_format($pkt->harga_paket, 0, ',', '.') }}</td>
+                                                    <td>{{ $pkt->site }}</td>
+                                                    <td>{{ $pkt->profile }}</td>
+                                                    <td hidden>{{ $pkt->username }}</td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </button>
+                                                        <button class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-trash"></i> Hapus
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                                
                                 <!-- /.card-body -->
                             </div>
-
                         </div>
-
-
                     </div>
-
-
                 </div>
-
             </section>
             <!-- /.content -->
         </div>
-      
+
+        <!-- Modal Tambah Paket -->
         <div class="modal fade" id="tambahRouterModal" tabindex="-1" aria-labelledby="tambahRouterModalLabel"
             aria-hidden="true">
             <div class="modal-dialog">
@@ -115,7 +97,7 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form action="{{route('tambahpaket')}}" method="post">
+                    <form action="{{ route('tambahpaket') }}" method="post">
                         @csrf
                         <div class="modal-body">
                             <!-- Pilihan MikroTik -->
@@ -146,13 +128,10 @@
                             <!-- Harga Paket -->
                             <div class="form-group">
                                 <label for="hargaPaket">Harga Paket</label>
-                                <input type="text" class="form-control" id="hargaPaket" name="hargaPaket" maxlength="7" pattern="\d*" required oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 7)">
+                                <input type="text" class="form-control" id="hargaPaket" name="hargaPaket" maxlength="7"
+                                    pattern="\d*" required
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 7)">
                             </div>
-                            
-                            
-                            
-                            
-                            
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
@@ -162,9 +141,6 @@
                 </div>
             </div>
         </div>
-
-
-
 
         <x-dhs.footer />
     </div>
@@ -181,7 +157,7 @@
                 profileDropdown.empty();
                 profileDropdown.append('<option value="">Pilih Profil</option>');
                 loadingIndicator.show(); // Menampilkan loading
-    
+
                 if (username) {
                     $.ajax({
                         url: '{{route("getMikrotikProfiles")}}', // Endpoint untuk mendapatkan profil MikroTik
@@ -190,18 +166,21 @@
                             username: username
                         },
                         success: function (data) {
-                            loadingIndicator.hide(); // Sembunyikan loading segera setelah data diterima
-    
-                            if (data.status === 'success' && data.profiles && data.profiles.length > 0) {
+                            loadingIndicator
+                        .hide(); // Sembunyikan loading segera setelah data diterima
+
+                            if (data.status === 'success' && data.profiles && data.profiles
+                                .length > 0) {
                                 data.profiles.forEach(profile => {
                                     profileDropdown.append(
                                         `<option value="${profile.name}">${profile.name}</option>`
                                     );
                                 });
-                            } 
+                            }
                         },
                         error: function () {
-                            loadingIndicator.hide(); // Sembunyikan loading jika terjadi error
+                            loadingIndicator
+                        .hide(); // Sembunyikan loading jika terjadi error
                             profileDropdown.append(
                                 '<option value="">Gagal memuat data profil</option>'
                             );
@@ -212,9 +191,22 @@
                 }
             });
         });
+
     </script>
-    
-    
+    <script>
+        $(document).ready(function () {
+            $('#pppoeTable').DataTable({
+                responsive: true,
+                autoWidth: false,
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/Indonesian.json"
+                }
+            });
+        });
+
+    </script>
+
+
 
 </body>
 

@@ -16,3 +16,4 @@
 <script src="{{asset('assetlogin/plugins/jquery-mapael/maps/usa_states.min.js')}}"></script>
 <!-- ChartJS -->
 <script src="{{asset('assetlogin/plugins/chart.js/Chart.min.js')}}"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
