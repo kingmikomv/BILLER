@@ -106,12 +106,13 @@
                                 <select class="form-control" id="username" name="username" required>
                                     <option value="">Pilih MikroTik</option>
                                     @foreach($onlineRouters as $mikrotiks)
-                                    <option value="{{ $mikrotiks->username }}">
+                                    <option value="{{ $mikrotiks->username }}" data-site="{{ $mikrotiks->site }}">
                                         {{ $mikrotiks->site }}
                                     </option>
                                     @endforeach
                                 </select>
                             </div>
+                    
                             <!-- Profil MikroTik -->
                             <div class="form-group">
                                 <label for="profile">Pilih Profil</label>
@@ -120,19 +121,30 @@
                                 </select>
                                 <div id="loadingIndicator" style="display:none;">Memuat profil MikroTik...</div>
                             </div>
+                    
                             <!-- Nama Paket -->
                             <div class="form-group">
-                                <label for="namaPaket">Nama Paket</label>
-                                <input type="text" class="form-control" id="namaPaket" name="namaPaket" required>
+                                <label for="packageName">Nama Paket</label>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="packageName" name="namaPaket" placeholder="Nama Paket"
+                                        aria-label="Nama Paket" required>
+                                    <div class="input-group-append">
+                                        <span class="input-group-text" id="selectedMikrotik"></span>
+                                    </div>
+                                </div>
                             </div>
+                    
+                            <!-- Hidden Input untuk Nama MikroTik -->
+                            <input type="hidden" id="mikrotikSite" name="mikrotikSite">
+                    
                             <!-- Harga Paket -->
                             <div class="form-group">
                                 <label for="hargaPaket">Harga Paket</label>
-                                <input type="text" class="form-control" id="hargaPaket" name="hargaPaket" maxlength="7"
-                                    pattern="\d*" required
+                                <input type="text" class="form-control" id="hargaPaket" name="hargaPaket" maxlength="7" pattern="\d*" required
                                     oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 7)">
                             </div>
                         </div>
+                    
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
                             <button type="submit" class="btn btn-primary">Simpan Profil</button>
@@ -150,27 +162,40 @@
     <x-dhs.alert />
     <script>
         $(document).ready(function () {
-            $('#username').on('change', function () {
-                const username = $(this).val();
-                const profileDropdown = $('#profile');
-                const loadingIndicator = $('#loadingIndicator');
+            const mikrotikDropdown = $('#username');
+            const profileDropdown = $('#profile');
+            const loadingIndicator = $('#loadingIndicator');
+            const selectedMikrotikSpan = $('#selectedMikrotik');
+            const mikrotikSiteInput = $('#mikrotikSite');
+    
+            // Saat MikroTik dipilih
+            mikrotikDropdown.on('change', function () {
+                const selectedOption = mikrotikDropdown.find(':selected');
+                const siteName = selectedOption.data('site');
+    
+                // Tampilkan nama MikroTik pada span
+                if (siteName) {
+                    selectedMikrotikSpan.text(siteName);
+                    mikrotikSiteInput.val(siteName); // Simpan ke input hidden
+                } else {
+                    selectedMikrotikSpan.text('');
+                    mikrotikSiteInput.val('');
+                }
+    
+                // Kosongkan dan muat ulang dropdown profil
                 profileDropdown.empty();
                 profileDropdown.append('<option value="">Pilih Profil</option>');
-                loadingIndicator.show(); // Menampilkan loading
-
+                loadingIndicator.show();
+    
+                const username = $(this).val();
                 if (username) {
                     $.ajax({
-                        url: '{{route("getMikrotikProfiles")}}', // Endpoint untuk mendapatkan profil MikroTik
+                        url: '{{ route("getMikrotikProfiles") }}',
                         type: 'GET',
-                        data: {
-                            username: username
-                        },
+                        data: { username: username },
                         success: function (data) {
-                            loadingIndicator
-                        .hide(); // Sembunyikan loading segera setelah data diterima
-
-                            if (data.status === 'success' && data.profiles && data.profiles
-                                .length > 0) {
+                            loadingIndicator.hide();
+                            if (data.status === 'success' && data.profiles.length > 0) {
                                 data.profiles.forEach(profile => {
                                     profileDropdown.append(
                                         `<option value="${profile.name}">${profile.name}</option>`
@@ -179,19 +204,17 @@
                             }
                         },
                         error: function () {
-                            loadingIndicator
-                        .hide(); // Sembunyikan loading jika terjadi error
+                            loadingIndicator.hide();
                             profileDropdown.append(
                                 '<option value="">Gagal memuat data profil</option>'
                             );
                         }
                     });
                 } else {
-                    loadingIndicator.hide(); // Sembunyikan loading jika MikroTik tidak dipilih
+                    loadingIndicator.hide();
                 }
             });
         });
-
     </script>
     <script>
         $(document).ready(function () {

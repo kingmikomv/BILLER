@@ -22,7 +22,7 @@ use App\Http\Controllers\PelangganController;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->to('/login');
 });
 
 // Auth routes with email verification
@@ -53,6 +53,12 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
 
         // API Traffic Data
         Route::get('{id}/api/traffic-data', 'getTrafficData')->name('traffic.data');
+
+        Route::post('/restart', [PelangganController::class, 'restartUser'])->name('pelanggan.restart');
+        Route::post('/kirim-tagihan', [PelangganController::class, 'kirimTagihan'])->name('pelanggan.kirimTagihan');
+        Route::post('/isolir', [PelangganController::class, 'isolir'])->name('pelanggan.isolir');
+        Route::post('/buka-isolir', [PelangganController::class, 'bukaIsolir'])->name('pelanggan.bukaIsolir');
+        Route::post('/broadcast-wa', [PelangganController::class, 'broadcastWA'])->name('pelanggan.broadcastWA');
     });
 
     // SIDEBAR MENU NETWORK

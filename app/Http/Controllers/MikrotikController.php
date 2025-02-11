@@ -194,8 +194,7 @@ class MikrotikController extends Controller
                 'remote_ip' => $remoteIp,  // Menyimpan remote IP
             ]);
 
-
-            return response()->json(['message' => 'MikroTik configuration saved and applied successfully!'], 200);
+            return redirect()->back()->with('success', 'Berhasil Menambahkan MikroTik');
         } catch (\Exception $e) {
             // Tangani error
             return response()->json(['error' => $e->getMessage()], 500);
@@ -390,7 +389,7 @@ class MikrotikController extends Controller
     {
         // Mendapatkan unique_id dari pengguna yang sedang login
         $uniqueId = auth()->user()->unique_id;
-
+        $sites = $request->input('mikrotikSite');
         // Mendapatkan input dari form
         $kode_paket = Str::random(10); // Anda bisa menyesuaikan dengan input yang ada
         $username = $request->input('username');
@@ -420,7 +419,7 @@ class MikrotikController extends Controller
             'username' => $username,
             'profile' => $profile,
             'harga_paket' => $harga_paket,
-            'nama_paket' => $nama_paket,
+            'nama_paket' => $nama_paket." ".$sites,
             'created_at' => now(),
             'updated_at' => now()
 
