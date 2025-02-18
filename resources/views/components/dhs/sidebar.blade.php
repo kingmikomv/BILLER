@@ -71,6 +71,18 @@
                   <p>Riwayat Tagihan</p>
                 </a>
               </li>
+              <li class="nav-item">
+                <a href="{{route('bil_pelanggan')}}" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Pelanggan</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="pages/charts/chartjs.html" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Broadcast WhatsApp</p>
+                </a>
+              </li>
             </ul>
           </li>
           @endif

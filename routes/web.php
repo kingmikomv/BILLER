@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\PenagihController;
 use App\Http\Controllers\TeknisiController;
@@ -81,6 +82,8 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
         });
     });
 
+
+
     // SIDEBAR MENU PEKERJA
     Route::middleware(['role:member'])->prefix('pekerja')->controller(MemberController::class)->group(function () {
         Route::get('/', 'pekerja')->name('pekerja');
@@ -105,4 +108,16 @@ Route::middleware(['auth', 'role:penagih'])->group(function () {
 // BUAT MEMBER DAN TEKNISI
 Route::middleware(['auth', 'role:member,teknisi'])->prefix('home/network/router')->group(function () {
     Route::get('/cek-koneksi/{routerId}', [MikrotikController::class, 'cekKoneksi'])->name('cek-koneksi');
+});
+
+//BUAT MEMBER DAN PENAGIH 
+Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->controller(BillingController::class)->group(function () {
+    
+    Route::get('/unpaid', 'unpaid')->name('unpaid');
+    Route::get('/paid', 'paid')->name('paid');
+    Route::get('/riwayat', 'riwayat')->name('riwayat');
+    Route::get('/bil_pelanggan', 'bil_pelanggan')->name('bil_pelanggan');
+    Route::get('/bcwa', 'bcwa')->name('bcwa');
+
+
 });
