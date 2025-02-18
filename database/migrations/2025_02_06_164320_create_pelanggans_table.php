@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('unique_id');
             $table->string('router_username');
             $table->string('kode_paket');
+            $table->string('profile_paket');
             $table->string('nama_pelanggan');
             $table->string('akun_pppoe');
             $table->string('password_pppoe');

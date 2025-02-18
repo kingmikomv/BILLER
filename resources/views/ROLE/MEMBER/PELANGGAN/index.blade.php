@@ -98,14 +98,16 @@
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>
                                                         <div class="row">
-                                                            <div
-                                                                class="col-md-6 d-flex justify-content-center align-items-center">
+                                                            <div class="col-md-6 d-flex justify-content-center align-items-center">
                                                                 @if ($pelanggan->status === 'Online')
-                                                                <span class="badge badge-success">Online</span>
-                                                                @else
-                                                                <span class="badge badge-danger">Offline</span>
+                                                                    <span class="badge badge-success">Online</span>
+                                                                @elseif ($pelanggan->status === 'Offline')
+                                                                    <span class="badge badge-danger">Offline</span>
+                                                                @elseif ($pelanggan->status === 'Isolir')
+                                                                    <span class="badge badge-warning">Isolir</span>
                                                                 @endif
                                                             </div>
+                                                            
                                                             <div
                                                                 class="col-md-6 d-flex justify-content-center align-items-center mt-2 mt-md-0">
                                                                 <button class="btn btn-info btn-sm cek-modem-btn"

@@ -23,11 +23,15 @@ class PelangganController extends Controller
         $plg = Pelanggan::whereIn('router_id', $mikrotikRouters->pluck('router_id'))
             ->with('paket')->get();
 
+        // Inisialisasi array untuk menyimpan status pelanggan
         $onlineStatus = [];
+
+        // Buat mapping router berdasarkan ID untuk akses cepat
+        $routerMapping = $mikrotikRouters->keyBy('router_id');
 
         foreach ($mikrotikRouters as $mikrotik) {
             try {
-                // Membuat koneksi ke MikroTik API
+                // Buat koneksi ke MikroTik API
                 $client = new Client([
                     'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
                     'user' => $mikrotik->username,
@@ -36,23 +40,29 @@ class PelangganController extends Controller
 
                 // Ambil daftar active connections
                 $query = new Query('/ppp/active/print');
-                $activeConnections = $client->query($query)->read();
+                $activeConnections = collect($client->query($query)->read());
 
-                // Cek status online pelanggan
-                foreach ($plg as $pelanggan) {
-                    if ($pelanggan->router_id == $mikrotik->router_id) {
-                        $isOnline = collect($activeConnections)->contains(function ($connection) use ($pelanggan) {
-                            return isset($connection['name']) && $connection['name'] === $pelanggan->akun_pppoe;
-                        });
-                        $onlineStatus[$pelanggan->akun_pppoe] = $isOnline ? 'Online' : 'Offline';
-                    }
+                // Proses setiap pelanggan yang ada di router ini
+                foreach ($plg->where('router_id', $mikrotik->router_id) as $pelanggan) {
+                    // Cari koneksi aktif berdasarkan akun PPPoE
+                    $activeConnection = $activeConnections->firstWhere('name', $pelanggan->akun_pppoe);
+
+                    // Cek apakah pelanggan sedang online
+                    $isOnline = !is_null($activeConnection);
+
+                    // Ambil IP pelanggan dari koneksi aktif (jika ada)
+                    $ipAddress = $activeConnection['address'] ?? null;
+
+                    // Cek apakah IP pelanggan dimulai dengan '172'
+                    $isIsolir = $ipAddress && str_starts_with($ipAddress, '172');
+
+                    // Tentukan status pelanggan
+                    $onlineStatus[$pelanggan->akun_pppoe] = $isIsolir ? 'Isolir' : ($isOnline ? 'Online' : 'Offline');
                 }
             } catch (\Exception $e) {
                 // Jika gagal koneksi, tandai semua pelanggan pada router ini offline
-                foreach ($plg as $pelanggan) {
-                    if ($pelanggan->router_id == $mikrotik->router_id) {
-                        $onlineStatus[$pelanggan->akun_pppoe] = 'Offline';
-                    }
+                foreach ($plg->where('router_id', $mikrotik->router_id) as $pelanggan) {
+                    $onlineStatus[$pelanggan->akun_pppoe] = 'Offline';
                 }
             }
         }
@@ -61,11 +71,10 @@ class PelangganController extends Controller
         foreach ($plg as $pelanggan) {
             $pelanggan->status = $onlineStatus[$pelanggan->akun_pppoe] ?? 'Offline';
         }
-        //dd($plg);
+
         // Return ke view dengan data pelanggan
         return view('ROLE.MEMBER.PELANGGAN.index', compact('plg'));
     }
-
 
     public function formulir()
     {
@@ -113,7 +122,6 @@ class PelangganController extends Controller
             return redirect()->back()->with('error', 'Tidak Ada Mikrotik Yang Aktif');
         }
     }
-
 
     public function addPelanggan(Request $request)
     {
@@ -167,6 +175,7 @@ class PelangganController extends Controller
             'unique_id' => $uniqueId,
             'router_username' => $Username,
             'kode_paket' => $kode_paket2,
+            'profile_paket' => $profil,
             'nama_pelanggan' => $namaPelanggan,
             'akun_pppoe' => $akunPppoe,
             'password_pppoe' => $passPppoe,
@@ -285,7 +294,6 @@ class PelangganController extends Controller
             return $bytes . ' Bytes';
         }
     }
-
 
     private function formatUptime($uptime)
     {
@@ -544,6 +552,313 @@ class PelangganController extends Controller
 
 
     public function restartUser(Request $request)
+    {
+        $ids = $request->input('ids', []);
+
+        // Validasi apakah ada ID yang dipilih
+        if (empty($ids)) {
+            return response()->json(['message' => 'Tidak ada pengguna yang dipilih.'], 400);
+        }
+
+        // Ambil data pelanggan berdasarkan ID
+        $pelanggan = Pelanggan::whereIn('id', $ids)->get();
+
+        if ($pelanggan->isEmpty()) {
+            return response()->json(['message' => 'Pengguna tidak ditemukan.'], 404);
+        }
+
+        // Grouping pelanggan berdasarkan router_id
+        $groupedDetails = [];
+        foreach ($pelanggan as $plg) {
+            $routerId = $plg->router_id;
+
+            $groupedDetails[$routerId][] = [
+                'akun_pppoe' => $plg->akun_pppoe,
+                'id_pelanggan' => $plg->id,
+            ];
+        }
+
+        // Ambil data MikroTik berdasarkan router_id
+        $routerIds = array_keys($groupedDetails);
+        $mikrotikData = Mikrotik::whereIn('router_id', $routerIds)->get()->keyBy('router_id');
+
+        // Menyiapkan detail MikroTik untuk setiap router_id
+        $mikrotikDetails = [];
+        foreach ($mikrotikData as $mikrotik) {
+            $mikrotikDetails[$mikrotik->router_id] = [
+                'id' => $mikrotik->id,
+                'port_api' => $mikrotik->port_api,
+                'username' => $mikrotik->username,
+                'password' => $mikrotik->password,
+            ];
+        }
+
+        $apiResponses = [];
+        foreach ($mikrotikDetails as $routerId => $router) {
+            try {
+                // Koneksi ke MikroTik menggunakan RouterOS Client
+                $client = new \RouterOS\Client([
+                    'host' => 'id-1.aqtnetwork.my.id',
+                    'user' => $router['username'],
+                    'pass' => $router['password'],
+                    'port' => (int) $router['port_api'],
+                ]);
+
+                // Proses setiap pelanggan pada router ini
+                if (isset($groupedDetails[$routerId]) && is_array($groupedDetails[$routerId])) {
+                    foreach ($groupedDetails[$routerId] as $detail) {
+                        $pppoeAkun = trim($detail['akun_pppoe']); // Pastikan akun PPPoE valid
+
+                        if ($pppoeAkun) {
+                            try {
+                                $client = new \RouterOS\Client([
+                                    'host' => 'id-1.aqtnetwork.my.id',
+                                    'user' => $router['username'],
+                                    'pass' => $router['password'],
+                                    'port' => (int) $router['port_api'],
+                                ]);
+                                // Query untuk mendapatkan daftar pengguna PPPoE aktif
+                                $query = new Query('/ppp/active/print');
+                                $pppActiveConnections = $client->query($query)->read();
+
+                                if (!empty($pppActiveConnections)) {
+                                    $found = false;
+
+                                    // Cari akun PPPoE berdasarkan nama
+                                    foreach ($pppActiveConnections as $connection) {
+                                        if ($connection['name'] === $pppoeAkun) {
+                                            $pppId = $connection['.id'];
+
+                                            // Hapus PPPoE aktif berdasarkan ID
+                                            $removeQuery = new Query('/ppp/active/remove');
+                                            $removeQuery->equal('.id', $pppId);
+                                            $client->query($removeQuery)->read();
+
+                                            $apiResponses[$routerId][] = [
+                                                'status' => 'success',
+                                                'message' => "Berhasil menghapus pengguna PPPoE: $pppoeAkun",
+                                            ];
+
+                                            $found = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (!$found) {
+                                        $apiResponses[$routerId][] = [
+                                            'status' => 'error',
+                                            'message' => "Akun PPPoE tidak ditemukan: $pppoeAkun",
+                                        ];
+                                    }
+                                } else {
+                                    $apiResponses[$routerId][] = [
+                                        'status' => 'error',
+                                        'message' => "Tidak ada pengguna PPPoE aktif pada router: $routerId",
+                                    ];
+                                }
+                            } catch (\Exception $e) {
+                                $apiResponses[$routerId][] = [
+                                    'status' => 'error',
+                                    'message' => "Error saat memproses akun PPPoE: $pppoeAkun - " . $e->getMessage(),
+                                ];
+                            }
+                        } else {
+                            $apiResponses[$routerId][] = [
+                                'status' => 'error',
+                                'message' => 'Data akun_pppoe tidak valid untuk router ID: ' . $routerId,
+                            ];
+                        }
+                    }
+                } else {
+                    \Log::warning("Grouped details tidak ditemukan untuk router ID: $routerId");
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error saat koneksi ke router: ' . $e->getMessage());
+                $apiResponses[$routerId][] = [
+                    'status' => 'error',
+                    'message' => "Error saat koneksi ke router ID: $routerId - " . $e->getMessage(),
+                ];
+            }
+        }
+
+        return response()->json([
+            'sessions' => 'success',
+            'message' => 'Proses restart PPPoE selesai.',
+            'api_responses' => $apiResponses,
+        ]);
+    }
+
+    public function kirimTagihan(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        // Logika untuk mengirim tagihan
+        return response()->json(['message' => 'Tagihan berhasil dikirim.']);
+    }
+
+    public function isolir(Request $request)
+    {
+        $ids = $request->input('ids', []);
+
+        // Validasi apakah ada ID yang dipilih
+        if (empty($ids)) {
+            return response()->json(['message' => 'Tidak ada pengguna yang dipilih.'], 400);
+        }
+
+        // Ambil data pelanggan berdasarkan ID
+        $pelanggan = Pelanggan::whereIn('id', $ids)->get();
+
+        if ($pelanggan->isEmpty()) {
+            return response()->json(['message' => 'Pengguna tidak ditemukan.'], 404);
+        }
+
+        // Grouping pelanggan berdasarkan router_id
+        $groupedDetails = [];
+        foreach ($pelanggan as $plg) {
+            $routerId = $plg->router_id;
+
+            $groupedDetails[$routerId][] = [
+                'akun_pppoe' => $plg->akun_pppoe,
+                'id_pelanggan' => $plg->id,
+            ];
+        }
+
+        // Ambil data MikroTik berdasarkan router_id
+        $routerIds = array_keys($groupedDetails);
+        $mikrotikData = Mikrotik::whereIn('router_id', $routerIds)->get()->keyBy('router_id');
+
+        // Menyiapkan detail MikroTik untuk setiap router_id
+        $mikrotikDetails = [];
+        foreach ($mikrotikData as $mikrotik) {
+            $mikrotikDetails[$mikrotik->router_id] = [
+                'id' => $mikrotik->id,
+                'port_api' => $mikrotik->port_api,
+                'username' => $mikrotik->username,
+                'password' => $mikrotik->password,
+            ];
+        }
+
+        $apiResponses = [];
+        foreach ($mikrotikDetails as $routerId => $router) {
+            try {
+                // Koneksi ke MikroTik menggunakan RouterOS Client
+                $client = new \RouterOS\Client([
+                    'host' => 'id-1.aqtnetwork.my.id',
+                    'user' => $router['username'],
+                    'pass' => $router['password'],
+                    'port' => (int) $router['port_api'],
+                ]);
+
+                // Proses setiap pelanggan pada router ini
+                if (isset($groupedDetails[$routerId]) && is_array($groupedDetails[$routerId])) {
+                    foreach ($groupedDetails[$routerId] as $detail) {
+                        $pppoeAkun = trim($detail['akun_pppoe']); // Pastikan akun PPPoE valid
+
+                        if ($pppoeAkun) {
+                            try {
+                                // Ambil daftar pengguna PPPoE dari /ppp/secret
+                                $querySecret = new Query('/ppp/secret/print');
+                                $secretUsers = $client->query($querySecret)->read();
+
+                                // Ambil daftar koneksi PPPoE aktif dari /ppp/active
+                                $queryActive = new Query('/ppp/active/print');
+                                $pppActiveConnections = $client->query($queryActive)->read();
+
+                                $updated = false;
+
+                                // Ubah profil PPPoE jika pengguna ditemukan di /ppp/secret
+                                if (!empty($secretUsers)) {
+                                    foreach ($secretUsers as $user) {
+                                        if ($user['name'] === $pppoeAkun) {
+                                            $pId = $user['.id'];
+
+                                            // Edit profil PPPoE ke "isolir-biller"
+                                            $updateProfileQuery = new Query('/ppp/secret/set');
+                                            $updateProfileQuery->equal('.id', $pId);
+                                            $updateProfileQuery->equal('profile', 'isolir-biller');
+                                            $client->query($updateProfileQuery)->read();
+
+                                            $apiResponses[$routerId][] = [
+                                                'status' => 'success',
+                                                'message' => "Profil PPPoE berhasil diubah: $pppoeAkun",
+                                            ];
+
+                                            $updated = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (!$updated) {
+                                    $apiResponses[$routerId][] = [
+                                        'status' => 'error',
+                                        'message' => "Akun PPPoE tidak ditemukan di /ppp/secret: $pppoeAkun",
+                                    ];
+                                }
+
+                                $removed = false;
+
+                                // Hapus koneksi PPPoE aktif jika ditemukan di /ppp/active
+                                if (!empty($pppActiveConnections)) {
+                                    foreach ($pppActiveConnections as $connection) {
+                                        if ($connection['name'] === $pppoeAkun) {
+                                            $pppId = $connection['.id'];
+
+                                            // Hapus koneksi aktif
+                                            $removeActiveQuery = new Query('/ppp/active/remove');
+                                            $removeActiveQuery->equal('.id', $pppId);
+                                            $client->query($removeActiveQuery)->read();
+
+                                            $apiResponses[$routerId][] = [
+                                                'status' => 'success',
+                                                'message' => "Koneksi PPPoE berhasil dihapus: $pppoeAkun",
+                                            ];
+
+                                            $removed = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (!$removed) {
+                                    $apiResponses[$routerId][] = [
+                                        'status' => 'error',
+                                        'message' => "Akun PPPoE tidak ditemukan di /ppp/active: $pppoeAkun",
+                                    ];
+                                }
+                            } catch (\Exception $e) {
+                                $apiResponses[$routerId][] = [
+                                    'status' => 'error',
+                                    'message' => "Error saat memproses akun PPPoE: $pppoeAkun - " . $e->getMessage(),
+                                ];
+                            }
+                        } else {
+                            $apiResponses[$routerId][] = [
+                                'status' => 'error',
+                                'message' => 'Data akun_pppoe tidak valid untuk router ID: ' . $routerId,
+                            ];
+                        }
+                    }
+                } else {
+                    \Log::warning("Grouped details tidak ditemukan untuk router ID: $routerId");
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error saat koneksi ke router: ' . $e->getMessage());
+                $apiResponses[$routerId][] = [
+                    'status' => 'error',
+                    'message' => "Error saat koneksi ke router ID: $routerId - " . $e->getMessage(),
+                ];
+            }
+        }
+
+        return response()->json([
+            'sessions' => 'success',
+            'message' => 'Proses restart PPPoE selesai.',
+            'api_responses' => $apiResponses,
+        ]);
+    }
+
+
+    public function bukaIsolir(Request $request)
 {
     $ids = $request->input('ids', []);
 
@@ -562,11 +877,15 @@ class PelangganController extends Controller
     // Grouping pelanggan berdasarkan router_id
     $groupedDetails = [];
     foreach ($pelanggan as $plg) {
-        $routerId = $plg->router_id;
+        if (!$plg->profile_paket) {
+            return response()->json(['message' => "Profil paket tidak tersedia untuk pelanggan ID {$plg->id}."], 400);
+        }
 
+        $routerId = $plg->router_id;
         $groupedDetails[$routerId][] = [
-            'akun_pppoe' => $plg->akun_pppoe,
+            'akun_pppoe' => trim($plg->akun_pppoe),
             'id_pelanggan' => $plg->id,
+            'profile_paket' => $plg->profile_paket,
         ];
     }
 
@@ -574,95 +893,83 @@ class PelangganController extends Controller
     $routerIds = array_keys($groupedDetails);
     $mikrotikData = Mikrotik::whereIn('router_id', $routerIds)->get()->keyBy('router_id');
 
-    // Menyiapkan detail MikroTik untuk setiap router_id
-    $mikrotikDetails = [];
-    foreach ($mikrotikData as $mikrotik) {
-        $mikrotikDetails[$mikrotik->router_id] = [
-            'id' => $mikrotik->id,
-            'port_api' => $mikrotik->port_api,
-            'username' => $mikrotik->username,
-            'password' => $mikrotik->password,
-        ];
-    }
-
     $apiResponses = [];
-    foreach ($mikrotikDetails as $routerId => $router) {
+    foreach ($mikrotikData as $routerId => $router) {
         try {
             // Koneksi ke MikroTik menggunakan RouterOS Client
             $client = new \RouterOS\Client([
                 'host' => 'id-1.aqtnetwork.my.id',
-                'user' => $router['username'],
-                'pass' => $router['password'],
-                'port' => (int) $router['port_api'],
+                'user' => $router->username,
+                'pass' => $router->password,
+                'port' => (int) $router->port_api,
             ]);
 
             // Proses setiap pelanggan pada router ini
-            if (isset($groupedDetails[$routerId]) && is_array($groupedDetails[$routerId])) {
-                foreach ($groupedDetails[$routerId] as $detail) {
-                    $pppoeAkun = trim($detail['akun_pppoe']); // Pastikan akun PPPoE valid
+            if (!isset($groupedDetails[$routerId]) || !is_array($groupedDetails[$routerId])) {
+                \Log::warning("Tidak ada pelanggan untuk router ID: $routerId");
+                continue;
+            }
 
-                    if ($pppoeAkun) {
-                        try {
-                            $client = new \RouterOS\Client([
-                                'host' => 'id-1.aqtnetwork.my.id',
-                                'user' => $router['username'],
-                                'pass' => $router['password'],
-                                'port' => (int) $router['port_api'],
-                            ]);
-                            // Query untuk mendapatkan daftar pengguna PPPoE aktif
-                            $query = new Query('/ppp/active/print');
-                            $pppActiveConnections = $client->query($query)->read();
+            // Ambil daftar pengguna PPPoE dari /ppp/secret
+            $querySecret = new Query('/ppp/secret/print');
+            $secretUsers = collect($client->query($querySecret)->read());
 
-                            if (!empty($pppActiveConnections)) {
-                                $found = false;
+            // Ambil daftar koneksi PPPoE aktif dari /ppp/active
+            $queryActive = new Query('/ppp/active/print');
+            $pppActiveConnections = collect($client->query($queryActive)->read());
 
-                                // Cari akun PPPoE berdasarkan nama
-                                foreach ($pppActiveConnections as $connection) {
-                                    if ($connection['name'] === $pppoeAkun) {
-                                        $pppId = $connection['.id'];
+            foreach ($groupedDetails[$routerId] as $detail) {
+                $pppoeAkun = $detail['akun_pppoe'];
+                $profilePaket = $detail['profile_paket'];
+                $updated = false;
+                $removed = false;
 
-                                        // Hapus PPPoE aktif berdasarkan ID
-                                        $removeQuery = new Query('/ppp/active/remove');
-                                        $removeQuery->equal('.id', $pppId);
-                                        $client->query($removeQuery)->read();
-
-                                        $apiResponses[$routerId][] = [
-                                            'status' => 'success',
-                                            'message' => "Berhasil menghapus pengguna PPPoE: $pppoeAkun",
-                                        ];
-
-                                        $found = true;
-                                        break;
-                                    }
-                                }
-
-                                if (!$found) {
-                                    $apiResponses[$routerId][] = [
-                                        'status' => 'error',
-                                        'message' => "Akun PPPoE tidak ditemukan: $pppoeAkun",
-                                    ];
-                                }
-                            } else {
-                                $apiResponses[$routerId][] = [
-                                    'status' => 'error',
-                                    'message' => "Tidak ada pengguna PPPoE aktif pada router: $routerId",
-                                ];
-                            }
-                        } catch (\Exception $e) {
-                            $apiResponses[$routerId][] = [
-                                'status' => 'error',
-                                'message' => "Error saat memproses akun PPPoE: $pppoeAkun - " . $e->getMessage(),
-                            ];
-                        }
-                    } else {
-                        $apiResponses[$routerId][] = [
-                            'status' => 'error',
-                            'message' => 'Data akun_pppoe tidak valid untuk router ID: ' . $routerId,
-                        ];
-                    }
+                if (!$pppoeAkun) {
+                    $apiResponses[$routerId][] = [
+                        'status' => 'error',
+                        'message' => "Data akun PPPoE kosong untuk pelanggan ID {$detail['id_pelanggan']}",
+                    ];
+                    continue;
                 }
-            } else {
-                \Log::warning("Grouped details tidak ditemukan untuk router ID: $routerId");
+
+                // Ubah profil PPPoE jika pengguna ditemukan di /ppp/secret
+                $user = $secretUsers->firstWhere('name', $pppoeAkun);
+                if ($user) {
+                    $updateProfileQuery = new Query('/ppp/secret/set');
+                    $updateProfileQuery->equal('.id', $user['.id']);
+                    $updateProfileQuery->equal('profile', $profilePaket);
+                    $client->query($updateProfileQuery)->read();
+
+                    $apiResponses[$routerId][] = [
+                        'status' => 'success',
+                        'message' => "Profil PPPoE diubah untuk: $pppoeAkun",
+                    ];
+                    $updated = true;
+                } else {
+                    $apiResponses[$routerId][] = [
+                        'status' => 'error',
+                        'message' => "Akun PPPoE tidak ditemukan di /ppp/secret: $pppoeAkun",
+                    ];
+                }
+
+                // Hapus koneksi PPPoE aktif jika ditemukan di /ppp/active
+                $activeConnection = $pppActiveConnections->firstWhere('name', $pppoeAkun);
+                if ($activeConnection) {
+                    $removeActiveQuery = new Query('/ppp/active/remove');
+                    $removeActiveQuery->equal('.id', $activeConnection['.id']);
+                    $client->query($removeActiveQuery)->read();
+
+                    $apiResponses[$routerId][] = [
+                        'status' => 'success',
+                        'message' => "Koneksi PPPoE berhasil dihapus: $pppoeAkun",
+                    ];
+                    $removed = true;
+                } else {
+                    $apiResponses[$routerId][] = [
+                        'status' => 'error',
+                        'message' => "Akun PPPoE tidak ditemukan di /ppp/active: $pppoeAkun",
+                    ];
+                }
             }
         } catch (\Exception $e) {
             \Log::error('Error saat koneksi ke router: ' . $e->getMessage());
@@ -680,33 +987,6 @@ class PelangganController extends Controller
     ]);
 }
 
-
-
-
-
-
-
-
-    public function kirimTagihan(Request $request)
-    {
-        $ids = $request->input('ids', []);
-        // Logika untuk mengirim tagihan
-        return response()->json(['message' => 'Tagihan berhasil dikirim.']);
-    }
-
-    public function isolir(Request $request)
-    {
-        $ids = $request->input('ids', []);
-        // Logika untuk isolir user
-        return response()->json(['message' => 'Pengguna berhasil diisolir.']);
-    }
-
-    public function bukaIsolir(Request $request)
-    {
-        $ids = $request->input('ids', []);
-        // Logika untuk buka isolir
-        return response()->json(['message' => 'Isolir berhasil dibuka.']);
-    }
 
     public function broadcastWA(Request $request)
     {
