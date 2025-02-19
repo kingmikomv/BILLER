@@ -13,24 +13,30 @@ return new class extends Migration
     {
         Schema::create('pelanggan', function (Blueprint $table) {
             $table->id();
-            $table->string('pelanggan_id');
+            $table->string('pelanggan_id')->unique();
             $table->string('router_id');
-            $table->string('unique_id');
+            $table->string('unique_id')->unique();
             $table->string('router_username');
             $table->string('kode_paket');
             $table->string('profile_paket');
             $table->string('nama_pelanggan');
-            $table->string('akun_pppoe');
+            $table->string('akun_pppoe')->unique();
             $table->string('password_pppoe');
             $table->longText('alamat');
             $table->string('nomor_telepon');
             $table->date('tanggal_daftar'); // Kolom tanggal daftar
-            $table->date('pembayaran_selanjutnya'); // Kolom pembayaran selanjutnya
+            $table->date('pembayaran_selanjutnya')->nullable(); // Kolom pembayaran selanjutnya
             $table->date('pembayaran_yang_akan_datang')->nullable(); // Kolom pembayaran yang akan datang (opsional)
-            $table->string('status_pembayaran')->default('Sudah Dibayar'); // Kolom status pembayaran
-
+            
+            // Tambahkan kolom untuk metode pembayaran (prabayar atau pascabayar)
+            $table->enum('metode_pembayaran', ['Prabayar', 'Pascabayar'])->default('Pascabayar');
+        
+            // Status pembayaran hanya untuk pascabayar, prabayar langsung lunas
+            $table->enum('status_pembayaran', ['Sudah Dibayar', 'Belum Dibayar'])->default('Sudah Dibayar'); 
+            
             $table->timestamps();
         });
+        
     }
 
     /**

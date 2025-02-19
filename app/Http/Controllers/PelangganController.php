@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use RouterOS\Query;
 use RouterOS\Client;
+use App\Models\Invoice;
 use App\Models\Mikrotik;
 use App\Models\Pelanggan;
 use App\Models\PaketPppoe;
-use Illuminate\Foundation\Mix;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Mix;
 
 class PelangganController extends Controller
 {
@@ -124,70 +125,72 @@ class PelangganController extends Controller
     }
 
     public function addPelanggan(Request $request)
-    {
-        $a = PaketPppoe::where('kode_paket', $request->input('kodePaket'))->first();
+{
+    $kodePaket = $request->input('kodePaket');
+    $paket = PaketPppoe::where('kode_paket', $kodePaket)->firstOrFail();
 
-        $uniqueId = auth()->user()->unique_id;
-        $kdpkt = $request->input('kodePaket');
-        $kode_paket = PaketPppoe::where('kode_paket', $kdpkt)->first();
+    $routerUsername = $paket->username;
+    $mikrotik = Mikrotik::where('username', $routerUsername)->firstOrFail();
 
-        $routerUsername = $kode_paket->username;
-        $mikrotik = Mikrotik::where('username', $routerUsername)->first();
-
-        $namaPelanggan = $request->input('namaPelanggan');
-        $akunPppoe = $request->input('akunPppoe');
-        $passPppoe = $request->input('passwordPppoe');
-        $alamat = $request->input('alamat');
-        $telepon = $request->input('telepon');
-
-        $portApi = $mikrotik->port_api;
-        $Username = $mikrotik->username;
-        $Password = $mikrotik->password;
-        $profil = $kode_paket->profile;
-        $kode_paket2 = $kode_paket->kode_paket;
-
-        try {
-            $client = new Client([
-                'host' => 'id-1.aqtnetwork.my.id:' . $portApi,
-                'user' => $Username,
-                'pass' => $Password,
-            ]);
-
-            $query = new Query('/ppp/secret/add');
-            $query->equal('name', $akunPppoe);
-            $query->equal('password', $passPppoe);
-            $query->equal('service', 'pppoe');
-            $query->equal('profile', $profil);
-
-            $client->query($query)->read();
-        } catch (\Exception $e) {
-            return redirect()->back()->withErrors(['mikrotik_pppoe' => 'Gagal menambahkan akun PPPoE: ' . $e->getMessage()]);
-        }
-
-        // Status pembayaran
-        $tanggalDaftar = now(); // Tanggal pendaftaran
-        $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth(); // Pembayaran selanjutnya bulan depan
-        $statusPembayaran = now()->format('Y-m') === $tanggalDaftar->format('Y-m') ? '1' : '0';
-
-        $pelanggan = Pelanggan::create([
-            'pelanggan_id' => 'PEL_' . rand(100, 9999999),
-            'router_id' => $mikrotik->router_id,
-            'unique_id' => $uniqueId,
-            'router_username' => $Username,
-            'kode_paket' => $kode_paket2,
-            'profile_paket' => $profil,
-            'nama_pelanggan' => $namaPelanggan,
-            'akun_pppoe' => $akunPppoe,
-            'password_pppoe' => $passPppoe,
-            'alamat' => $alamat,
-            'nomor_telepon' => $telepon,
-            'tanggal_daftar' => $tanggalDaftar,
-            'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
-            'status_pembayaran' => $statusPembayaran,
+    $akunPppoe = $request->input('akunPppoe');
+    $passPppoe = $request->input('passwordPppoe');
+    $uniqueId = auth()->user()->unique_id;
+    try {
+        // Koneksi ke MikroTik API
+        $client = new Client([
+            'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
+            'user' => $mikrotik->username,
+            'pass' => $mikrotik->password,
         ]);
 
-        return redirect()->route('pelanggan')->with('success', 'Pelanggan berhasil ditambahkan');
+        // Tambahkan akun PPPoE di MikroTik
+        $query = new Query('/ppp/secret/add');
+        $query->equal('name', $akunPppoe);
+        $query->equal('password', $passPppoe);
+        $query->equal('service', 'pppoe');
+        $query->equal('profile', $paket->profile);
+
+        $client->query($query)->read();
+    } catch (\Exception $e) {
+        return redirect()->back()->withErrors(['mikrotik_pppoe' => 'Gagal menambahkan akun PPPoE: ' . $e->getMessage()]);
     }
+
+    // Status pembayaran
+    $tanggalDaftar = now();
+    $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth();
+    $statusPembayaran = $request->input('metode_pembayaran') === 'Prabayar' ? 'Sudah Dibayar' : 'Belum Dibayar';
+
+    // Buat data pelanggan
+    $pelanggan = Pelanggan::create([
+        'pelanggan_id' => 'PEL_' . rand(100, 9999999),
+        'router_id' => $mikrotik->router_id,
+        'unique_id' => $uniqueId,
+        'router_username' => $mikrotik->username,
+        'kode_paket' => $kodePaket,
+        'profile_paket' => $paket->profile,
+        'nama_pelanggan' => $request->input('namaPelanggan'),
+        'akun_pppoe' => $akunPppoe,
+        'password_pppoe' => $passPppoe,
+        'alamat' => $request->input('alamat'),
+        'nomor_telepon' => $request->input('telepon'),
+        'tanggal_daftar' => $tanggalDaftar,
+        'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
+        'metode_pembayaran' => $request->input('metode_pembayaran'),
+        'status_pembayaran' => $statusPembayaran,
+    ]);
+
+    // Jika metode pembayaran adalah Prabayar, buat invoice langsung
+    if ($request->metode_pembayaran === 'Prabayar') {
+        Invoice::create([
+            'pelanggan_id' => $pelanggan->id, // Menggunakan ID pelanggan dari database
+            'jumlah' => $paket->harga_paket,
+            'status' => 'Lunas',
+            'tanggal_pembuatan' => now(),
+        ]);
+    }
+
+    return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan!');
+}
 
     public function showPelanggan($id)
     {
