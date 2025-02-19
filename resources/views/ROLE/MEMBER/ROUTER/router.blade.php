@@ -45,6 +45,7 @@
                                                         <tr>
                                                             <th style="width: 10px">#</th>
                                                             <th>Status</th>
+                                                            <th>Router ID</th>
                                                             <th>Nama Router</th>
                                                             <th>Port API</th>
                                                             <th>Port Winbox</th>
@@ -63,6 +64,7 @@
                                                                         <span class="badge badge-danger">Offline</span>
                                                                     @endif
                                                                 </td>
+                                                                <td>{{ $router->router_id }}</td>
                                                                 <td>{{ $router->site }}</td>
                                                                 <td>{{ "id-1.aqtnetwork.my.id:".$router->port_api }}</td>
                                                                 <td>{{ "id-1.aqtnetwork.my.id:".$router->port_winbox }}</td>

@@ -26,9 +26,25 @@ class PelangganExport implements FromCollection, WithHeadings
             'tanggal_daftar', 
             'pembayaran_selanjutnya', 
             'status_pembayaran'
-        )->get();
+        )->get()->map(function ($item) {
+            return [
+                'Kode Pelanggan' => $item->pelanggan_id,
+                'Nama Pelanggan' => $item->nama_pelanggan ?? '-',
+                'Router ID' => $item->router_id ?? '-',
+                'Router Username' => $item->router_username ?? '-',
+                'Kode Paket' => "'" . ($item->kode_paket ?? '-'), // Menjaga format angka sebagai string
+                'Profil Paket' => $item->profile_paket ?? '-',
+                'Akun PPPoE' => $item->akun_pppoe,
+                'Password PPPoE' => $item->password_pppoe,
+                'Alamat' => $item->alamat,
+                'Nomor Telepon' => "'" . ($item->nomor_telepon ?? '-'), // Menjaga angka nol di awal
+                'Tanggal Daftar' => $item->tanggal_daftar ? \Carbon\Carbon::parse($item->tanggal_daftar)->format('Y-m-d') : '-',
+                'Pembayaran Selanjutnya' => $item->pembayaran_selanjutnya ? \Carbon\Carbon::parse($item->pembayaran_selanjutnya)->format('Y-m-d') : '-',
+                'Status Pembayaran' => $item->status_pembayaran,
+            ];
+        });
     }
-
+    
     /**
      * Menentukan header kolom dalam file Excel
      */
@@ -50,4 +66,5 @@ class PelangganExport implements FromCollection, WithHeadings
             'Status Pembayaran'
         ];
     }
+    
 }

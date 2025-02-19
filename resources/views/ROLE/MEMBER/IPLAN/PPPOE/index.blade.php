@@ -45,6 +45,7 @@
                                             <thead>
                                                 <tr>
                                                     <th>#</th>
+                                                    <th>Paket ID</th>
                                                     <th>Nama Paket</th>
                                                     <th>Harga Paket</th>
                                                     <th>Site</th>
@@ -58,6 +59,7 @@
                                                 @foreach($paket as $pkt)
                                                 <tr>
                                                     <td>{{ $no++ }}</td>
+                                                    <td>{{ $pkt->kode_paket }}</td>
                                                     <td>{{ $pkt->nama_paket }}</td>
                                                     <td>Rp. {{ number_format($pkt->harga_paket, 0, ',', '.') }}</td>
                                                     <td>{{ $pkt->site }}</td>
