@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Imports;
 
 use App\Models\Pelanggan;
@@ -27,11 +28,15 @@ class PelangganImport implements ToModel, WithStartRow
             'password_pppoe' => $row[7],
             'alamat' => $row[8],
             'nomor_telepon' => ltrim($row[9], "'"), // Hapus kutip untuk nomor telepon
-            'tanggal_daftar' => isset($row[10]) ? Date::excelToDateTimeObject(floor((float) $row[10]))->format('Y-m-d') : null,
-            'pembayaran_selanjutnya' => isset($row[11]) ? Date::excelToDateTimeObject(floor((float) $row[11]))->format('Y-m-d') : null,
+            'tanggal_daftar' => isset($row[10]) && !empty($row[10])
+                ? date('Y-m-d', strtotime($row[10]))
+                : null,
+
+            'pembayaran_selanjutnya' => isset($row[11]) && !empty($row[11])
+                ? date('Y-m-d', strtotime($row[11]))
+                : null,
+
             'status_pembayaran' => $row[12],
         ]);
     }
 }
-
-

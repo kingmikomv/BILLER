@@ -167,7 +167,7 @@ class PelangganController extends Controller
         // Status pembayaran
         $tanggalDaftar = now(); // Tanggal pendaftaran
         $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth(); // Pembayaran selanjutnya bulan depan
-        $statusPembayaran = now()->format('Y-m') === $tanggalDaftar->format('Y-m') ? 'Sudah Dibayar' : 'Belum Dibayar';
+        $statusPembayaran = now()->format('Y-m') === $tanggalDaftar->format('Y-m') ? '1' : '0';
 
         $pelanggan = Pelanggan::create([
             'pelanggan_id' => 'PEL_' . rand(100, 9999999),

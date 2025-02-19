@@ -6,8 +6,11 @@ use App\Models\Pelanggan;
 use Illuminate\Http\Request;
 use App\Exports\PelangganExport;
 use App\Imports\PelangganImport;
+use App\Models\PaketPppoe;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Response;
+
 
 class BillingController extends Controller
 {
@@ -22,10 +25,10 @@ class BillingController extends Controller
     }
     public function bil_pelanggan(){
         $pelanggan = Pelanggan::where('unique_id', auth()->user()->unique_id)
-        ->orderBy('created_at', 'desc') // Mengurutkan dari yang terbaru
+        ->orderBy('id', 'desc') // Mengurutkan dari yang terbaru
         ->get(); // Jangan lupa panggil get() untuk mengambil data
-    
-    return view('ROLE.MEMBER.BILLING.bill_pelanggan', compact('pelanggan'));
+        $paketpppoe = PaketPppoe::where('unique_id', auth()->user()->unique_id)->get();
+    return view('ROLE.MEMBER.BILLING.bill_pelanggan', compact('pelanggan', 'paketpppoe'));
     
     }
 
@@ -85,4 +88,5 @@ class BillingController extends Controller
     {
         return Excel::download(new PelangganExport, 'data_pelanggan.xlsx');
     }
+   
 }
