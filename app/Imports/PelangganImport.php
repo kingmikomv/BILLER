@@ -35,8 +35,8 @@ class PelangganImport implements ToModel, WithStartRow
             'pembayaran_selanjutnya' => isset($row[11]) && !empty($row[11])
                 ? date('Y-m-d', strtotime($row[11]))
                 : null,
-
-            'status_pembayaran' => $row[12],
+            'metode_pembayaran' => $row[12],
+            'status_pembayaran' => $row[13],
         ]);
     }
 }

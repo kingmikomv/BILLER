@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('pelanggan_id')->unique();
             $table->string('router_id');
-            $table->string('unique_id')->unique();
+            $table->string('unique_id');
             $table->string('router_username');
             $table->string('kode_paket');
             $table->string('profile_paket');

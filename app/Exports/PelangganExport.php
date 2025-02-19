@@ -25,7 +25,8 @@ class PelangganExport implements FromCollection, WithHeadings
             'nomor_telepon', 
             'tanggal_daftar', 
             'pembayaran_selanjutnya', 
-            'status_pembayaran'
+            'status_pembayaran',
+            'metode_pembayaran'
         )->get()->map(function ($item) {
             return [
                 'Kode Pelanggan' => $item->pelanggan_id,
@@ -41,6 +42,8 @@ class PelangganExport implements FromCollection, WithHeadings
                 'Tanggal Daftar' => $item->tanggal_daftar ? \Carbon\Carbon::parse($item->tanggal_daftar)->format('Y-m-d') : '-',
                 'Pembayaran Selanjutnya' => $item->pembayaran_selanjutnya ? \Carbon\Carbon::parse($item->pembayaran_selanjutnya)->format('Y-m-d') : '-',
                 'Status Pembayaran' => $item->status_pembayaran,
+                'Metode Pembayaran' => $item->metode_pembayaran,
+
             ];
         });
     }
@@ -63,7 +66,9 @@ class PelangganExport implements FromCollection, WithHeadings
             'Nomor Telepon', 
             'Tanggal Daftar', 
             'Pembayaran Selanjutnya', 
-            'Status Pembayaran'
+            'Status Pembayaran',
+            'Metode Pembayaran'
+
         ];
     }
     

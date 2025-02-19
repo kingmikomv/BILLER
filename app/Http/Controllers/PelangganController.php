@@ -10,6 +10,7 @@ use App\Models\Pelanggan;
 use App\Models\PaketPppoe;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Mix;
+use Illuminate\Support\Facades\Http;
 
 class PelangganController extends Controller
 {
@@ -125,72 +126,134 @@ class PelangganController extends Controller
     }
 
     public function addPelanggan(Request $request)
-{
-    $kodePaket = $request->input('kodePaket');
-    $paket = PaketPppoe::where('kode_paket', $kodePaket)->firstOrFail();
+    {
+        $kodePaket = $request->input('kodePaket');
+        $paket = PaketPppoe::where('kode_paket', $kodePaket)->firstOrFail();
 
-    $routerUsername = $paket->username;
-    $mikrotik = Mikrotik::where('username', $routerUsername)->firstOrFail();
+        $routerUsername = $paket->username;
+        $mikrotik = Mikrotik::where('username', $routerUsername)->firstOrFail();
 
-    $akunPppoe = $request->input('akunPppoe');
-    $passPppoe = $request->input('passwordPppoe');
-    $uniqueId = auth()->user()->unique_id;
-    try {
-        // Koneksi ke MikroTik API
-        $client = new Client([
-            'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
-            'user' => $mikrotik->username,
-            'pass' => $mikrotik->password,
+        $akunPppoe = $request->input('akunPppoe');
+        $passPppoe = $request->input('passwordPppoe');
+        $uniqueId = auth()->user()->unique_id;
+        try {
+            // Koneksi ke MikroTik API
+            $client = new Client([
+                'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
+                'user' => $mikrotik->username,
+                'pass' => $mikrotik->password,
+            ]);
+
+            // Tambahkan akun PPPoE di MikroTik
+            $query = new Query('/ppp/secret/add');
+            $query->equal('name', $akunPppoe);
+            $query->equal('password', $passPppoe);
+            $query->equal('service', 'pppoe');
+            $query->equal('profile', $paket->profile);
+
+            $client->query($query)->read();
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['mikrotik_pppoe' => 'Gagal menambahkan akun PPPoE: ' . $e->getMessage()]);
+        }
+
+        // Status pembayaran
+        $tanggalDaftar = now();
+        $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth();
+        $statusPembayaran = $request->input('metode_pembayaran') === 'Prabayar' ? 'Sudah Dibayar' : 'Belum Dibayar';
+        $uuniq = 'PEL_' . rand(100, 9999999);
+        // Buat data pelanggan
+        $pelanggan = Pelanggan::create([
+            'pelanggan_id' => $uuniq,
+            'router_id' => $mikrotik->router_id,
+            'unique_id' => $uniqueId,
+            'router_username' => $mikrotik->username,
+            'kode_paket' => $kodePaket,
+            'profile_paket' => $paket->profile,
+            'nama_pelanggan' => $request->input('namaPelanggan'),
+            'akun_pppoe' => $akunPppoe,
+            'password_pppoe' => $passPppoe,
+            'alamat' => $request->input('alamat'),
+            'nomor_telepon' => $request->input('telepon'),
+            'tanggal_daftar' => $tanggalDaftar,
+            'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
+            'metode_pembayaran' => $request->input('metode_pembayaran'),
+            'status_pembayaran' => $statusPembayaran,
         ]);
-
-        // Tambahkan akun PPPoE di MikroTik
-        $query = new Query('/ppp/secret/add');
-        $query->equal('name', $akunPppoe);
-        $query->equal('password', $passPppoe);
-        $query->equal('service', 'pppoe');
-        $query->equal('profile', $paket->profile);
-
-        $client->query($query)->read();
-    } catch (\Exception $e) {
-        return redirect()->back()->withErrors(['mikrotik_pppoe' => 'Gagal menambahkan akun PPPoE: ' . $e->getMessage()]);
-    }
-
-    // Status pembayaran
-    $tanggalDaftar = now();
-    $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth();
-    $statusPembayaran = $request->input('metode_pembayaran') === 'Prabayar' ? 'Sudah Dibayar' : 'Belum Dibayar';
-
-    // Buat data pelanggan
-    $pelanggan = Pelanggan::create([
-        'pelanggan_id' => 'PEL_' . rand(100, 9999999),
-        'router_id' => $mikrotik->router_id,
-        'unique_id' => $uniqueId,
-        'router_username' => $mikrotik->username,
-        'kode_paket' => $kodePaket,
-        'profile_paket' => $paket->profile,
-        'nama_pelanggan' => $request->input('namaPelanggan'),
-        'akun_pppoe' => $akunPppoe,
-        'password_pppoe' => $passPppoe,
-        'alamat' => $request->input('alamat'),
-        'nomor_telepon' => $request->input('telepon'),
-        'tanggal_daftar' => $tanggalDaftar,
-        'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
-        'metode_pembayaran' => $request->input('metode_pembayaran'),
-        'status_pembayaran' => $statusPembayaran,
-    ]);
-
-    // Jika metode pembayaran adalah Prabayar, buat invoice langsung
-    if ($request->metode_pembayaran === 'Prabayar') {
-        Invoice::create([
-            'pelanggan_id' => $pelanggan->id, // Menggunakan ID pelanggan dari database
-            'jumlah' => $paket->harga_paket,
-            'status' => 'Lunas',
-            'tanggal_pembuatan' => now(),
+        
+        if (!$pelanggan) {
+            return redirect()->back()->with('error', 'Pelanggan tidak ditemukan.');
+        }
+        
+        // Token API Fonnte
+        $token = 'g3ZXCoCHeR1y75j4xJoz';
+        if (!$token) {
+            return redirect()->back()->with('error', 'Token API tidak ditemukan.');
+        }
+        
+        // Ambil nomor WhatsApp pelanggan
+        $nomor = $pelanggan->nomor_telepon; // Pastikan ada di database
+        
+        if ($request->metode_pembayaran === 'Prabayar') {
+            // Simpan invoice sebagai "Lunas"
+            Invoice::create([
+                'pelanggan_id' => $pelanggan->pelanggan_id,
+                'jumlah' => $paket->harga_paket,
+                'status' => 'Lunas',
+                'tanggal_pembuatan' => now(),
+            ]);
+        
+            // Pesan WhatsApp untuk Prabayar
+            $pesan = "Halo {$pelanggan->nama_pelanggan},\n\n"
+                . "Terima kasih telah melakukan pembayaran paket internet Anda.\n"
+                . "Detail Pembayaran:\n\n"
+                . "💳 ID Pelanggan: {$pelanggan->pelanggan_id} - Prabayar\n"
+                . "📦 Paket: {$paket->profile}\n"
+                . "💰 Harga: Rp" . number_format($paket->harga_paket, 0, ',', '.') . "\n"
+                . "🗓️ Tanggal Pembayaran: " . now()->format('d-m-Y') . "\n\n"
+                . "Paket Anda telah *aktif* ✅\n"
+                . "Terima kasih telah menggunakan layanan internet dari kami.\n"
+                . "Jika ada pertanyaan, silakan hubungi layanan pelanggan.\n\n"
+                . "Salam, Admin AQT Network\n\n\n"
+                . "*Catatan: Jangan Membalas Pesan Otomatis ini*";
+        
+        } elseif ($request->metode_pembayaran === 'Pascabayar') {
+            // Simpan invoice sebagai "Belum Lunas"
+            Invoice::create([
+                'pelanggan_id' => $pelanggan->id,
+                'jumlah' => $paket->harga_paket,
+                'status' => 'Belum Lunas',
+                'tanggal_pembuatan' => now(),
+            ]);
+        
+            // Pesan WhatsApp untuk Pascabayar (Tagihan Bulanan)
+            $pesan = "Halo {$pelanggan->nama_pelanggan},\n\n"
+                . "Tagihan internet Anda sudah tersedia. Mohon segera melakukan pembayaran sebelum jatuh tempo.\n"
+                . "Detail Tagihan:\n\n"
+                . "💳 ID Pelanggan: {$pelanggan->pelanggan_id} - Pascabayar\n"
+                . "📦 Paket: {$paket->profile}\n"
+                . "💰 Total Tagihan: Rp" . number_format($paket->harga_paket, 0, ',', '.') . "\n"
+                . "🗓️ Jatuh Tempo: " . date('d-m-Y', strtotime($pelanggan->pembayaran_selanjutnya)) . "\n\n"
+                . "⚠️ Jika pembayaran tidak dilakukan sebelum jatuh tempo, layanan akan dihentikan sementara secara otomatis.\n"
+                . "Silakan lakukan pembayaran tepat waktu untuk tetap menikmati layanan kami.\n\n"
+                . "Salam, Admin AQT Network\n\n\n"
+                . "*Catatan: Jangan Membalas Pesan Otomatis ini*";
+        }
+        
+        // Kirim pesan ke WhatsApp via API Fonnte
+        $response = Http::withHeaders([
+            'Authorization' => $token
+        ])->post('https://api.fonnte.com/send', [
+            'target' => $nomor,
+            'message' => $pesan,
+            'countryCode' => '62', // Indonesia
         ]);
+        
+        if ($response->successful()) {
+            return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan dan pesan WhatsApp berhasil dikirim.');
+        } else {
+            return redirect()->back()->with('warning', 'Pelanggan berhasil ditambahkan, tetapi pesan WhatsApp gagal dikirim.');
+        }
     }
-
-    return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan!');
-}
 
     public function showPelanggan($id)
     {
