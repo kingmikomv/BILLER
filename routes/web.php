@@ -117,7 +117,12 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
     Route::get('/paid', 'paid')->name('paid');
     Route::get('/riwayat', 'riwayat')->name('riwayat');
     Route::get('/bil_pelanggan', 'bil_pelanggan')->name('bil_pelanggan');
+    Route::post('/send-whatsapp', 'kirimwa')->name('send.whatsapp');
+
     Route::get('/bcwa', 'bcwa')->name('bcwa');
+
+    Route::post('/import-excel', 'importExcel')->name('import.excel');
+    Route::get('/export-excel', 'exportExcel')->name('export.excel');
 
 
 });
