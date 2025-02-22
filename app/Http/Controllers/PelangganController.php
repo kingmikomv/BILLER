@@ -8,6 +8,8 @@ use App\Models\Invoice;
 use App\Models\Mikrotik;
 use App\Models\Pelanggan;
 use App\Models\PaketPppoe;
+use App\Models\TiketPsb;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Mix;
 use Illuminate\Support\Facades\Http;
@@ -124,7 +126,9 @@ class PelangganController extends Controller
             return redirect()->back()->with('error', 'Tidak Ada Mikrotik Yang Aktif');
         }
     }
-
+    function generateKodePSB() {
+        return now()->format('ymd') . mt_rand(100, 999); 
+    }
     public function addPelanggan(Request $request)
     {
         $kodePaket = $request->input('kodePaket');
@@ -135,6 +139,10 @@ class PelangganController extends Controller
 
         $akunPppoe = $request->input('akunPppoe');
         $passPppoe = $request->input('passwordPppoe');
+        $ssidWifi = $request->input('ssid');
+        $passWifi = $request->input('passwifi');
+        $tanggalinginpasang = $request->input('tip');
+
         $uniqueId = auth()->user()->unique_id;
         try {
             // Koneksi ke MikroTik API
@@ -160,10 +168,16 @@ class PelangganController extends Controller
         $tanggalDaftar = now();
         $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth();
         $statusPembayaran = $request->input('metode_pembayaran') === 'Prabayar' ? 'Sudah Dibayar' : 'Belum Dibayar';
-        $uuniq = 'PEL_' . rand(100, 9999999);
+        $uuniq = rand(100, 9999999);
+        $kodePsb = $this->generateKodePSB(); // 6 karakter acak (bisa disesuaikan)
+
+
         // Buat data pelanggan
         $pelanggan = Pelanggan::create([
             'pelanggan_id' => $uuniq,
+            'no_tiket' => $kodePsb,
+            'nama_ssid' => $ssidWifi,
+            'password_ssid' => $passWifi,
             'router_id' => $mikrotik->router_id,
             'unique_id' => $uniqueId,
             'router_username' => $mikrotik->username,
@@ -175,84 +189,71 @@ class PelangganController extends Controller
             'alamat' => $request->input('alamat'),
             'nomor_telepon' => $request->input('telepon'),
             'tanggal_daftar' => $tanggalDaftar,
+            'tanggal_ingin_pasang' => $tanggalinginpasang,
             'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
             'metode_pembayaran' => $request->input('metode_pembayaran'),
             'status_pembayaran' => $statusPembayaran,
         ]);
+
+        $tiket = TiketPsb::create([
+            'no_tiket' => $kodePsb,
+            'unique_id' => auth()->user()->unique_id, // Generate Unique ID
+            'status_tiket' => 'Belum Dikonfirmasi',
+            'serialnumber' => null,
+            'nama_pelanggan' => $request->input('namaPelanggan'),
+            'pelanggan_id' => $uuniq, // Contoh unik ID pelanggan
+            'router_id' => $mikrotik->router_id,
+            'router_username' => $mikrotik->username,
+            'kode_paket' => $kodePaket,
+            'profile_paket' => $paket->profile,
+            'akun_pppoe' => $akunPppoe, // Generate akun unik
+            'password_pppoe' => $passPppoe, // Password acak
+            'alamat' => $request->input('alamat'),
+            'nomor_telepon' => $request->input('telepon'),
+            'tanggal_daftar' => $tanggalDaftar,
+            'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
+            'pembayaran_yang_akan_datang' => null,
+            'tanggal_ingin_pasang' => $request->input('tip'),
+            'nama_ssid' => $ssidWifi,
+            'password_ssid' => $passWifi,
+            'mac_address' => $request->input('macadress'),
+            'odp' => $request->input('odp'),
+            'olt' => $request->input('olt'),
+        ]);
+    
         
         if (!$pelanggan) {
             return redirect()->back()->with('error', 'Pelanggan tidak ditemukan.');
         }
-        
-        // Token API Fonnte
-        $token = 'g3ZXCoCHeR1y75j4xJoz';
-        if (!$token) {
-            return redirect()->back()->with('error', 'Token API tidak ditemukan.');
-        }
+     
         
         // Ambil nomor WhatsApp pelanggan
-        $nomor = $pelanggan->nomor_telepon; // Pastikan ada di database
+        // $nomor = $pelanggan->nomor_telepon; // Pastikan ada di database
         
-        if ($request->metode_pembayaran === 'Prabayar') {
-            // Simpan invoice sebagai "Lunas"
-            Invoice::create([
-                'pelanggan_id' => $pelanggan->pelanggan_id,
-                'jumlah' => $paket->harga_paket,
-                'status' => 'Lunas',
-                'tanggal_pembuatan' => now(),
-            ]);
+        // if ($request->metode_pembayaran === 'Prabayar') {
+        //     // Simpan invoice sebagai "Lunas"
+        //     Invoice::create([
+        //         'pelanggan_id' => $pelanggan->id,
+        //         'jumlah' => $paket->harga_paket,
+        //         'status' => 'Lunas',
+        //         'tanggal_pembuatan' => now(),
+        //     ]);
         
-            // Pesan WhatsApp untuk Prabayar
-            $pesan = "Halo {$pelanggan->nama_pelanggan},\n\n"
-                . "Terima kasih telah melakukan pembayaran paket internet Anda.\n"
-                . "Detail Pembayaran:\n\n"
-                . "💳 ID Pelanggan: {$pelanggan->pelanggan_id} - Prabayar\n"
-                . "📦 Paket: {$paket->profile}\n"
-                . "💰 Harga: Rp" . number_format($paket->harga_paket, 0, ',', '.') . "\n"
-                . "🗓️ Tanggal Pembayaran: " . now()->format('d-m-Y') . "\n\n"
-                . "Paket Anda telah *aktif* ✅\n"
-                . "Terima kasih telah menggunakan layanan internet dari kami.\n"
-                . "Jika ada pertanyaan, silakan hubungi layanan pelanggan.\n\n"
-                . "Salam, Admin AQT Network\n\n\n"
-                . "*Catatan: Jangan Membalas Pesan Otomatis ini*";
+           
+        // } elseif ($request->metode_pembayaran === 'Pascabayar') {
+        //     // Simpan invoice sebagai "Belum Lunas"
+        //     Invoice::create([
+        //         'pelanggan_id' => $pelanggan->id,
+        //         'jumlah' => $paket->harga_paket,
+        //         'status' => 'Belum Lunas',
+        //         'tanggal_pembuatan' => now(),
+        //     ]);
         
-        } elseif ($request->metode_pembayaran === 'Pascabayar') {
-            // Simpan invoice sebagai "Belum Lunas"
-            Invoice::create([
-                'pelanggan_id' => $pelanggan->id,
-                'jumlah' => $paket->harga_paket,
-                'status' => 'Belum Lunas',
-                'tanggal_pembuatan' => now(),
-            ]);
-        
-            // Pesan WhatsApp untuk Pascabayar (Tagihan Bulanan)
-            $pesan = "Halo {$pelanggan->nama_pelanggan},\n\n"
-                . "Tagihan internet Anda sudah tersedia. Mohon segera melakukan pembayaran sebelum jatuh tempo.\n"
-                . "Detail Tagihan:\n\n"
-                . "💳 ID Pelanggan: {$pelanggan->pelanggan_id} - Pascabayar\n"
-                . "📦 Paket: {$paket->profile}\n"
-                . "💰 Total Tagihan: Rp" . number_format($paket->harga_paket, 0, ',', '.') . "\n"
-                . "🗓️ Jatuh Tempo: " . date('d-m-Y', strtotime($pelanggan->pembayaran_selanjutnya)) . "\n\n"
-                . "⚠️ Jika pembayaran tidak dilakukan sebelum jatuh tempo, layanan akan dihentikan sementara secara otomatis.\n"
-                . "Silakan lakukan pembayaran tepat waktu untuk tetap menikmati layanan kami.\n\n"
-                . "Salam, Admin AQT Network\n\n\n"
-                . "*Catatan: Jangan Membalas Pesan Otomatis ini*";
-        }
+         
+        // }
         
         // Kirim pesan ke WhatsApp via API Fonnte
-        $response = Http::withHeaders([
-            'Authorization' => $token
-        ])->post('https://api.fonnte.com/send', [
-            'target' => $nomor,
-            'message' => $pesan,
-            'countryCode' => '62', // Indonesia
-        ]);
-        
-        if ($response->successful()) {
-            return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan dan pesan WhatsApp berhasil dikirim.');
-        } else {
-            return redirect()->back()->with('warning', 'Pelanggan berhasil ditambahkan, tetapi pesan WhatsApp gagal dikirim.');
-        }
+      return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan.');
     }
 
     public function showPelanggan($id)

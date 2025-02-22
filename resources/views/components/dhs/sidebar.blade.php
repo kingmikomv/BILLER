@@ -42,6 +42,17 @@
               </p>
             </a>
           </li>
+          @if(auth()->user()->role == 'teknisi')
+
+          <li class="nav-item">
+            <a href="{{route('datapsb')}}" class="nav-link">
+              <i class="nav-icon fas fa-binoculars"></i>
+              <p>
+                Data PSB
+              </p>
+            </a>
+          </li>
+          @endif
           @if(in_array(auth()->user()->role, ['member', 'cs', 'penagih']))
           <!-- TAGIHAN -->
           <li class="nav-item">
@@ -87,7 +98,7 @@
           </li>
           @endif
           
-          @if(in_array(auth()->user()->role, ['member', 'teknisi']))
+          @if(in_array(auth()->user()->role, ['member']))
           <!-- INTERNET PLAN -->
           <li class="nav-item">
             <a href="#" class="nav-link">
@@ -118,8 +129,10 @@
               </li>
             </ul>
           </li>
-          
+          @endif
           <!-- NETWORK -->
+          @if(in_array(auth()->user()->role, ['member', 'teknisi']))
+
           <li class="nav-item">
             <a href="#" class="nav-link">
               <i class="nav-icon fas fa-network-wired"></i>
@@ -141,6 +154,8 @@
                   <p>OLT</p>
                 </a>
               </li>
+              @if(in_array(auth()->user()->role, ['member']))
+
               <li class="nav-item">
                 <a href="pages/forms/editors.html" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
@@ -153,10 +168,10 @@
                   <p>VPN Remote</p>
                 </a>
               </li>
+              @endif
             </ul>
           </li>
           @endif
-          
           <!-- PENGATURAN -->
           <li class="nav-header">Pengaturan</li>
           @if(auth()->user()->role == 'member')

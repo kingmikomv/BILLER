@@ -28,11 +28,13 @@
                                 <div class="card-header">
                                     <h3 class="card-title">Daftar Router</h3>
                                     <div class="card-tools">
+                                        @if(in_array(auth()->user()->role, ['member']))
+
                                         <button type="button" class="btn btn-primary btn-sm" data-toggle="modal"
                                             data-target="#tambahRouterModal">
                                             <i class="fas fa-plus"></i> Tambah Router
                                         </button>
-                                      
+                                        @endif
                                     </div>
                                 </div>
                                 <!-- /.card-header -->

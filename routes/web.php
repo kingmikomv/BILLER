@@ -94,7 +94,11 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
 
 // Middleware for TEKNISI, requires authentication and teknisi role
 Route::middleware(['auth', 'role:teknisi'])->group(function () {
-    // Add routes for TEKNISI
+    Route::prefix('home/teknisi')->controller(TeknisiController::class)->group(function () {
+        Route::get('/datapsb', 'datapsb')->name('datapsb');
+        Route::get('/datapsb/yes/{tiket_id}', 'konfirmasiPemasangan')->name('pemasangan.konfirmasi');
+
+    });
 });
 
 // Middleware for PENAGIH, requires authentication and penagih role

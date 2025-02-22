@@ -55,12 +55,45 @@
                                             </div>
                                             <div class="form-group">
                                                 <label for="akunPppoe">Akun PPPoE</label>
-                                                <input type="text" class="form-control" id="akunPppoe" name="akunPppoe" required>
+                                                <input type="text" class="form-control" id="akunPppoe" name="akunPppoe" required placeholder="contoh:akun@123">
                                             </div>
                                             <div class="form-group">
                                                 <label for="passwordPppoe">Password PPPoE</label>
-                                                <input type="text" class="form-control" id="passwordPppoe" name="passwordPppoe" required>
+                                                <input type="text" class="form-control" id="passwordPppoe" name="passwordPppoe" required placeholder="Password PPPoE">
                                             </div>
+                                            <div class="form-group">
+                                                <label for="passwordPppoe">SSID WiFI</label>
+                                                <input type="text" class="form-control" id="ssid" name="ssid" required placeholder="SSID WiFi">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="passwordPppoe">Password WiFI</label>
+                                                <input type="text" class="form-control" id="passwifi" name="passwifi" required placeholder="Password WiFi">
+                                            </div>
+                                            
+                                            
+                                            <button type="button" class="btn btn-primary btn-block" id="toggleAdvance">Advance Form</button>
+                                            
+                                            <div id="advanceForm" style="display: none;">
+                                                <div class="form-group">
+                                                    <label for="passwordPppoe">Serial Number (Optional)</label>
+                                                    <input type="text" class="form-control" id="serial" name="serialnumber" placeholder="Serial Number">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="passwordPppoe">MAC Address (Optional)</label>
+                                                    <input type="text" class="form-control" id="macaddress" name="macaddress" placeholder="Mac Address">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="passwordPppoe">ODP (Optional)</label>
+                                                    <input type="text" class="form-control" id="odp" name="odp" placeholder="ODP">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="passwordPppoe">OLT (Optional)</label>
+                                                    <input type="text" class="form-control" id="olt" name="olt" placeholder="OLT">
+                                                </div>
+                                            </div>
+                                            
+                                        
+
                                         </fieldset>
                                     
                                         <!-- Informasi Pelanggan -->
@@ -68,15 +101,20 @@
                                             <legend class="w-auto px-2">Informasi Pelanggan</legend>
                                             <div class="form-group">
                                                 <label for="namaPelanggan">Nama Pelanggan</label>
-                                                <input type="text" class="form-control" id="namaPelanggan" name="namaPelanggan" required>
+                                                <input type="text" class="form-control" id="namaPelanggan" name="namaPelanggan" required placeholder="Nama Pelanggan">
                                             </div>
+
                                             <div class="form-group">
                                                 <label for="telepon">Nomor Telepon</label>
-                                                <input type="text" class="form-control" id="telepon" name="telepon" required>
+                                                <input type="text" class="form-control" id="telepon" name="telepon" required placeholder="Nomor Telepon">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="telepon">Tanggal Ingin Pasang</label>
+                                                <input type="date" class="form-control" id="tanggalinginpasang" name="tip" required placeholder="Tanggal Ingin Pasang">
                                             </div>
                                             <div class="form-group">
                                                 <label for="alamat">Alamat</label>
-                                                <textarea class="form-control" id="alamat" name="alamat" required></textarea>
+                                                <textarea class="form-control" id="alamat" name="alamat" required placeholder="Alamat"></textarea>
                                             </div>
                                             <div class="form-group">
                                                 <label for="tipePembayaran">Tipe Pembayaran</label>
@@ -101,7 +139,7 @@
                                             </div>
                                         </fieldset>
                                     
-                                        <button type="submit" class="btn btn-primary">Tambah Pelanggan</button>
+                                        <button type="submit" class="btn btn-success">Tambah Pelanggan</button>
                                     </form>
                                     
                                     
@@ -155,6 +193,13 @@
                 invoiceSection.classList.add("d-none");
             }
         }
+    </script>
+     <script>
+        $(document).ready(function() {
+            $("#toggleAdvance").click(function() {
+                $("#advanceForm").slideToggle();
+            });
+        });
     </script>
 </body>
 
