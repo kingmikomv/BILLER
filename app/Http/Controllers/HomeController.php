@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Pelanggan;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -27,10 +28,10 @@ class HomeController extends Controller
         if (auth()->user()->hasRole('superadmin')) {
             dd('superadmin');
         } elseif (auth()->user()->hasRole('member')) {
-            // if(auth()->user()->email_verified_at == null){
-            //     return view('auth.verify');
-            // }
-            return view('ROLE/MEMBER/index');
+            $riwayatPemasangan = Pelanggan::where('unique_id', auth()->user()->unique_id)
+            ->where('status_terpasang', 'Sudah Dipasang')->orderBy('tanggal_terpasang', 'desc')
+            ->get();
+            return view('ROLE/MEMBER/index', compact('riwayatPemasangan'));
         } elseif (auth()->user()->hasRole('teknisi')) {
             return view('ROLE/PEKERJA/index');
 
