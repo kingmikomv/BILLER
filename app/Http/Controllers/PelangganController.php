@@ -199,7 +199,7 @@ class PelangganController extends Controller
             'no_tiket' => $kodePsb,
             'unique_id' => auth()->user()->unique_id, // Generate Unique ID
             'status_tiket' => 'Belum Dikonfirmasi',
-            'serialnumber' => null,
+            'serialnumber' => $request->input('serialnumber'),
             'nama_pelanggan' => $request->input('namaPelanggan'),
             'pelanggan_id' => $uuniq, // Contoh unik ID pelanggan
             'router_id' => $mikrotik->router_id,

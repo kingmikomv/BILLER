@@ -22,6 +22,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'unique_id',
         'unique_id_pekerja',
+        'username',
         'name',
         'email',
         'password',
@@ -55,5 +56,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasRole($role)
     {
         return $this->role === $role;
+    }
+
+
+    public function findForPassport($identifier)
+    {
+        return $this->where('email', $identifier)
+                    ->orWhere('username', $identifier)
+                    ->first();
     }
 }

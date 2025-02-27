@@ -16,11 +16,15 @@ class TeknisiController extends Controller
         ->where('status_tiket', 'Belum Dikonfirmasi')
         ->pluck('no_tiket'); // Ambil hanya 'no_tiket' dalam bentuk array
 
-    $cocokPelanggan = Pelanggan::where('unique_id', auth()->user()->unique_id)
+        $cocokPelanggan = Pelanggan::where('unique_id', auth()->user()->unique_id)
         ->whereIn('no_tiket', $dataUniqueId)
         ->get();
 
-    return view('ROLE.PEKERJA.TEKNISI.datapsb', compact('cocokPelanggan'));
+        $riwayatPemasangan = Pelanggan::where('unique_id', auth()->user()->unique_id)
+        ->where('status_terpasang', 'Sudah Dipasang')
+        ->get();
+
+    return view('ROLE.PEKERJA.TEKNISI.datapsb', compact('cocokPelanggan', 'riwayatPemasangan'));
     }
     public function konfirmasiPemasangan($tiket_id)
     {
@@ -31,9 +35,11 @@ class TeknisiController extends Controller
         $harga = PaketPppoe::where('kode_paket', $plg->kode_paket)->first();
 
         if($psb->no_tiket == $tid || $plg->no_tiket == $tid){
+            $psb->tanggal_terpasang = now();
             $psb->status_tiket = 'Sudah Dikonfirmasi';
             $psb->save();
             $plg->status_terpasang = 'Sudah Dipasang';
+            $plg->tanggal_terpasang = now();
             $plg->dipasang_oleh = auth()->user()->name;
             $plg->save();
 
@@ -57,4 +63,20 @@ class TeknisiController extends Controller
             return redirect()->back()->with('error', 'Tiket tidak ditemukan!');
         }
     }
+    public function show($tiket)
+{
+    $riwayat = Pelanggan::where('no_tiket', $tiket)->first();
+
+    if ($riwayat) {
+        return response()->json([
+            'success' => true,
+            'riwayat' => $riwayat
+        ]);
+    } else {
+        return response()->json([
+            'success' => false,
+            'message' => 'Data tidak ditemukan'
+        ]);
+    }
+}
 }

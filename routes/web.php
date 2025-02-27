@@ -60,6 +60,7 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
         Route::post('/isolir', [PelangganController::class, 'isolir'])->name('pelanggan.isolir');
         Route::post('/buka-isolir', [PelangganController::class, 'bukaIsolir'])->name('pelanggan.bukaIsolir');
         Route::post('/broadcast-wa', [PelangganController::class, 'broadcastWA'])->name('pelanggan.broadcastWA');
+        
     });
 
     // SIDEBAR MENU NETWORK
@@ -97,6 +98,7 @@ Route::middleware(['auth', 'role:teknisi'])->group(function () {
     Route::prefix('home/teknisi')->controller(TeknisiController::class)->group(function () {
         Route::get('/datapsb', 'datapsb')->name('datapsb');
         Route::get('/datapsb/yes/{tiket_id}', 'konfirmasiPemasangan')->name('pemasangan.konfirmasi');
+        Route::get('/riwayat-pemasangan/{tiket}', 'show')->name('riwayat.pemasangan');
 
     });
 });

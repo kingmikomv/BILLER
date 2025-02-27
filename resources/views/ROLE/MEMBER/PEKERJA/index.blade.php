@@ -87,44 +87,78 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form id="formTambahPekerja" method="POST" action="{{route('addPekerja')}}">
+                    <form id="formTambahPekerja" method="POST" action="{{ route('addPekerja') }}">
                         @csrf
                         <div class="modal-body">
-
+    
                             <div class="form-group">
                                 <label for="namaPekerja">Nama Pekerja</label>
-                                <input type="text" class="form-control" id="namaPekerja" name="namaPekerja"
-                                    placeholder="Masukkan nama pekerja" required>
+                                <input type="text" class="form-control @error('namaPekerja') is-invalid @enderror" id="namaPekerja" name="namaPekerja"
+                                    placeholder="Masukkan nama pekerja" value="{{ old('namaPekerja') }}" required>
+                                @error('namaPekerja')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
+    
+                            <div class="form-group">
+                                <label for="usernamePekerja">Username</label>
+                                <input type="text" class="form-control @error('usernamePekerja') is-invalid @enderror" id="usernamePekerja" name="usernamePekerja"
+                                    placeholder="Masukkan username pekerja" value="{{ old('usernamePekerja') }}" required>
+                                @error('usernamePekerja')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+    
                             <div class="form-group">
                                 <label for="emailPekerja">Email Login</label>
-                                <input type="email" class="form-control" id="emailPekerja" name="emailPekerja"
-                                    placeholder="Masukkan email pekerja" required>
+                                <input type="email" class="form-control @error('emailPekerja') is-invalid @enderror" id="emailPekerja" name="emailPekerja"
+                                    placeholder="Masukkan email pekerja" value="{{ old('emailPekerja') }}" required>
+                                @error('emailPekerja')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
+    
                             <div class="form-group">
-                                <label for="emailPekerja">Password Login</label>
-                                <input type="text" class="form-control" id="emailPekerja" name="passwordPekerja"
+                                <label for="passwordPekerja">Password Login</label>
+                                <input type="password" class="form-control @error('passwordPekerja') is-invalid @enderror" id="passwordPekerja" name="passwordPekerja"
                                     placeholder="Masukkan password pekerja" required>
+                                @error('passwordPekerja')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
+    
+                            <div class="form-group">
+                                <label for="passwordPekerja_confirmation">Konfirmasi Password</label>
+                                <input type="password" class="form-control" id="passwordPekerja_confirmation" 
+                                    name="passwordPekerja_confirmation" placeholder="Konfirmasi password pekerja" required>
+                            </div>
+    
                             <div class="form-group">
                                 <label for="posisiPekerja">Posisi</label>
-                                <select name="posisiPekerja" class="form-control" id="">
+                                <select name="posisiPekerja" class="form-control @error('posisiPekerja') is-invalid @enderror" required>
                                     <option disabled selected value>Pilih Posisi</option>
                                     <option value="teknisi">Teknisi</option>
                                     <option value="cs">Customer Service</option>
                                     <option value="penagih">Penagih</option>
                                 </select>
+                                @error('posisiPekerja')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
+    
                             <div class="form-group">
                                 <label for="noTeleponPekerja">Nomor Telepon</label>
-                                <input type="text" class="form-control" id="noTeleponPekerja" name="noTeleponPekerja"
-                                    placeholder="Masukkan nomor telepon pekerja" required>
+                                <input type="text" class="form-control @error('noTeleponPekerja') is-invalid @enderror" id="noTeleponPekerja" name="noTeleponPekerja"
+                                    placeholder="Masukkan nomor telepon pekerja" value="{{ old('noTeleponPekerja') }}" required>
+                                @error('noTeleponPekerja')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
-
+    
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
-                            <button type="submit" class="btn btn-primary" form="formTambahPekerja">Simpan</button>
+                            <button type="submit" class="btn btn-primary">Simpan</button>
                         </div>
                     </form>
 
@@ -136,7 +170,7 @@
     <!-- ./wrapper -->
 
     <x-dhs.scripts />
-
+    <x-dhs.alert />
 </body>
 
 </html>

@@ -49,25 +49,49 @@
                                                 <div class="card-body">
                                                     <h5 class="card-title font-weight-bold text-primary">TIKET - <span
                                                             id="tiketId">{{$psb->no_tiket}}</span></h5>
-                                                    <p class="card-text">
-                                                        <strong>Nama Pelanggan:</strong> <span
-                                                            id="pelangganId">{{$psb->nama_pelanggan}}</span><br>
-                                                        <strong>Tgl. Ingin Dipasang:</strong> <span
-                                                            id="tanggalPasang">{{$psb->tanggal_ingin_pasang}}</span><br>
-                                                        <strong>Akun PPPoE:</strong> <span
-                                                            id="akunPppoe">{{$psb->akun_pppoe}}</span><br>
-                                                        <strong>Pass PPPoE:</strong> <span
-                                                            id="passwordPppoe">{{$psb->password_pppoe}}</span><br>
-                                                        <strong>Nama WiFi:</strong> <span
-                                                            id="namaSsid">{{$psb->nama_ssid}}</span><br>
-                                                        <strong>Pass WiFi:</strong> <span
-                                                            id="passwordSsid">{{$psb->password_ssid}}</span>
+                                                    <p class="card-text ">
+                                                        <table class="table">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <th>Nama Pelanggan</th>
+                                                                    <td id="pelangganId">{{ $psb->nama_pelanggan }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Tgl. Ingin Dipasang</th>
+                                                                    <td id="tanggalPasang">
+                                                                        {{ $psb->tanggal_ingin_pasang }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Akun PPPoE</th>
+                                                                    <td id="akunPppoe">{{ $psb->akun_pppoe }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Pass PPPoE</th>
+                                                                    <td id="passwordPppoe">{{ $psb->password_pppoe }}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Nama WiFi</th>
+                                                                    <td id="namaSsid">{{ $psb->nama_ssid }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Pass WiFi</th>
+                                                                    <td id="passwordSsid">{{ $psb->password_ssid }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th>Alamat</th>
+                                                                    <td id="passwordSsid">
+                                                                        {{ Str::limit($psb->alamat, 16, '...') }}</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+
                                                     </p>
                                                     <button class="btn btn-success btn-block font-weight-bold"
-                                                    onclick="konfirmasiPemasangan('{{$psb->no_tiket}}')">
-                                                    ✅ Sudah Dipasang
-                                                </button>
-                                                
+                                                        onclick="konfirmasiPemasangan('{{$psb->no_tiket}}')">
+                                                        ✅ Sudah Dipasang
+                                                    </button>
+
 
                                                     <!-- Dropdown More Options -->
                                                     <div class="dropdown mt-2">
@@ -95,22 +119,64 @@
                                         <div class="modal fade" id="detailModal{{$psb->no_tiket}}" tabindex="-1"
                                             role="dialog" aria-labelledby="detailModalLabel{{$psb->no_tiket}}"
                                             aria-hidden="true">
-                                            <div class="modal-dialog" role="document">
+                                            <div class="modal-dialog modal-lg" role="document">
+                                                <!-- Tambahkan modal-lg agar lebih lebar -->
                                                 <div class="modal-content">
                                                     <div class="modal-header">
                                                         <h5 class="modal-title" id="detailModalLabel{{$psb->no_tiket}}">
-                                                            🔍 Detail Tiket - {{$psb->no_tiket}}</h5>
+                                                            🔍 Detail Tiket - {{$psb->no_tiket}}
+                                                        </h5>
                                                         <button type="button" class="close" data-dismiss="modal"
                                                             aria-label="Close">
                                                             <span aria-hidden="true">&times;</span>
                                                         </button>
                                                     </div>
                                                     <div class="modal-body">
-                                                        <p><strong>Nama Pelanggan:</strong> {{$psb->nama_pelanggan}}</p>
-                                                        <p><strong>Nomor Telepon:</strong> {{$psb->nomor_telepon}}</p>
-                                                        <p><strong>Alamat:</strong> {{$psb->alamat}}</p>
-                                                        <p><strong>Akun PPPoE:</strong> {{$psb->akun_pppoe}}</p>
-                                                        <p><strong>Nama WiFi:</strong> {{$psb->nama_ssid}}</p>
+                                                        <div class="table-responsive">
+                                                            <!-- Tambahkan div ini agar tabel bisa scroll di layar kecil -->
+                                                            <table class="table table-bordered table-striped">
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <th>No Tiket</th>
+                                                                        <td>{{ $psb->no_tiket }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>Nama Pelanggan</th>
+                                                                        <td>{{ $psb->nama_pelanggan }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>Nomor Telepon</th>
+                                                                        <td>{{ $psb->nomor_telepon }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>Tanggal Ingin Dipasang</th>
+                                                                        <td>{{ $psb->tanggal_ingin_pasang }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>Akun PPPoE</th>
+                                                                        <td>{{ $psb->akun_pppoe }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>Password PPPoE</th>
+                                                                        <td>{{ $psb->password_pppoe }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>Nama WiFi</th>
+                                                                        <td>{{ $psb->nama_ssid }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>Password WiFi</th>
+                                                                        <td>{{ $psb->password_ssid }}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th>Alamat</th>
+                                                                        <td class="text-wrap"
+                                                                            style="max-width: 400px; word-break: break-word;">
+                                                                            {{ $psb->alamat }}</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
                                                     </div>
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary"
@@ -119,6 +185,7 @@
                                                 </div>
                                             </div>
                                         </div>
+
 
                                         <!-- Modal Tgl. Pasang Diundur -->
                                         <div class="modal fade" id="undurModal{{$psb->no_tiket}}" tabindex="-1"
@@ -183,7 +250,65 @@
                             <!-- /.card-footer -->
                         </div>
 
+                        <div class="col-md-12">
 
+
+
+
+
+
+
+
+                            <div class="card">
+                                <div class="card-header border-transparent">
+                                    <h3 class="card-title">Riwayat Pemasangan Baru</h3>
+
+
+                                </div>
+                                <!-- /.card-header -->
+                                <div class="card-body table-responsive">
+                                    <table class="table" id="tabelRiwayat">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>No Tiket</th>
+                                                <th>Nama Pelanggan</th>
+                                                <th>Tgl. Ingin Dipasang</th>
+                                                <th>Tgl. Terpasang</th>
+                                                <th>Dipasang Oleh</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($riwayatPemasangan as $riwayat)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $riwayat->no_tiket }}</td>
+                                                <td>{{ $riwayat->nama_pelanggan }}</td>
+                                                <td>{{ $riwayat->tanggal_ingin_pasang }}</td>
+                                                <td>{{ $riwayat->tanggal_terpasang }}</td>
+                                                <td>{{ $riwayat->dipasang_oleh }}</td>
+                                                <td>
+                                                    <button class="btn btn-info btn-sm btnDetail"
+                                                        data-tiket="{{ $riwayat->no_tiket }}">
+                                                        Cek Detail
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+
+                                    <!-- Modal untuk Detail Pemasangan -->
+
+
+                                </div>
+                                <!-- /.table-responsive -->
+                            </div>
+                            <!-- /.card-body -->
+
+                            <!-- /.card-footer -->
+                        </div>
                     </div>
 
 
@@ -194,6 +319,70 @@
 
         </section>
         <!-- /.content -->
+    </div>
+    <div class="modal fade" id="modalDetail" tabindex="-1" role="dialog" aria-labelledby="modalDetailLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalDetailLabel">Detail Pemasangan</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <tbody>
+                                <tr>
+                                    <th>No Tiket</th>
+                                    <td id="detailTiket"></td>
+                                </tr>
+                                <tr>
+                                    <th>Nama Pelanggan</th>
+                                    <td id="detailNama"></td>
+                                </tr>
+                                <tr>
+                                    <th>Tanggal Ingin Dipasang</th>
+                                    <td id="detailTgl"></td>
+                                </tr>
+                                <tr>
+                                    <th>Tanggal Terpasang</th>
+                                    <td id="detailTglTerpasang"></td>
+                                </tr>
+                                <tr>
+                                    <th>Dipasang Oleh</th>
+                                    <td id="detailDipasang"></td>
+                                </tr>
+                                <tr>
+                                    <th>Akun PPPoE</th>
+                                    <td id="detailAkun"></td>
+                                </tr>
+                                <tr>
+                                    <th>Password PPPoE</th>
+                                    <td id="detailPass"></td>
+                                </tr>
+                                <tr>
+                                    <th>Nama WiFi</th>
+                                    <td id="detailSsid"></td>
+                                </tr>
+                                <tr>
+                                    <th>Password WiFi</th>
+                                    <td id="detailWifiPass"></td>
+                                </tr>
+                                <tr>
+                                    <th>Alamat</th>
+                                    <td class="text-wrap" style="max-width: 400px; word-break: break-word;">
+                                        <span id="detailAlamat"></span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
     </div>
 
     <x-dhs.footer />
@@ -208,16 +397,81 @@
                 text: "Pastikan perangkat sudah benar-benar dipasang!",
                 icon: "warning",
                 showCancelButton: true,
-               
+
                 confirmButtonText: "✅ Ya, sudah dipasang",
                 cancelButtonText: "❌ Batal"
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Kirim permintaan ke backend jika dikonfirmasi
-                    window.location.href = "{{ route('pemasangan.konfirmasi', ['tiket_id' => '__TIKET_ID__']) }}".replace('__TIKET_ID__', tiketId);
+                    window.location.href =
+                        "{{ route('pemasangan.konfirmasi', ['tiket_id' => '__TIKET_ID__']) }}".replace(
+                            '__TIKET_ID__', tiketId);
                 }
             });
         }
+
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            $('#tabelRiwayat').DataTable({
+                "paging": true,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "language": {
+
+                    "paginate": {
+                        "first": "Awal",
+                        "last": "Akhir",
+                        "next": "Selanjutnya",
+                        "previous": "Sebelumnya"
+                    }
+                },
+
+            });
+        });
+
+        $(document).ready(function () {
+            $('#tabelRiwayat').DataTable(); // Aktifkan DataTables
+
+
+        });
+        $(document).ready(function () {
+            $('#tabelRiwayat').DataTable(); // Aktifkan DataTables
+
+            $('.btnDetail').on('click', function () {
+                var tiket = $(this).data('tiket'); // Ambil nomor tiket dari tombol
+                var url = "{{ route('riwayat.pemasangan', ':tiket') }}".replace(':tiket',
+                tiket); // Buat URL sesuai route
+
+                $.ajax({
+                    url: url, // Gunakan route Laravel
+                    type: 'GET',
+                    success: function (data) {
+                        if (data.success) {
+                            $('#detailTiket').text(data.riwayat.no_tiket);
+                            $('#detailNama').text(data.riwayat.nama_pelanggan);
+                            $('#detailTgl').text(data.riwayat.tanggal_ingin_pasang);
+                            $('#detailTglTerpasang').text(data.riwayat.tanggal_terpasang);
+                            $('#detailDipasang').text(data.riwayat.dipasang_oleh);
+                            $('#detailAkun').text(data.riwayat.akun_pppoe);
+                            $('#detailPass').text(data.riwayat.password_pppoe);
+                            $('#detailSsid').text(data.riwayat.nama_ssid);
+                            $('#detailWifiPass').text(data.riwayat.password_ssid);
+                            $('#detailAlamat').text(data.riwayat.alamat);
+                            $('#modalDetail').modal('show'); // Tampilkan modal
+                        } else {
+                            alert('Data tidak ditemukan!');
+                        }
+                    }
+                });
+            });
+        });
+
     </script>
 </body>
 

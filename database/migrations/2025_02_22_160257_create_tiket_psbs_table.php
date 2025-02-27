@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('no_tiket')->unique();
             $table->string('unique_id');
             $table->string('status_tiket');
-            $table->string('serial_number')->nullable();
+            $table->string('serialnumber')->nullable();
             $table->string('nama_pelanggan');
             $table->string('pelanggan_id')->unique();
             $table->string('router_id');
@@ -31,6 +31,8 @@ return new class extends Migration
             $table->date('pembayaran_selanjutnya')->nullable();
             $table->date('pembayaran_yang_akan_datang')->nullable();
             $table->date('tanggal_ingin_pasang')->nullable();
+            $table->date('tanggal_terpasang')->nullable();
+
             $table->string('nama_ssid')->nullable(); // Kolom nama SSID (opsional)
             $table->string('password_ssid')->nullable(); // Kolom password SSID (opsional)
             $table->string('mac_address')->nullable(); // Kolom MAC Address (opsional)

@@ -28,6 +28,8 @@ return new class extends Migration
             $table->date('pembayaran_selanjutnya')->nullable(); 
             $table->date('pembayaran_yang_akan_datang')->nullable(); 
             $table->date('tanggal_ingin_pasang')->nullable(); 
+            $table->date('tanggal_terpasang')->nullable(); 
+
             $table->string('nama_ssid')->nullable(); // Kolom nama SSID (opsional)
             $table->string('password_ssid')->nullable(); // Kolom password SSID (opsional)
             $table->string('mac_address')->nullable(); // Kolom MAC Address (opsional)
