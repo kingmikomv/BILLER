@@ -57,6 +57,7 @@ class RegisterController extends Controller
     {
         return User::create([
             'unique_id' => Str::uuid(),
+            'unique_member' => mt_rand(1000, 9999),
             'name' => $data['name'],
             'username' => $data['username'], // Simpan username ke database
             'email' => $data['email'],

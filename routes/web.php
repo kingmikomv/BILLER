@@ -84,12 +84,16 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
         });
     });
 
-
-
     // SIDEBAR MENU PEKERJA
     Route::middleware(['role:member'])->prefix('pekerja')->controller(MemberController::class)->group(function () {
         Route::get('/', 'pekerja')->name('pekerja');
         Route::post('/addPekerja', 'addPekerja')->name('addPekerja');
+    });
+
+    Route::middleware(['role:member'])->prefix('company')->controller(MemberController::class)->group(function () {
+        Route::get('/', 'company')->name('company');
+        Route::put('/profil-perusahaan/{id}/up',  'updateCompany')->name('updateCompany');
+    
     });
 });
 

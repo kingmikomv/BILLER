@@ -4,10 +4,13 @@
    <!-- /.login-logo -->
    <div class="card card-outline card-primary">
      <div class="card-header text-center">
-       <a href="{{ url('/login') }}" class="h1"><b>Admin</b>LTE</a>
+       <a href="{{ url('/login') }}" class="h1">
+        <img src="{{ asset('assetlogin/re.png') }}" alt="BILLER Logo" class="img-fluid" style="max-height: 130px;">
+
+      </a>
      </div>
      <div class="card-body">
-       <p class="login-box-msg">Sign in to start your session</p>
+       <p class="login-box-msg">Login Disini</p>
  
        <form method="POST" action="{{ route('login') }}">
          @csrf
@@ -66,13 +69,13 @@
                  {{ old('remember') ? 'checked' : '' }}
                >
                <label for="remember">
-                 Remember Me
+                 Ingat Saya
                </label>
              </div>
            </div>
            <!-- /.col -->
            <div class="col-4">
-             <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+             <button type="submit" class="btn btn-primary btn-block">Login</button>
            </div>
            <!-- /.col -->
          </div>
@@ -80,11 +83,11 @@
  
        <p class="mb-1">
          @if (Route::has('password.request'))
-           <a href="{{ route('password.request') }}">I forgot my password</a>
+           <a href="{{ route('password.request') }}">Lupa Password</a>
          @endif
        </p>
        <p class="mb-0">
-         <a href="{{ route('register') }}" class="text-center">Register a new membership</a>
+         <a href="{{ route('register') }}" class="text-center">Belum Punya Akun ? Daftar Member</a>
        </p>
      </div>
      <!-- /.card-body -->

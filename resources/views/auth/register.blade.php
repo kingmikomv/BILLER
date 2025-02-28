@@ -3,10 +3,12 @@
     <!-- /.login-logo -->
     <div class="card card-outline card-primary">
         <div class="card-header text-center">
-            <a href="{{ url('/login') }}" class="h1"><b>Admin</b>LTE</a>
+            <a href="{{ url('/login') }}" class="h1">
+                <img src="{{ asset('assetlogin/re.png') }}" alt="BILLER Logo" class="img-fluid" style="max-height: 130px;">
+            </a>
         </div>
         <div class="card-body">
-            <p class="login-box-msg">Register a new membership</p>
+            <p class="login-box-msg">Daftar Member</p>
 
             <form method="POST" action="{{ route('register') }}">
                 @csrf
@@ -108,13 +110,13 @@
                         <div class="icheck-primary">
                             <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
                             <label for="remember">
-                                I agree to the <a href="#">terms</a>
+                                Saya Setuju Dengan <a href="#">Aturan</a>
                             </label>
                         </div>
                     </div>
                     <!-- /.col -->
                     <div class="col-4">
-                        <button type="submit" class="btn btn-primary btn-block">Register</button>
+                        <button type="submit" class="btn btn-primary btn-block">Daftar</button>
                     </div>
                     <!-- /.col -->
                 </div>
@@ -123,11 +125,11 @@
 
             <p class="mb-1">
                 @if (Route::has('password.request'))
-                <a href="{{ route('password.request') }}">I forgot my password</a>
+                <a href="{{ route('password.request') }}">Lupa Password</a>
                 @endif
             </p>
             <p class="mb-0">
-                <a href="{{ route('login') }}" class="text-center">Already have a membership? Login</a>
+                <a href="{{ route('login') }}" class="text-center">Sudah Punya Akun ? Login</a>
             </p>
         </div>
         <!-- /.card-body -->

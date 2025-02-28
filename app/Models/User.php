@@ -3,11 +3,12 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\ProfilPerusahaan;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -21,6 +22,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $fillable = [
         'unique_id',
+        'unique_member',
         'unique_id_pekerja',
         'username',
         'name',
@@ -64,5 +66,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->where('email', $identifier)
                     ->orWhere('username', $identifier)
                     ->first();
+    }
+    public function profilPerusahaan() {
+        return $this->hasOne(ProfilPerusahaan::class, 'user_id');
     }
 }

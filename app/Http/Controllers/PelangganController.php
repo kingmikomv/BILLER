@@ -174,7 +174,7 @@ class PelangganController extends Controller
 
         // Buat data pelanggan
         $pelanggan = Pelanggan::create([
-            'pelanggan_id' => $uuniq,
+            'pelanggan_id' => Auth()->user()->unique_member.$uuniq,
             'no_tiket' => $kodePsb,
             'nama_ssid' => $ssidWifi,
             'password_ssid' => $passWifi,
