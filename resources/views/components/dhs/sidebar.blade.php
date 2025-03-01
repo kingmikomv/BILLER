@@ -1,14 +1,15 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
     <a href="{{route('home')}}" class="brand-link" style="margin-bottom: 200px">
-      <img src="{{asset('assetlogin/lgs.png')}}" alt="AdminLTE Logo" 
-          style="max-height: 80px; width: auto; max-width: 100%;">
+      <img src="{{asset('assetlogin/icon.png')}}" alt="AdminLTE Logo" class="brand-image">
+      <span class="brand-text font-weight">BILLER</span>
+
   </a>
 
     <!-- Sidebar -->
     <div class="sidebar">
       <!-- Sidebar user panel (optional) -->
-      <div class="user-panel pb-3 d-flex" style="margin-top: 65px">
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="image">
           <img src="https://ui-avatars.com/api/?name={{Auth()->user()->name}}" class="img-circle elevation-2" alt="User Image">
         </div>
