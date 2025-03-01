@@ -1,5 +1,6 @@
 <x-dhs.head />
 
+
 <body class="hold-transition dark-mode sidebar-mini layout-fixed layout-navbar-fixed layout-footer-fixed">
     <div class="wrapper">
 
@@ -245,6 +246,9 @@
             $('#pelangganTable').DataTable({
                 responsive: true,
                 autoWidth: false,
+                pageLength: 20, // Set default jumlah baris per halaman ke 20
+                lengthMenu: [[10, 20, 50, 100], [10, 20, 50, 100]], // Pastikan 20 ada di sini
+
                 language: {
                     url: "//cdn.datatables.net/plug-ins/1.10.20/i18n/Indonesian.json"
                 }

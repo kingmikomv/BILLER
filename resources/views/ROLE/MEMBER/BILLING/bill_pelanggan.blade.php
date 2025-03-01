@@ -252,6 +252,9 @@
                 "autoWidth": false,
                 "lengthChange": true,
                 "pageLength": 10,
+                pageLength: 20, // Set default jumlah baris per halaman ke 20
+                lengthMenu: [[10, 20, 50, 100], [10, 20, 50, 100]], // Pastikan 20 ada di sini
+
 
             });
         });

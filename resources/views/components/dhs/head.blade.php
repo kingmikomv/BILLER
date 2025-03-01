@@ -16,5 +16,30 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+  <style>
+    /* Warna dropdown 'Tampilkan entri' */
+    
 
+    /* Dropdown entries background & text color */
+    .dataTables_length select {
+        background-color: #007bff00; /* Biru */
+        color: rgb(0, 0, 0); /* Teks putih */
+        border: 1px solid #0056b3;
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    /* Hover efek dropdown */
+    .dataTables_length select:hover {
+        background-color: #00000000;
+        color: rgb(0, 0, 0);
+    }
+
+    /* Agar dropdown tidak full putih saat diklik */
+    .dataTables_length select:focus {
+        background-color: #323233;
+        color: white;
+        outline: none;
+    }
+</style>
 </head>
