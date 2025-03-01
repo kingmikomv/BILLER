@@ -2,10 +2,13 @@
 <div class="login-box">
   <div class="card card-outline card-primary">
     <div class="card-header text-center">
-      <a href="{{ url('/login') }}" class="h1"><b>Admin</b>LTE</a>
+      <a href="{{ url('/login') }}" class="h1">
+        <img src="{{ asset('assetlogin/re.png') }}" alt="BILLER Logo" class="img-fluid" style="max-height: 130px;">
+
+      </a>
     </div>
     <div class="card-body">
-      <p class="login-box-msg">Forgot your password? Reset it here.</p>
+      <p class="login-box-msg">Lupa Password ? Reset Disini</p>
 
       @if (session('status'))
         <div class="alert alert-success" role="alert">
@@ -42,13 +45,13 @@
 
         <div class="row">
           <div class="col-12">
-            <button type="submit" class="btn btn-primary btn-block">Send Password Reset Link</button>
+            <button type="submit" class="btn btn-primary btn-block">Kirim Reset Password Link</button>
           </div>
         </div>
       </form>
 
       <p class="mb-0">
-        <a href="{{ route('login') }}" class="text-center">Remember your password? Login</a>
+        <a href="{{ route('login') }}" class="text-center">Sudah Punya Akun ? Login</a>
       </p>
 
     </div>

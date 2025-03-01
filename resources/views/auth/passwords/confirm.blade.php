@@ -2,7 +2,10 @@
 <div class="login-box">
   <div class="card card-outline card-primary">
     <div class="card-header text-center">
-      <a href="{{ url('/login') }}" class="h1"><b>Admin</b>LTE</a>
+      <a href="{{ url('/login') }}" class="h1">
+        <img src="{{ asset('assetlogin/re.png') }}" alt="BILLER Logo" class="img-fluid" style="max-height: 130px;">
+
+      </a>
     </div>
     <div class="card-body">
       <p class="login-box-msg">Please confirm your password before continuing.</p>

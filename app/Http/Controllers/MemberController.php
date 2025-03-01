@@ -19,7 +19,8 @@ class MemberController extends Controller
 {
     public function pekerja()
     {
-        return view('ROLE.MEMBER.PEKERJA.index');
+        $pekerja = User::where('unique_id', auth()->user()->unique_id)->where('role', '!=', 'superadmin')->get();
+        return view('ROLE.MEMBER.PEKERJA.index', compact('pekerja'));
     }
     public function addPekerja(Request $request)
     {

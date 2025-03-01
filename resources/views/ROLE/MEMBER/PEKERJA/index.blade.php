@@ -45,17 +45,38 @@
                                     </div>
                                 </div>
                                 <!-- /.card-header -->
-                                <div class="card-body p-0">
-                                    <div class="d-md-flex">
-                                        <div class="p-1 flex-fill" style="overflow: hidden">
-                                            <!-- Map will be created here -->
-                                            <div id="world-map-markers" style="height: 325px; overflow: hidden">
-
-                                                data
-                                            </div>
-                                        </div>
-
-                                    </div><!-- /.d-md-flex -->
+                                <div class="card-body table-responsive">
+                                    <table class="table" id="tablePekerja">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Nama Pekerja</th>
+                                                <th>Username</th>
+                                                <th>Email</th>
+                                                <th>Posisi</th>
+                                                <th>No Telepon</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($pekerja as $key => $item)
+                                            <tr>
+                                                <td>{{ $key + 1 }}</td>
+                                                <td>{{ $item->name }}</td>
+                                                <td>{{ $item->username }}</td>
+                                                <td>{{ $item->email }}</td>
+                                                <td>{{ $item->role }}</td>
+                                                <td>{{ $item->phone }}</td>
+                                                <td>
+                                                    <a href=""
+                                                        class="btn btn-warning btn-sm"><i class="fas fa-edit"></i> Edit</a>
+                                                    <a href=""
+                                                        class="btn btn-danger btn-sm"><i class="fas fa-trash"></i> Hapus</a>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
                                 <!-- /.card-body -->
                             </div>
@@ -90,71 +111,80 @@
                     <form id="formTambahPekerja" method="POST" action="{{ route('addPekerja') }}">
                         @csrf
                         <div class="modal-body">
-    
+
                             <div class="form-group">
                                 <label for="namaPekerja">Nama Pekerja</label>
-                                <input type="text" class="form-control @error('namaPekerja') is-invalid @enderror" id="namaPekerja" name="namaPekerja"
-                                    placeholder="Masukkan nama pekerja" value="{{ old('namaPekerja') }}" required>
+                                <input type="text" class="form-control @error('namaPekerja') is-invalid @enderror"
+                                    id="namaPekerja" name="namaPekerja" placeholder="Masukkan nama pekerja"
+                                    value="{{ old('namaPekerja') }}" required>
                                 @error('namaPekerja')
-                                    <small class="text-danger">{{ $message }}</small>
+                                <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
-    
+
                             <div class="form-group">
                                 <label for="usernamePekerja">Username</label>
-                                <input type="text" class="form-control @error('usernamePekerja') is-invalid @enderror" id="usernamePekerja" name="usernamePekerja"
-                                    placeholder="Masukkan username pekerja" value="{{ old('usernamePekerja') }}" required>
+                                <input type="text" class="form-control @error('usernamePekerja') is-invalid @enderror"
+                                    id="usernamePekerja" name="usernamePekerja" placeholder="Masukkan username pekerja"
+                                    value="{{ old('usernamePekerja') }}" required>
                                 @error('usernamePekerja')
-                                    <small class="text-danger">{{ $message }}</small>
+                                <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
-    
+
                             <div class="form-group">
                                 <label for="emailPekerja">Email Login</label>
-                                <input type="email" class="form-control @error('emailPekerja') is-invalid @enderror" id="emailPekerja" name="emailPekerja"
-                                    placeholder="Masukkan email pekerja" value="{{ old('emailPekerja') }}" required>
+                                <input type="email" class="form-control @error('emailPekerja') is-invalid @enderror"
+                                    id="emailPekerja" name="emailPekerja" placeholder="Masukkan email pekerja"
+                                    value="{{ old('emailPekerja') }}" required>
                                 @error('emailPekerja')
-                                    <small class="text-danger">{{ $message }}</small>
+                                <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
-    
+
                             <div class="form-group">
                                 <label for="passwordPekerja">Password Login</label>
-                                <input type="password" class="form-control @error('passwordPekerja') is-invalid @enderror" id="passwordPekerja" name="passwordPekerja"
-                                    placeholder="Masukkan password pekerja" required>
+                                <input type="password"
+                                    class="form-control @error('passwordPekerja') is-invalid @enderror"
+                                    id="passwordPekerja" name="passwordPekerja" placeholder="Masukkan password pekerja"
+                                    required>
                                 @error('passwordPekerja')
-                                    <small class="text-danger">{{ $message }}</small>
+                                <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
-    
+
                             <div class="form-group">
                                 <label for="passwordPekerja_confirmation">Konfirmasi Password</label>
-                                <input type="password" class="form-control" id="passwordPekerja_confirmation" 
-                                    name="passwordPekerja_confirmation" placeholder="Konfirmasi password pekerja" required>
+                                <input type="password" class="form-control" id="passwordPekerja_confirmation"
+                                    name="passwordPekerja_confirmation" placeholder="Konfirmasi password pekerja"
+                                    required>
                             </div>
-    
+
                             <div class="form-group">
                                 <label for="posisiPekerja">Posisi</label>
-                                <select name="posisiPekerja" class="form-control @error('posisiPekerja') is-invalid @enderror" required>
+                                <select name="posisiPekerja"
+                                    class="form-control @error('posisiPekerja') is-invalid @enderror" required>
                                     <option disabled selected value>Pilih Posisi</option>
                                     <option value="teknisi">Teknisi</option>
                                     <option value="cs">Customer Service</option>
                                     <option value="penagih">Penagih</option>
                                 </select>
                                 @error('posisiPekerja')
-                                    <small class="text-danger">{{ $message }}</small>
+                                <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
-    
+
                             <div class="form-group">
                                 <label for="noTeleponPekerja">Nomor Telepon</label>
-                                <input type="text" class="form-control @error('noTeleponPekerja') is-invalid @enderror" id="noTeleponPekerja" name="noTeleponPekerja"
-                                    placeholder="Masukkan nomor telepon pekerja" value="{{ old('noTeleponPekerja') }}" required>
+                                <input type="text" class="form-control @error('noTeleponPekerja') is-invalid @enderror"
+                                    id="noTeleponPekerja" name="noTeleponPekerja"
+                                    placeholder="Masukkan nomor telepon pekerja" value="{{ old('noTeleponPekerja') }}"
+                                    required>
                                 @error('noTeleponPekerja')
-                                    <small class="text-danger">{{ $message }}</small>
+                                <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
-    
+
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
@@ -171,6 +201,12 @@
 
     <x-dhs.scripts />
     <x-dhs.alert />
+    <script>
+        $(document).ready(function () {
+            $('#tablePekerja').DataTable();
+        });
+
+    </script>
 </body>
 
 </html>
