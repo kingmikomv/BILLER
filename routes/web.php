@@ -60,6 +60,8 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
         Route::post('/isolir', [PelangganController::class, 'isolir'])->name('pelanggan.isolir');
         Route::post('/buka-isolir', [PelangganController::class, 'bukaIsolir'])->name('pelanggan.bukaIsolir');
         Route::post('/broadcast-wa', [PelangganController::class, 'broadcastWA'])->name('pelanggan.broadcastWA');
+        Route::post('/broadcastWA', [PelangganController::class, 'broadcastWAPS'])->name('pelanggan.broadcastWAPS');
+
         Route::get('/riwayat-pemasangan/{tiket}', [TeknisiController::class, 'show'])->name('riwayat.pemasangan');
 
     });

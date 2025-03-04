@@ -56,6 +56,9 @@
                                         <table id="exampleTable" class="table">
                                             <thead class="text-center">
                                                 <tr>
+                                                    <th>
+                                                        <input type="checkbox" id="checkAll">
+                                                    </th>
                                                     <th>No</th>
                                                     <th>Kode Pelanggan</th>
                                                     <th>Nama Pelanggan</th>
@@ -70,6 +73,9 @@
                                             <tbody>
                                                 @foreach ($pelanggan as $index => $data)
                                                 <tr class="text-center align-middle">
+                                                    <td>
+                                                        <input type="checkbox" class="check-item" value="{{ $data->id }}">
+                                                    </td>
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>{{ $data->pelanggan_id }}</td>
                                                     <td>{{ $data->nama_pelanggan }}</td>
@@ -106,6 +112,9 @@
                                                 @endforeach
                                             </tbody>
                                         </table>
+                                        
+                                       
+                                        
                                     </div>
                                 </div>
                             </div>
@@ -244,7 +253,14 @@
     <!-- ./wrapper -->
 
     <x-dhs.scripts />
-
+    <script>
+        document.getElementById("checkAll").addEventListener("change", function() {
+            let checkboxes = document.querySelectorAll(".check-item");
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    </script>
     <script>
         $(document).ready(function () {
             $('#exampleTable').DataTable({
