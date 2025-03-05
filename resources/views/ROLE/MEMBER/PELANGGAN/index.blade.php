@@ -125,7 +125,7 @@
 
                                                             <div
                                                                 class="col-md-6 d-flex justify-content-center align-items-center mt-2 mt-md-0">
-                                                                <button class="btn btn-info btn-sm cek-modem-btn"
+                                                                <button type="button" class="btn btn-info btn-sm cek-modem-btn"
                                                                     data-pppoe="{{ $pelanggan->akun_pppoe }}"
                                                                     data-nama="{{ $pelanggan->nama_pelanggan }}"
                                                                     data-routerid="{{ $pelanggan->router_id }}">
@@ -190,62 +190,166 @@
 
     </div>
 
-    <!-- Modal untuk Broadcast WhatsApp (Umum) -->
-    <div class="modal fade" id="broadcastModal" tabindex="-1" role="dialog" aria-labelledby="broadcastModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="broadcastModalLabel">Kirim Broadcast WhatsApp</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <textarea id="waMessageGeneral" class="form-control" rows="4"
-                        placeholder="Tulis pesan Anda di sini..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                    <button type="button" id="sendBroadcastGeneral" class="btn btn-primary">Kirim</button>
-                </div>
+
+
+
+
+<!-- Modal untuk Broadcast WhatsApp Umum -->
+<div class="modal fade" id="broadcastModal" tabindex="-1" role="dialog" aria-labelledby="broadcastModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="broadcastModalLabel">Kirim Broadcast WhatsApp</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label for="waMessageGeneral">Pesan WhatsApp:</label>
+                <textarea id="waMessageGeneral" class="form-control" rows="4" placeholder="Tulis pesan Anda di sini..." required></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" id="sendBroadcastGeneral" class="btn btn-primary">Kirim</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modal untuk Broadcast WA Per Site -->
-    <div class="modal fade" id="broadcastModalPs" tabindex="-1" role="dialog" aria-labelledby="broadcastModalPsLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="broadcastModalPsLabel">Broadcast WA Per Site</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <!-- Dropdown MikroTik -->
-                    <label for="mikrotikSelectPs">Pilih MikroTik:</label>
-                    <select id="mikrotikSelectPs" class="form-control">
-                        <option value="">-- Pilih MikroTik --</option>
-                        @foreach ($mikrotikRouters as $mikrotik)
-                        <option value="{{ $mikrotik->router_id }}">{{ $mikrotik->site }}</option>
-                        @endforeach
-                    </select>
+<!-- Modal untuk Broadcast WhatsApp Per Site -->
+<div class="modal fade" id="broadcastModalPs" tabindex="-1" role="dialog" aria-labelledby="broadcastModalPsLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="broadcastModalPsLabel">Broadcast WA Per Site</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Dropdown MikroTik -->
+                <label for="mikrotikSelectPs" class="font-weight-bold">Pilih MikroTik:</label>
+                <select id="mikrotikSelectPs" class="form-control" required>
+                    <option value="">-- Pilih MikroTik --</option>
+                    @foreach ($mikrotikRouters as $mikrotik)
+                    <option value="{{ $mikrotik->router_id }}">{{ $mikrotik->site }}</option>
+                    @endforeach
+                </select>
 
-                    <!-- Textarea Pesan -->
-                    <label for="waMessagePs" class="mt-3">Pesan WhatsApp:</label>
-                    <textarea id="waMessagePs" class="form-control" rows="4"
-                        placeholder="Tulis pesan di sini..."></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                    <button type="button" id="sendBroadcastPs" class="btn btn-primary">Kirim</button>
-                </div>
+                <!-- Textarea Pesan -->
+                <label for="waMessagePs" class="mt-3 font-weight-bold">Pesan WhatsApp:</label>
+                <textarea id="waMessagePs" class="form-control" rows="4" placeholder="Tulis pesan di sini..." required></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" id="sendBroadcastPs" class="btn btn-primary">Kirim</button>
             </div>
         </div>
     </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <!-- Modal -->
     <div class="modal fade" id="cekModemModal" tabindex="-1" role="dialog" aria-labelledby="cekModemModalLabel"
         aria-hidden="true">
@@ -291,34 +395,32 @@
     <!-- ./wrapper -->
 
     <x-dhs.scripts />
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const cekModemButtons = document.querySelectorAll('.cek-modem-btn');
+            
             cekModemButtons.forEach(button => {
                 button.addEventListener('click', function () {
                     const namaPelanggan = this.getAttribute('data-nama');
                     const akunPPPoE = this.getAttribute('data-pppoe');
                     const routerID = this.getAttribute('data-routerid');
-
+    
                     document.getElementById('modalNama').textContent = namaPelanggan;
                     document.getElementById('inputPPPoE').value = akunPPPoE;
                     document.getElementById('inputRouterID').value = routerID;
-
+    
+                    // Menampilkan modal menggunakan Bootstrap 4
                     $('#cekModemModal').modal('show');
                 });
             });
         });
-
     </script>
-    @if (session('success_script'))
-    <script>
-        {
-            !!session('success_script') !!
-        }
+   @if (session('success_script'))
+   <script>
+       {!! session('success_script') !!}
+   </script>
+@endif
 
-    </script>
-    @endif
     <script>
         $(document).ready(function () {
             $('#pelangganTable').DataTable({
@@ -399,9 +501,9 @@
                         .then(response => response.json())
                         .then(data => {
                             Swal.fire({
-                                icon: data.success ? "success" : "error",
-                                title: data.message || "Aksi berhasil.",
-                            }).then(() => location.reload());
+                            icon: "success",
+                            title: "Aksi Berhasil.",
+                        }).then(() => location.reload());
                         })
                         .catch(error => {
                             console.error("Fetch error:", error);
@@ -427,113 +529,111 @@
         attachClickEvent("isolir", "{{ route('pelanggan.isolir') }}");
         attachClickEvent("bukaIsolir", "{{ route('pelanggan.bukaIsolir') }}");
 
-        const sendBroadcast = (modalId, inputId, additionalData = {}) => {
-            let message = document.getElementById(inputId).value.trim();
-            if (message === "") {
-                Swal.fire({
-                    icon: "error",
-                    title: "Terjadi kesalahan",
-                    text: "Pesan Tidak Boleh Kosong!",
-                });
-                return;
-            }
+        const sendBroadcastGeneral = (modalId, inputId, additionalData = {}) => {
+    let message = document.getElementById(inputId).value.trim();
+    if (message === "") {
+        Swal.fire({
+            icon: "error",
+            title: "Terjadi kesalahan",
+            text: "Pesan Tidak Boleh Kosong!",
+        });
+        return;
+    }
 
-            sendRequest("{{ route('pelanggan.broadcastWA') }}", {
-                message,
-                ...additionalData
-            });
+    sendRequest("{{ route('pelanggan.broadcastWA') }}", {
+        message,
+        ...additionalData
+    });
 
-            // Sembunyikan modal setelah request terkirim
-            $(`#${modalId}`).modal("hide");
-        };
+    // Sembunyikan modal setelah request terkirim
+    $(`#${modalId}`).modal("hide");
+};
 
-        const broadcastBtn = document.getElementById("sendBroadcastGeneral");
-        if (broadcastBtn) {
-            broadcastBtn.addEventListener("click", () =>
-                sendBroadcast("broadcastModal", "waMessageGeneral")
-            );
-        }
+const broadcastBtn = document.getElementById("sendBroadcastGeneral");
+if (broadcastBtn) {
+    broadcastBtn.addEventListener("click", () =>
+        sendBroadcastGeneral("broadcastModal", "waMessageGeneral")
+    );
+}
     });
 
 </script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const sendBroadcast = (url, additionalData = {}) => {
-            let message = additionalData.message ? additionalData.message.trim() : "";
+   document.addEventListener("DOMContentLoaded", () => {
+    const sendBroadcastPs = (url, additionalData = {}) => {
+        let message = additionalData.message ? additionalData.message.trim() : "";
 
-            if (!additionalData.mikrotikId) {
-                Swal.fire({
-                    icon: "error",
-                    title: "Terjadi kesalahan",
-                    text: "Silakan pilih MikroTik terlebih dahulu!",
-                });
-                return;
-            }
-
-            if (!message) {
-                Swal.fire({
-                    icon: "error",
-                    title: "Terjadi kesalahan",
-                    text: "Pesan Tidak Boleh Kosong!",
-                });
-                return;
-            }
-
+        if (!additionalData.mikrotikId) {
             Swal.fire({
-                title: "Konfirmasi Pengiriman",
-                text: "Apakah Anda yakin ingin mengirim broadcast ini?",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Ya, kirim!",
-                cancelButtonText: "Batal",
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    fetch(url, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "X-CSRF-TOKEN": document.querySelector(
-                                    'meta[name="csrf-token"]').content,
-                            },
-                            body: JSON.stringify(additionalData),
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            Swal.fire({
-                                icon: data.success ? "Success" : "Error",
-                                title: data.message || "Pesan berhasil dikirim.",
-                            }).then(() => location.reload());
-                        })
-                        .catch(error => {
-                            console.error("Fetch error:", error);
-                            Swal.fire({
-                                icon: "error",
-                                title: "Terjadi kesalahan",
-                                text: "Gagal mengirim pesan. Periksa konsol untuk detail.",
-                            });
-                        });
-                }
+                icon: "error",
+                title: "Terjadi kesalahan",
+                text: "Silakan pilih MikroTik terlebih dahulu!",
             });
-        };
-
-        const broadcastPsBtn = document.getElementById("sendBroadcastPs");
-        if (broadcastPsBtn) {
-            broadcastPsBtn.addEventListener("click", () => {
-                let mikrotikId = document.getElementById("mikrotikSelectPs").value;
-                let message = document.getElementById("waMessagePs").value;
-
-                sendBroadcast("{{ route('pelanggan.broadcastWAPS') }}", {
-                    mikrotikId,
-                    message
-                });
-
-                // Sembunyikan modal setelah request dikirim
-                $("#broadcastModalPs").modal("hide");
-            });
+            return;
         }
-    });
 
+        if (!message) {
+            Swal.fire({
+                icon: "error",
+                title: "Terjadi kesalahan",
+                text: "Pesan Tidak Boleh Kosong!",
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: "Konfirmasi Pengiriman",
+            text: "Apakah Anda yakin ingin mengirim broadcast ini?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Ya, kirim!",
+            cancelButtonText: "Batal",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: JSON.stringify(additionalData),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Pesan berhasil dikirim.",
+                        }).then(() => location.reload());
+                    })
+                    .catch(error => {
+                        console.error("Fetch error:", error);
+                        Swal.fire({
+                            icon: "error",
+                            title: "Terjadi kesalahan",
+                            text: "Gagal mengirim pesan. Periksa konsol untuk detail.",
+                        });
+                    });
+            }
+        });
+    };
+
+    const broadcastPsBtn = document.getElementById("sendBroadcastPs");
+    if (broadcastPsBtn) {
+        broadcastPsBtn.addEventListener("click", () => {
+            let mikrotikId = document.getElementById("mikrotikSelectPs").value;
+            let message = document.getElementById("waMessagePs").value;
+
+            sendBroadcastPs("{{ route('pelanggan.broadcastWAPS') }}", {
+                mikrotikId,
+                message
+            });
+
+            // Sembunyikan modal setelah request dikirim
+            $("#broadcastModalPs").modal("hide");
+        });
+    }
+});
 </script>
 
 

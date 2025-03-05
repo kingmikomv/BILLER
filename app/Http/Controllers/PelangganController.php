@@ -1159,85 +1159,84 @@ class PelangganController extends Controller
             'api_responses' => $apiResponses,
         ]);
     }
-  
 
-public function broadcastWAPS(Request $request)
-{
-  
-    $mikrotikId = $request->mikrotikId;
-    $message = $request->message;
-    $token = 'g3ZXCoCHeR1y75j4xJoz';
 
-    // Ambil informasi MikroTik dari database
-    $mikrotik = Mikrotik::where('router_id', $mikrotikId)->where('unique_id', auth()->user()->unique_id)->first();
+    public function broadcastWAPS(Request $request)
+    {
 
-    if (!$mikrotik) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'MikroTik tidak ditemukan dalam database.',
-        ], 404);
-    }
+        $mikrotikId = $request->mikrotikId;
+        $message = $request->message;
+        $token = 'g3ZXCoCHeR1y75j4xJoz';
 
-    try {
-        // Koneksi ke MikroTik dengan RouterOS API
-        $client = new \RouterOS\Client([
-            'host' => 'id-1.aqtnetwork.my.id',
-            'user' => $mikrotik->username,
-            'pass' => $mikrotik->password,
-            'port' => (int) $mikrotik->port_api,
-        ]);
+        // Ambil informasi MikroTik dari database
+        $mikrotik = Mikrotik::where('router_id', $mikrotikId)->where('unique_id', auth()->user()->unique_id)->first();
 
-        // Ambil data dari /ppp/secret
-        $query = new Query('/ppp/secret/print');
-        $pppSecrets = $client->query($query)->read();
-
-        if (empty($pppSecrets)) {
+        if (!$mikrotik) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Tidak ada data PPP Secret yang ditemukan.',
+                'message' => 'MikroTik tidak ditemukan dalam database.',
             ], 404);
         }
 
-        // Lakukan broadcast WA ke setiap pengguna PPP Secret
-        foreach ($pppSecrets as $secret) {
-            $username = $secret['name'] ?? null;
+        try {
+            // Koneksi ke MikroTik dengan RouterOS API
+            $client = new \RouterOS\Client([
+                'host' => 'id-1.aqtnetwork.my.id',
+                'user' => $mikrotik->username,
+                'pass' => $mikrotik->password,
+                'port' => (int) $mikrotik->port_api,
+            ]);
 
-            if ($username) {
-                // Cek apakah ada pelanggan dengan router_id dan unique_id yang sesuai
-                $pelanggan = Pelanggan::where('router_id', $mikrotikId)
-                                      ->where('unique_id', auth()->user()->unique_id)
-                                      ->where('akun_pppoe', $username)
-                                      ->first();
+            // Ambil data dari /ppp/secret
+            $query = new Query('/ppp/secret/print');
+            $pppSecrets = $client->query($query)->read();
 
-                if ($pelanggan) {
-                    $phoneNumber = $pelanggan->nomor_telepon; // Ambil nomor HP pelanggan
+            if (empty($pppSecrets)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Tidak ada data PPP Secret yang ditemukan.',
+                ], 404);
+            }
 
-                    if ($phoneNumber) {
-                       
-                        // Kirim pesan WA melalui API Fonnte
-                        $response = Http::withHeaders([
-                            'Authorization' => $token
-                        ])->post('https://api.fonnte.com/send', [
-                            'target' => $phoneNumber,
-                            'message' => $message,
-                            'countryCode' => '62', // Kode Negara (62 untuk Indonesia)
-                        ]);
+            // Lakukan broadcast WA ke setiap pengguna PPP Secret
+            foreach ($pppSecrets as $secret) {
+                $username = $secret['name'] ?? null;
+
+                if ($username) {
+                    // Cek apakah ada pelanggan dengan router_id dan unique_id yang sesuai
+                    $pelanggan = Pelanggan::where('router_id', $mikrotikId)
+                        ->where('unique_id', auth()->user()->unique_id)
+                        ->where('akun_pppoe', $username)
+                        ->first();
+
+                    if ($pelanggan) {
+                        $phoneNumber = $pelanggan->nomor_telepon; // Ambil nomor HP pelanggan
+
+                        if ($phoneNumber) {
+
+                            // Kirim pesan WA melalui API Fonnte
+                            $response = Http::withHeaders([
+                                'Authorization' => $token
+                            ])->post('https://api.fonnte.com/send', [
+                                'target' => $phoneNumber,
+                                'message' => $message,
+                                'countryCode' => '62', // Kode Negara (62 untuk Indonesia)
+                            ]);
+                        }
                     }
                 }
             }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Pesan berhasil dikirim ke semua pengguna di MikroTik ID: $mikrotikId",
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat mengambil data dari MikroTik atau mengirim pesan.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => "Pesan berhasil dikirim ke semua pengguna di MikroTik ID: $mikrotikId",
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Terjadi kesalahan saat mengambil data dari MikroTik atau mengirim pesan.',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
-
 }
