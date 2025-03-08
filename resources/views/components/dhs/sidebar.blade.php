@@ -89,13 +89,7 @@
                   <p>Riwayat Tagihan</p>
                 </a>
               </li>
-             
-              <li class="nav-item">
-                <a href="pages/charts/chartjs.html" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Broadcast WhatsApp</p>
-                </a>
-              </li>
+            
             </ul>
           </li>
           @endif
@@ -164,8 +158,8 @@
             </ul>
           </li>
 
-          <li class="nav-item">
-            <a href="#" class="nav-link">
+          <li class="nav-item {{ request()->routeIs('olt.epon') ? 'menu-open' : '' }}">
+            <a href="#" class="nav-link {{ request()->routeIs('olt.epon') ? 'active' : '' }}">
               <i class="nav-icon fas fa-chart-line"></i>
               <p>
                 OLT
@@ -174,7 +168,7 @@
             </a>
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="{{route('olt.epon')}}" class="nav-link">
+                <a href="{{route('olt.epon')}}" class="nav-link {{ request()->routeIs('olt.epon') ? 'active' : '' }}">
                   <i class="far fa-circle nav-icon"></i>
                   <p>EPON</p>
                 </a>

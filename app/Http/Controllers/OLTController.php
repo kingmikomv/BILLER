@@ -12,8 +12,8 @@ class OLTController extends Controller
 {
     public function epon(){
         $dataSite = Mikrotik::where('unique_id', auth()->user()->unique_id)->get();
-
-        return view('ROLE.MEMBER.OLT.EPON.epon', compact('dataSite'));
+        $dataOLT = OLT::where('unique_id', auth()->user()->unique_id)->get();
+        return view('ROLE.MEMBER.OLT.EPON.epon', compact('dataSite', 'dataOLT'));
     }
     public function tambah_epon(Request $req)
     {
