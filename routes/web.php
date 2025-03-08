@@ -9,6 +9,7 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\PenagihController;
 use App\Http\Controllers\TeknisiController;
 use App\Http\Controllers\MikrotikController;
+use App\Http\Controllers\OLTController;
 use App\Http\Controllers\PelangganController;
 
 /*
@@ -83,6 +84,16 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
             Route::get('/', 'pppoe')->name('member.pppoe');
             Route::get('/get-mikrotik-profiles', 'getMikrotikProfiles')->name('getMikrotikProfiles');
             Route::post('/tambahpaket', 'tambahpaket')->name('tambahpaket');
+        });
+    });
+
+
+    // SIDEBAR MENU OLT
+    Route::middleware(['role:member,teknisi'])->prefix('olt')->group(function () {
+       // EPON
+        Route::prefix('olt')->controller(OLTController::class)->group(function () {
+            Route::get('/epon', 'epon')->name('olt.epon');
+            Route::post('/tambah-epon', 'tambah_epon')->name('tambah.olt.epon');
         });
     });
 

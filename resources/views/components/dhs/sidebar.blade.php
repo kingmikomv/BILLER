@@ -174,7 +174,7 @@
             </a>
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="{{route('member.router')}}" class="nav-link">
+                <a href="{{route('olt.epon')}}" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>EPON</p>
                 </a>
