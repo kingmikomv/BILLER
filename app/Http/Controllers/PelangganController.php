@@ -917,7 +917,7 @@ class PelangganController extends Controller
 
         return response()->json([
             'sessions' => 'success',
-            'message' => 'Proses restart PPPoE selesai.',
+            'message' => 'Proses Isolir PPPoE selesai.',
             'api_responses' => $apiResponses,
         ]);
     }
@@ -1047,7 +1047,7 @@ class PelangganController extends Controller
 
         return response()->json([
             'sessions' => 'success',
-            'message' => 'Proses restart PPPoE selesai.',
+            'message' => 'Proses Buka Isolir PPPoE selesai.',
             'api_responses' => $apiResponses,
         ]);
     }

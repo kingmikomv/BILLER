@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
-use App\Models\PaketPppoe;
 use App\Models\TiketPsb;
 use App\Models\Pelanggan;
+use App\Models\PaketPppoe;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class TeknisiController extends Controller
 {
@@ -58,6 +59,47 @@ class TeknisiController extends Controller
                     'tanggal_pembuatan' => now(),
                 ]);
             }
+            $token = 'g3ZXCoCHeR1y75j4xJoz';
+            $message = "Yth. ".$plg->nama_pelanggan.",\n\n"
+    . "Selamat! Pemasangan WiFi Anda telah selesai dan kini sudah dapat digunakan.\n\n"
+    . "Berikut detail layanan Anda:\n"
+    . "- Nama Pelanggan: ".$plg->nama_pelanggan."\n"
+    . "- ID Pelanggan: ".$plg->pelanggan_id."\n"
+    . "- Paket: ".$plg->profile_paket."\n"
+    . "- Tanggal Aktivasi: ".$plg->tanggal_terpasang."\n\n"
+    . "Silakan cek koneksi internet Anda dan pastikan semuanya berjalan lancar. Jika ada kendala atau pertanyaan, jangan ragu untuk menghubungi tim support kami.\n\n"
+    . "Terima kasih telah memilih layanan kami. Selamat menikmati koneksi internet yang cepat dan stabil! 🚀\n\n"
+    . "Hormat kami,\n"
+    . "AQT Network";
+
+            $pelanggan = Pelanggan::where('no_tiket', $psb->no_tiket)
+                        ->where('unique_id', auth()->user()->unique_id)
+                        ->where('akun_pppoe', $plg->akun_pppoe)
+                        ->first();
+
+                    if ($pelanggan) {
+                        $phoneNumber = $pelanggan->nomor_telepon; // Ambil nomor HP pelanggan
+
+                        if ($phoneNumber) {
+
+                            // Kirim pesan WA melalui API Fonnte
+                            $response = Http::withHeaders([
+                                'Authorization' => $token
+                            ])->post('https://api.fonnte.com/send', [
+                                'target' => $phoneNumber,
+                                'message' => $message,
+                                'countryCode' => '62', // Kode Negara (62 untuk Indonesia)
+                            ]);
+                        }
+                    }
+                
+
+
+
+
+
+
+
             return redirect()->back()->with('success', 'Status pemasangan telah diperbarui!');
         } else {
             return redirect()->back()->with('error', 'Tiket tidak ditemukan!');

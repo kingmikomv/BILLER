@@ -1,3 +1,5 @@
+
+@if(auth()->user()->role == 'member')
 <div class="row">
     <div class="col-12 col-sm-6 col-md-4">
       <div class="info-box">
@@ -137,3 +139,5 @@
       <!-- /.info-box -->
     </div>
   </div>
+
+  @endif
