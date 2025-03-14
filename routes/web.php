@@ -2,14 +2,15 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\OLTController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\BillingController;
+use App\Http\Controllers\UsahaController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\PenagihController;
 use App\Http\Controllers\TeknisiController;
 use App\Http\Controllers\MikrotikController;
-use App\Http\Controllers\OLTController;
 use App\Http\Controllers\PelangganController;
 
 /*
@@ -107,6 +108,14 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
         Route::get('/', 'company')->name('company');
         Route::put('/profil-perusahaan/{id}/up',  'updateCompany')->name('updateCompany');
     
+    });
+
+
+
+    Route::middleware(['auth', 'role:member'])->group(function () {
+        Route::get('/profil-usaha', [UsahaController::class, 'index'])->name('profil.usaha');
+        Route::get('/profil-usaha/create', [UsahaController::class, 'create'])->name('profil.usaha.create');
+        Route::post('/profil-usaha', [UsahaController::class, 'store'])->name('profil.usaha.store');
     });
 });
 

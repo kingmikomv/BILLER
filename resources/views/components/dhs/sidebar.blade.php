@@ -215,21 +215,32 @@
             </a>
             <ul class="nav nav-treeview">
               <li class="nav-item">
-                <a href="" class="nav-link">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Akun Saya</p>
-                </a>
+                  <a href="" class="nav-link">
+                      <i class="far fa-circle nav-icon"></i>
+                      <p>Akun Saya</p>
+                  </a>
               </li>
+          
+              @if(auth()->user()->role == 'member')
+                  <li class="nav-item">
+                      <a href="{{route('profil.usaha')}}" class="nav-link">
+                          <i class="far fa-circle nav-icon"></i>
+                          <p>Setting Profil Usaha</p>
+                      </a>
+                  </li>
+              @endif
+          
               <li class="nav-item">
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                  @csrf
-              </form>
-              <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                  <i class="fas fa-sign-out-alt nav-icon"></i>
-                  <p>Logout</p>
-              </a>
+                  <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                      @csrf
+                  </form>
+                  <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                      <i class="fas fa-sign-out-alt nav-icon"></i>
+                      <p>Logout</p>
+                  </a>
               </li>
-            </ul>
+          </ul>
+          
           </li>
 
 
