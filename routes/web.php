@@ -114,9 +114,9 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
 
     Route::middleware(['auth', 'role:member'])->group(function () {
         Route::get('/profil-usaha', [UsahaController::class, 'index'])->name('profil.usaha');
-        Route::get('/profil-usaha/create', [UsahaController::class, 'create'])->name('profil.usaha.create');
-        Route::post('/profil-usaha', [UsahaController::class, 'store'])->name('profil.usaha.store');
-    });
+        Route::post('/profil/usaha/store-or-update', [UsahaController::class, 'storeOrUpdate'])
+        ->name('profil.usaha.storeOrUpdate');
+        });
 });
 
 
