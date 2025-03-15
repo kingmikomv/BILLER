@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Usaha;
+use App\Models\ActivityLog;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
 
@@ -11,8 +12,9 @@ class UsahaController extends Controller
 {
     public function index()
     {
+        $logs = ActivityLog::with('user')->latest()->paginate(25);
         $usaha = auth()->user()->usaha; // Ambil usaha milik user
-        return view('ROLE.MEMBER.PROFIL.USAHA.index', compact('usaha'));
+        return view('ROLE.MEMBER.PROFIL.USAHA.index', compact('usaha', 'logs'));
     }
 
     public function create()

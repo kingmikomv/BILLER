@@ -8,6 +8,7 @@ use App\Models\Mikrotik;
 use App\Models\PaketPppoe;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Helpers\ActivityLogger;
 use Illuminate\Support\Facades\DB;
 
 class MikrotikController extends Controller
@@ -193,6 +194,7 @@ class MikrotikController extends Controller
                 'local_ip' => $localIp,
                 'remote_ip' => $remoteIp,  // Menyimpan remote IP
             ]);
+            ActivityLogger::log('Menambahkan Router Baru', 'Nama Site: '.$request->site);
 
             return redirect()->back()->with('success', 'Berhasil Menambahkan MikroTik');
         } catch (\Exception $e) {
