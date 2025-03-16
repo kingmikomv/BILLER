@@ -8,6 +8,7 @@ use RouterOS\Client;
 use App\Models\Mikrotik;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Helpers\ActivityLogger;
 use App\Models\ProfilPerusahaan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +20,7 @@ class MemberController extends Controller
 {
     public function pekerja()
     {
-        $pekerja = User::where('unique_id', auth()->user()->unique_id)->where('role', '!=', 'superadmin')->get();
+        $pekerja = User::where('parent_id', auth()->user()->id)->where('role', '!=', 'superadmin')->get();
         return view('ROLE.MEMBER.PEKERJA.index', compact('pekerja'));
     }
     public function addPekerja(Request $request)
@@ -41,8 +42,7 @@ class MemberController extends Controller
 
         // Simpan data ke database
         $pekerja = new User();
-        $pekerja->unique_id = auth()->user()->unique_id;
-        $pekerja->unique_id_pekerja = 'PEK_' . Str::uuid();
+        $pekerja->parent_id = auth()->user()->id;
         $pekerja->name = $request->input('namaPekerja');
         $pekerja->username = $request->input('usernamePekerja'); // Simpan username
         $pekerja->email = $request->input('emailPekerja');
@@ -51,6 +51,7 @@ class MemberController extends Controller
         $pekerja->phone = $request->input('noTeleponPekerja');
         $pekerja->email_verified_at = now();
         $pekerja->save();
+        ActivityLogger::log('Menambahkan Pekerja Baru', 'Nama Pekerja : '.$request->input('namaPekerja'). " Posisi : ". $request->input('posisiPekerja'));
 
         // Redirect atau response JSON
         return redirect()->back()->with('success', 'Pekerja berhasil ditambahkan');

@@ -6,27 +6,52 @@ use App\Models\Invoice;
 use App\Models\TiketPsb;
 use App\Models\Pelanggan;
 use App\Models\PaketPppoe;
+use App\Helpers\ActivityLogger;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
 class TeknisiController extends Controller
 {
+
+    
     public function datapsb()
     {
-        $dataUniqueId = TiketPsb::where('unique_id', auth()->user()->unique_id)
-        ->where('status_tiket', 'Belum Dikonfirmasi')
-        ->pluck('no_tiket'); // Ambil hanya 'no_tiket' dalam bentuk array
-
-        $cocokPelanggan = Pelanggan::where('unique_id', auth()->user()->unique_id)
-        ->whereIn('no_tiket', $dataUniqueId)
-        ->get();
-
-        $riwayatPemasangan = Pelanggan::where('unique_id', auth()->user()->unique_id)
-        ->where('status_terpasang', 'Sudah Dipasang')
-        ->get();
-
-    return view('ROLE.PEKERJA.TEKNISI.datapsb', compact('cocokPelanggan', 'riwayatPemasangan'));
+        $user = auth()->user();
+        $userId = $user->parent_id;
+    
+        // Ambil semua pelanggan_id dari TiketPsb yang terkait dengan teknisi (berdasarkan parent_id)
+        $pelangganID = TiketPsb::whereHas('mikrotik', function ($query) use ($userId) {
+                $query->where('parent_id', $userId);
+            })
+            ->pluck('pelanggan_id');
+    
+        // Ambil nomor tiket yang belum dikonfirmasi
+        $dataUniqueId = TiketPsb::whereHas('mikrotik', function ($query) use ($userId) {
+                $query->where('parent_id', $userId);
+            })
+            ->where('status_tiket', 'Belum Dikonfirmasi')
+            ->pluck('no_tiket');
+    
+        // Ambil pelanggan yang tiketnya belum dikonfirmasi
+        $cocokPelanggan = Pelanggan::whereIn('id', $pelangganID) // Gunakan 'id' bukan 'pelanggan_id' jika primary key tabel pelanggan adalah 'id'
+            ->whereIn('no_tiket', $dataUniqueId)
+            ->with(['mikrotik', 'paket'])
+            ->get();
+    
+        // Ambil pelanggan yang sudah terpasang
+        $riwayatPemasangan = Pelanggan::whereIn('id', $pelangganID) 
+            ->where('status_terpasang', 'Sudah Dipasang')
+            ->with(['mikrotik', 'paket'])
+            ->get();
+    
+        return view('ROLE.PEKERJA.TEKNISI.datapsb', compact('cocokPelanggan', 'riwayatPemasangan'));
     }
+    
+    
+    
+
+    
     public function konfirmasiPemasangan($tiket_id)
     {
         $tid = $tiket_id;
@@ -73,7 +98,7 @@ class TeknisiController extends Controller
     . "AQT Network";
 
             $pelanggan = Pelanggan::where('no_tiket', $psb->no_tiket)
-                        ->where('unique_id', auth()->user()->unique_id)
+                        ->where('no_tiket', $plg->no_tiket)
                         ->where('akun_pppoe', $plg->akun_pppoe)
                         ->first();
 
@@ -98,7 +123,7 @@ class TeknisiController extends Controller
 
 
 
-
+        ActivityLogger::log('Teknisi '. auth()->user()->name .' Mengkonfirmasi PSB', 'Nomor Tiket PSB : ' .$tid);
 
             return redirect()->back()->with('success', 'Status pemasangan telah diperbarui!');
         } else {

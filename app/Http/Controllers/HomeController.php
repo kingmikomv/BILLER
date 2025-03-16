@@ -28,14 +28,13 @@ class HomeController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $uniqueId = $user->unique_id;
     
-        // Ambil semua router yang dimiliki oleh user
-        $mikrotikRouters = Mikrotik::where('unique_id', $uniqueId)->get();
+        // Ambil semua router yang dimiliki oleh user berdasarkan router_id
+        $routerIds = $user->routers ? $user->routers->pluck('router_id') : collect();
+        $mikrotikRouters = Mikrotik::whereIn('router_id', $routerIds)->get();
     
         // Ambil semua pelanggan terkait router yang dimiliki user
-        $plg = Pelanggan::whereIn('router_id', $mikrotikRouters->pluck('router_id'))
-            ->with('paket')->get();
+        $plg = Pelanggan::whereIn('router_id', $routerIds)->with('paket')->get();
     
         // Inisialisasi array untuk menyimpan status pelanggan
         $onlineStatus = [];
@@ -88,7 +87,10 @@ class HomeController extends Controller
     
         // Check user role dan kirim data ke view sesuai peran pengguna
         if ($user->hasRole('superadmin')) {
+
+
             return response()->json(['message' => 'superadmin']);
+            
         } elseif ($user->hasRole('member')) {
             $totalPelanggan = $plg->count();
             $totalPelangganAktif = $plg->where('status', 'Aktif')->count();
@@ -110,6 +112,8 @@ class HomeController extends Controller
         // Default view jika peran tidak terdefinisi
         return redirect()->route('home');
     }
+    
+
     
     
 }

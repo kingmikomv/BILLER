@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('paketpppoe', function (Blueprint $table) {
             $table->id();
-            $table->string('unique_id');
-            $table->string('router_id');
+
+            $table->foreignId('mikrotik_id')->constrained('mikrotik')->onDelete('cascade'); 
             $table->string('kode_paket');
             $table->string('site');
             $table->string('username'); // dari mikrotik
@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('nama_paket');
             $table->timestamps();
         });
+        
     }
 
     /**

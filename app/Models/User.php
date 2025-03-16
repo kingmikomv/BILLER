@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\PaketPppoe;
 use App\Models\ProfilPerusahaan;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
@@ -21,7 +22,6 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array<int, string>
      */
     protected $fillable = [
-        'unique_id',
         'unique_member',
         'unique_id_pekerja',
         'username',
@@ -75,4 +75,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(Usaha::class);
     }
+    public function mikrotik()
+    {
+        return $this->hasMany(Mikrotik::class, 'user_id', 'id');
+    }
+
 }

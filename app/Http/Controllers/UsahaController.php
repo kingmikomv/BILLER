@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Usaha;
 use App\Models\ActivityLog;
+use App\Helpers\ActivityLogger;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -63,7 +65,8 @@ class UsahaController extends Controller
             $user->usaha()->create($data);
             $message = 'Profil usaha berhasil ditambahkan.';
         }
-    
+        ActivityLogger::log('Mengupdate Profil Usaha', '');
+
         return redirect()->route('profil.usaha')->with('success', $message);
     }
     

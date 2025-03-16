@@ -50,4 +50,15 @@ class Pelanggan extends Model
             'countryCode' => '62',
         ]);
     }
+
+    public function mikrotik()
+{
+    return $this->belongsTo(Mikrotik::class, 'mikrotik_id');
+}
+
+public function tiket()
+{
+    return $this->hasOne(TiketPsb::class, 'pelanggan_id');
+}
+
 }

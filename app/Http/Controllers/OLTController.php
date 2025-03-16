@@ -6,6 +6,8 @@ use App\Models\OLT;
 use RouterOS\Query;
 use RouterOS\Client;
 use App\Models\Mikrotik;
+use App\Helpers\ActivityLogger;
+
 use Illuminate\Http\Request;
 
 class OLTController extends Controller
@@ -102,7 +104,8 @@ class OLTController extends Controller
                 'ipvpn' => $ipmikrotik->remote_ip,
                 'portvpn' => $newPort,
             ]);
-    
+            ActivityLogger::log('Menambahkan OLT', 'Nama OLT : '.$namaOLT);
+
             session()->flash('success', "Konfigurasi OLT Berhasil Ditambahkan!");
             return redirect()->back();
         } catch (ClientException $e) {

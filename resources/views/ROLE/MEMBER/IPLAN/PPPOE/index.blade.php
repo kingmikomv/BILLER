@@ -56,7 +56,7 @@
                                             </thead>
                                             <tbody>
                                                 @php $no = 1; @endphp
-                                                @foreach($paket as $pkt)
+                                                @foreach($onlinePackages as $pkt)
                                                 <tr>
                                                     <td>{{ $no++ }}</td>
                                                     <td>{{ $pkt->kode_paket }}</td>
@@ -88,73 +88,72 @@
             <!-- /.content -->
         </div>
 
-        <!-- Modal Tambah Paket -->
-        <div class="modal fade" id="tambahRouterModal" tabindex="-1" aria-labelledby="tambahRouterModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="tambahRouterModalLabel">Tambah Profil PPPoE</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <form action="{{ route('tambahpaket') }}" method="post">
-                        @csrf
-                        <div class="modal-body">
-                            <!-- Pilihan MikroTik -->
-                            <div class="form-group">
-                                <label for="username">Pilih MikroTik ( Aktif )</label>
-                                <select class="form-control" id="username" name="username" required>
-                                    <option value="">Pilih MikroTik</option>
-                                    @foreach($onlineRouters as $mikrotiks)
-                                    <option value="{{ $mikrotiks->username }}" data-site="{{ $mikrotiks->site }}">
-                                        {{ $mikrotiks->site }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                    
-                            <!-- Profil MikroTik -->
-                            <div class="form-group">
-                                <label for="profile">Pilih Profil</label>
-                                <select class="form-control" id="profile" name="profile" required>
-                                    <option value="">Pilih Profil</option>
-                                </select>
-                                <div id="loadingIndicator" style="display:none;">Memuat profil MikroTik...</div>
-                            </div>
-                    
-                            <!-- Nama Paket -->
-                            <div class="form-group">
-                                <label for="packageName">Nama Paket</label>
-                                <div class="input-group mb-3">
-                                    <input type="text" class="form-control" id="packageName" name="namaPaket" placeholder="Nama Paket"
-                                        aria-label="Nama Paket" required>
-                                    <div class="input-group-append">
-                                        <span class="input-group-text" id="selectedMikrotik"></span>
-                                    </div>
-                                </div>
-                            </div>
-                    
-                            <!-- Hidden Input untuk Nama MikroTik -->
-                            <input type="hidden" id="mikrotikSite" name="mikrotikSite">
-                    
-                            <!-- Harga Paket -->
-                            <div class="form-group">
-                                <label for="hargaPaket">Harga Paket</label>
-                                <input type="text" class="form-control" id="hargaPaket" name="hargaPaket" maxlength="7" pattern="\d*" required
-                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 7)">
-                            </div>
-                        </div>
-                    
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary">Simpan Profil</button>
-                        </div>
-                    </form>
-                </div>
+        <div class="modal fade" id="tambahRouterModal" tabindex="-1" aria-labelledby="tambahRouterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tambahRouterModalLabel">Tambah Profil PPPoE</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
+            <form action="{{ route('tambahpaket') }}" method="post">
+                @csrf
+                <div class="modal-body">
+                    <!-- Pilihan MikroTik -->
+                    <div class="form-group">
+                        <label for="username">Pilih MikroTik ( Aktif )</label>
+                        <select class="form-control" id="username" name="username" required>
+                            <option value="">Pilih MikroTik</option>
+                            @foreach(collect($onlinePackages)->unique('username') as $mikrotiks)
+    <option value="{{ $mikrotiks->username }}" data-site="{{ $mikrotiks->site }}">
+        {{ $mikrotiks->site }}
+    </option>
+@endforeach
+
+                        </select>
+                    </div>
+
+                    <!-- Profil MikroTik -->
+                    <div class="form-group">
+                        <label for="profile">Pilih Profil</label>
+                        <select class="form-control" id="profile" name="profile" required>
+                            <option value="">Pilih Profil</option>
+                        </select>
+                        <small id="loadingIndicator" style="display:none; color: blue;">Memuat profil MikroTik...</small>
+                    </div>
+
+                    <!-- Nama Paket -->
+                    <div class="form-group">
+                        <label for="packageName">Nama Paket</label>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="packageName" name="namaPaket" placeholder="Nama Paket" required>
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="selectedMikrotik"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Input untuk Nama MikroTik -->
+                    <input type="hidden" id="mikrotikSite" name="mikrotikSite">
+
+                    <!-- Harga Paket -->
+                    <div class="form-group">
+                        <label for="hargaPaket">Harga Paket</label>
+                        <input type="text" class="form-control" id="hargaPaket" name="hargaPaket" required
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 7)">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Profil</button>
+                </div>
+            </form>
         </div>
+    </div>
+</div>
+
 
         <x-dhs.footer />
     </div>
@@ -163,61 +162,60 @@
     <x-dhs.scripts />
     <x-dhs.alert />
     <script>
-        $(document).ready(function () {
-            const mikrotikDropdown = $('#username');
-            const profileDropdown = $('#profile');
-            const loadingIndicator = $('#loadingIndicator');
-            const selectedMikrotikSpan = $('#selectedMikrotik');
-            const mikrotikSiteInput = $('#mikrotikSite');
-    
-            // Saat MikroTik dipilih
-            mikrotikDropdown.on('change', function () {
-                const selectedOption = mikrotikDropdown.find(':selected');
-                const siteName = selectedOption.data('site');
-    
-                // Tampilkan nama MikroTik pada span
-                if (siteName) {
-                    selectedMikrotikSpan.text(siteName);
-                    mikrotikSiteInput.val(siteName); // Simpan ke input hidden
-                } else {
-                    selectedMikrotikSpan.text('');
-                    mikrotikSiteInput.val('');
-                }
-    
-                // Kosongkan dan muat ulang dropdown profil
-                profileDropdown.empty();
-                profileDropdown.append('<option value="">Pilih Profil</option>');
-                loadingIndicator.show();
-    
-                const username = $(this).val();
-                if (username) {
-                    $.ajax({
-                        url: '{{ route("getMikrotikProfiles") }}',
-                        type: 'GET',
-                        data: { username: username },
-                        success: function (data) {
-                            loadingIndicator.hide();
-                            if (data.status === 'success' && data.profiles.length > 0) {
-                                data.profiles.forEach(profile => {
-                                    profileDropdown.append(
-                                        `<option value="${profile.name}">${profile.name}</option>`
-                                    );
-                                });
-                            }
-                        },
-                        error: function () {
-                            loadingIndicator.hide();
-                            profileDropdown.append(
-                                '<option value="">Gagal memuat data profil</option>'
-                            );
-                        }
-                    });
-                } else {
+    $(document).ready(function () {
+        const mikrotikDropdown = $('#username');
+        const profileDropdown = $('#profile');
+        const loadingIndicator = $('#loadingIndicator');
+        const selectedMikrotikSpan = $('#selectedMikrotik');
+        const mikrotikSiteInput = $('#mikrotikSite');
+
+        // Saat MikroTik dipilih
+        mikrotikDropdown.on('change', function () {
+            const selectedOption = mikrotikDropdown.find(':selected');
+            const siteName = selectedOption.data('site');
+
+            // Tampilkan nama MikroTik di sebelah input paket
+            selectedMikrotikSpan.text(siteName || '');
+            mikrotikSiteInput.val(siteName || '');
+
+            // Kosongkan dropdown profil sebelum menambahkan data baru
+            profileDropdown.empty().append('<option value="">Pilih Profil</option>');
+            
+            // Jika tidak ada pilihan MikroTik, hentikan eksekusi
+            const username = $(this).val();
+            if (!username) return;
+
+            // Tampilkan loading indikator
+            loadingIndicator.show();
+
+            $.ajax({
+                url: '{{ route("getMikrotikProfiles") }}',
+                type: 'GET',
+                data: { username: username },
+                dataType: 'json',
+                success: function (response) {
                     loadingIndicator.hide();
+                    if (response.status === 'success' && response.profiles.length > 0) {
+                        response.profiles.forEach(profile => {
+                            profileDropdown.append(`<option value="${profile.name}">${profile.name}</option>`);
+                        });
+                    } else {
+                        profileDropdown.append('<option value="">Tidak ada profil tersedia</option>');
+                    }
+                },
+                error: function (xhr) {
+                    loadingIndicator.hide();
+                    let errorMessage = "Gagal memuat data profil";
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage += ": " + xhr.responseJSON.message;
+                    }
+                    profileDropdown.append(`<option value="">${errorMessage}</option>`);
                 }
             });
         });
-    </script>
+    });
+</script>
+
     <script>
         $(document).ready(function () {
             $('#pppoeTable').DataTable({

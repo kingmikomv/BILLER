@@ -15,48 +15,55 @@ class MikrotikController extends Controller
 {
 
     public function router()
-    {
-        $uniqueId = auth()->user()->unique_id;
-        $mikrotik = Mikrotik::where('unique_id', $uniqueId)->get();
-
-        // Membuat koneksi API MikroTik
-        $client = new Client([
-            'host' => 'id-1.aqtnetwork.my.id',
-            'user' => 'admin',
-            'pass' => 'bakpao1922',
-        ]);
-
-        $query = new Query('/ppp/active/print');
-        $response = $client->query($query)->read();
-
-        // Array untuk menyimpan status koneksi setiap router
-        $routerStatuses = [];
-
-        // Loop untuk mengecek koneksi di active-connection
-        foreach ($mikrotik as $router) {
-            $vpnUsername = $router->vpn_username; // Ambil vpn_username dari database
-            $status = 'Offline'; // Default status adalah Offline
-
-            // Loop untuk mengecek apakah vpn_username ada di active-connection
-            foreach ($response as $connection) {
-                if (isset($connection['name']) && $connection['name'] === $vpnUsername) {
-                    // Jika vpn_username ditemukan di active-connection, set status ke Online
-                    $status = 'Online';
-                    break;
-                }
-            }
-
-            // Simpan status router berdasarkan vpn_username
-            $routerStatuses[$router->id] = $status;
-        }
-
-        // Debug untuk melihat hasil status koneksi
-        //dd($routerStatuses);
-
-        // Kembalikan view dengan data router dan status koneksi mereka
-        return view('ROLE/MEMBER/ROUTER/router', compact('mikrotik', 'routerStatuses'));
+{
+    $user = auth()->user(); // Ambil user yang sedang login
+    $userId = $user->id;
+    
+    // Cek apakah user adalah member atau bukan
+    if ($user->role == 'member') {
+        // Jika member, ambil mikrotik berdasarkan user_id
+        $mikrotik = Mikrotik::where('user_id', $userId)->get();
+    } else {
+        // Jika bukan member (misal teknisi), ambil mikrotik berdasarkan parent_id
+        $mikrotik = Mikrotik::where('user_id', $user->parent_id)->get();
     }
 
+    // Membuat koneksi API MikroTik
+    $client = new Client([
+        'host' => 'id-1.aqtnetwork.my.id',
+        'user' => 'admin',
+        'pass' => 'bakpao1922',
+    ]);
+
+    $query = new Query('/ppp/active/print');
+    $response = $client->query($query)->read();
+
+    // Array untuk menyimpan status koneksi setiap router
+    $routerStatuses = [];
+
+    // Loop untuk mengecek koneksi di active-connection
+    foreach ($mikrotik as $router) {
+        $vpnUsername = $router->vpn_username; // Ambil vpn_username dari database
+        $status = 'Offline'; // Default status adalah Offline
+
+        // Loop untuk mengecek apakah vpn_username ada di active-connection
+        foreach ($response as $connection) {
+            if (isset($connection['name']) && $connection['name'] === $vpnUsername) {
+                // Jika vpn_username ditemukan di active-connection, set status ke Online
+                $status = 'Online';
+                break;
+            }
+        }
+
+        // Simpan status router berdasarkan vpn_username
+        $routerStatuses[$router->id] = $status;
+    }
+
+    // Kembalikan view dengan data router dan status koneksi mereka
+    return view('ROLE/MEMBER/ROUTER/router', compact('mikrotik', 'routerStatuses'));
+}
+
+    
     public function store(Request $request)
     {
         try {
@@ -64,13 +71,13 @@ class MikrotikController extends Controller
             $request->validate([
                 'site' => 'required|string|max:255',
             ]);
-
-            // Ambil unique_id dari user yang login
-            $uniqueId = auth()->user()->unique_id;
-            $username = "BILLER_" . rand(1000, 9999) . auth()->user()->unique_id;
+    
+            // Ambil user_id dari user yang login
+            $userId = auth()->user()->id;
+            $username = "BILLER_" . rand(1000, 9999) . auth()->user()->id;
             $vpnUsername = date('Y') . date('m') . rand(1000000, 9999999);
             $ur = date('Y') . date('m') . auth()->user()->id . rand(1000000, 9999999);
-
+    
             // Koneksi ke MikroTik
             $client = new Client([
                 'host' => 'id-1.aqtnetwork.my.id',
@@ -78,31 +85,31 @@ class MikrotikController extends Controller
                 'pass' => 'bakpao1922',
                 'port' => 8728,
             ]);
-
+    
             // Mengambil semua PPP secrets untuk memeriksa username yang sudah ada
             $queryAllSecrets = new Query('/ppp/secret/print');
             $response = $client->query($queryAllSecrets)->read();
-
+    
             // Cek apakah username sudah ada
             $existingUsernames = array_column($response, 'name');
-
+    
             if (in_array($username, $existingUsernames)) {
                 session()->flash('error', 'Username sudah ada, silakan gunakan username lain.');
                 return redirect()->back();
             }
-
+    
             // Oktet yang tetap
             $firstOctet = '180';
             $secondOctet = 16;
-
+    
             // Ambil daftar thirdOctets yang sudah digunakan
             $usedThirdOctets = array_map(function ($secret) {
                 return isset($secret['local-address']) ? explode('.', $secret['local-address'])[2] : null;
             }, $response);
-
+    
             // Hapus nilai null dari daftar $usedThirdOctets
             $usedThirdOctets = array_filter($usedThirdOctets);
-
+    
             // Tentukan thirdOctet yang baru
             $thirdOctetBase = 11;
             $thirdOctet = $thirdOctetBase;
@@ -112,75 +119,73 @@ class MikrotikController extends Controller
                     throw new \Exception("Tidak ada third octet yang tersedia untuk IP addresses.");
                 }
             }
-
+    
             // Tentukan fourthOctet untuk lokal dan remote
             $existingCount = count($response);
             $fourthOctetLocal = 1;
             $fourthOctetRemote = 10 + ($existingCount % 255);
-
+    
             // Generate IP addresses
             $localIp = "$firstOctet.$secondOctet.$thirdOctet.$fourthOctetLocal";
             $remoteIp = "$firstOctet.$secondOctet.$thirdOctet.$fourthOctetRemote";
-
+    
             // Buat query untuk menambahkan PPP secret
             $query = new Query('/ppp/secret/add');
             $query->equal('name', $vpnUsername)
                 ->equal('password', $vpnUsername)
-                ->equal('comment', 'VPN BILLER ' . $uniqueId)
+                ->equal('comment', 'VPN BILLER ' . $vpnUsername)
                 ->equal('profile', 'IP-Tunnel-VPN')
                 ->equal('local-address', $localIp)
                 ->equal('remote-address', $remoteIp);
-
+    
             // Eksekusi query MikroTik
             $response = $client->query($query)->read();
+     // Ambil port API, Winbox, dan Remote Web yang unik
+     $portApi = $this->generateUniquePort('port_api', $client);
+     $portWinbox = $this->generateUniquePort('port_winbox', $client);
+     $portRemoteWeb = $this->generateUniquePort('port_remoteweb', $client);
 
-            // Ambil port API, Winbox, dan Remote Web yang unik
-            $portApi = $this->generateUniquePort('port_api', $client);
-            $portWinbox = $this->generateUniquePort('port_winbox', $client);
-            $portRemoteWeb = $this->generateUniquePort('port_remoteweb', $client);
+     // Buat query untuk menambahkan NAT API
+     $natQueryApi = new Query('/ip/firewall/nat/add');
+     $natQueryApi->equal('chain', 'dstnat')
+         ->equal('protocol', 'tcp')
+         ->equal('dst-port', $portApi)
+         ->equal('dst-address-list', 'ip-public')
+         ->equal('action', 'dst-nat')
+         ->equal('to-addresses', $remoteIp)
+         ->equal('to-ports', $portApi)
+         ->equal('comment', 'BILLER_' . $vpnUsername . '_API');
 
-            // Buat query untuk menambahkan NAT API
-            $natQueryApi = new Query('/ip/firewall/nat/add');
-            $natQueryApi->equal('chain', 'dstnat')
-                ->equal('protocol', 'tcp')
-                ->equal('dst-port', $portApi)
-                ->equal('dst-address-list', 'ip-public')
-                ->equal('action', 'dst-nat')
-                ->equal('to-addresses', $remoteIp)
-                ->equal('to-ports', $portApi)
-                ->equal('comment', 'BILLER_' . $vpnUsername . '_API');
+     $natResponseApi = $client->query($natQueryApi)->read();
 
-            $natResponseApi = $client->query($natQueryApi)->read();
+     // Buat query untuk menambahkan NAT Winbox
+     $natQueryWinbox = new Query('/ip/firewall/nat/add');
+     $natQueryWinbox->equal('chain', 'dstnat')
+         ->equal('protocol', 'tcp')
+         ->equal('dst-port', $portWinbox)
+         ->equal('dst-address-list', 'ip-public')
+         ->equal('action', 'dst-nat')
+         ->equal('to-addresses', $remoteIp)
+         ->equal('to-ports', $portWinbox)
+         ->equal('comment', 'BILLER_' . $vpnUsername . '_WBX');
 
-            // Buat query untuk menambahkan NAT Winbox
-            $natQueryWinbox = new Query('/ip/firewall/nat/add');
-            $natQueryWinbox->equal('chain', 'dstnat')
-                ->equal('protocol', 'tcp')
-                ->equal('dst-port', $portWinbox)
-                ->equal('dst-address-list', 'ip-public')
-                ->equal('action', 'dst-nat')
-                ->equal('to-addresses', $remoteIp)
-                ->equal('to-ports', $portWinbox)
-                ->equal('comment', 'BILLER_' . $vpnUsername . '_WBX');
+     $natResponseWinbox = $client->query($natQueryWinbox)->read();
 
-            $natResponseWinbox = $client->query($natQueryWinbox)->read();
+     // Buat query untuk menambahkan NAT Remote Web
+     $natQueryRemoteWeb = new Query('/ip/firewall/nat/add');
+     $natQueryRemoteWeb->equal('chain', 'dstnat')
+         ->equal('protocol', 'tcp')
+         ->equal('dst-port', $portRemoteWeb)
+         ->equal('dst-address-list', 'ip-public')
+         ->equal('action', 'dst-nat')
+         ->equal('to-addresses', $remoteIp) // Pastikan `remoteIp` diisi dengan IP tujuan
+         ->equal('to-ports', $portRemoteWeb)
+         ->equal('comment', 'BILLER_' . $vpnUsername . '_RemoteWeb');
 
-            // Buat query untuk menambahkan NAT Remote Web
-            $natQueryRemoteWeb = new Query('/ip/firewall/nat/add');
-            $natQueryRemoteWeb->equal('chain', 'dstnat')
-                ->equal('protocol', 'tcp')
-                ->equal('dst-port', $portRemoteWeb)
-                ->equal('dst-address-list', 'ip-public')
-                ->equal('action', 'dst-nat')
-                ->equal('to-addresses', $remoteIp) // Pastikan `remoteIp` diisi dengan IP tujuan
-                ->equal('to-ports', $portRemoteWeb)
-                ->equal('comment', 'BILLER_' . $vpnUsername . '_RemoteWeb');
-
-            $natResponseRemoteWeb = $client->query($natQueryRemoteWeb)->read();
+     $natResponseRemoteWeb = $client->query($natQueryRemoteWeb)->read();
 
             $mikrotik = Mikrotik::create([
-
-                'unique_id' => $uniqueId,
+                'user_id' => $userId,
                 'router_id' => 'RO_' . Str::random(3) . Str::random(10),
                 'site' => $request->site,
                 'port_api' => $portApi,
@@ -195,10 +200,9 @@ class MikrotikController extends Controller
                 'remote_ip' => $remoteIp,  // Menyimpan remote IP
             ]);
             ActivityLogger::log('Menambahkan Router Baru', 'Nama Site: '.$request->site);
-
+    
             return redirect()->back()->with('success', 'Berhasil Menambahkan MikroTik');
         } catch (\Exception $e) {
-            // Tangani error
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -274,79 +278,91 @@ class MikrotikController extends Controller
     }
 
     public function cekKoneksi($id)
-    {
-        // Ambil data router dari database berdasarkan $routerId
-        $router = Mikrotik::find($id);
+{
+    // Ambil data router dari database berdasarkan ID
+    $router = Mikrotik::with('user') // Jika ada relasi dengan user
+        ->find($id);
 
-        //dd($router->username);
-        if (!$router) {
-            return response()->json(['message' => 'Router tidak ditemukan!'], 404);
-        }
-
-        try {
-            // Setup client
-            $client = new Client([
-                'host' => 'id-1.aqtnetwork.my.id:' . $router->port_api,
-                'user' => $router->username,
-                'pass' => $router->password,
-                //'port' => (int)$router->port_api,
-            ]);
-
-            // Try to get some basic information to check the connection
-            $response = $client->query('/system/identity/print')->read();
-
-            // If we receive a response, it means the connection is working
-            return redirect()->back()->with('success', 'Koneksi berhasil ke Router: ' . $response[0]['name']);
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Koneksi gagal: ' . $e->getMessage());
-        }
+    if (!$router) {
+        return response()->json(['message' => 'Router tidak ditemukan!'], 404);
     }
+
+    try {
+        // Setup client menggunakan data dari relasi
+        $client = new Client([
+            'host' => "id-1.aqtnetwork.my.id:". $router->port_api,
+            'user' => $router->username,
+            'pass' => $router->password,
+        ]);
+
+        // Cek koneksi dengan mengambil identitas router
+        $response = $client->query('/system/identity/print')->read();
+
+        return redirect()->back()->with('success', 'Koneksi berhasil ke Router: ' . ($response[0]['name'] ?? 'Tidak diketahui'));
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Koneksi gagal: ' . $e->getMessage());
+    }
+}
+
 
 
 
     // PPPOE
 
     public function pppoe()
-    {
-        $uniqueId = auth()->user()->unique_id;
-        $mikrotik = Mikrotik::where('unique_id', $uniqueId)->get();
+{
+    $userId = auth()->user()->id;
 
-        // Membuat koneksi API MikroTik
-        $client = new Client([
-            'host' => 'id-1.aqtnetwork.my.id',
-            'user' => 'admin',
-            'pass' => 'bakpao1922',
-        ]);
+    // Ambil MikroTik milik user yang memiliki paket PPPoE
+    $mikrotikList = Mikrotik::where('user_id', $userId)
+        ->whereHas('paketPppoe')
+        ->with('paketPppoe')
+        ->get();
 
-        $query = new Query('/ppp/active/print');
-        $response = $client->query($query)->read();
+    // Koneksi ke MikroTik API
+    $client = new Client([
+        'host' => 'id-1.aqtnetwork.my.id',
+        'user' => 'admin',
+        'pass' => 'bakpao1922',
+    ]);
 
-        // Array untuk menyimpan router yang online
-        $onlineRouters = [];
+    $query = new Query('/ppp/active/print');
+    $response = $client->query($query)->read();
 
-        // Loop untuk mengecek koneksi di active-connection
-        foreach ($mikrotik as $router) {
-            $vpnUsername = $router->vpn_username; // Ambil vpn_username dari database
+    $onlinePackages = [];
 
-            // Loop untuk mengecek apakah vpn_username ada di active-connection
-            foreach ($response as $connection) {
-                if (isset($connection['name']) && $connection['name'] === $vpnUsername) {
-                    // Jika vpn_username ditemukan di active-connection, router dianggap online
-                    $onlineRouters[] = $router; // Menyimpan router yang statusnya Online
-                    break;
+    // Cek router yang aktif di MikroTik
+    foreach ($mikrotikList as $router) {
+        foreach ($response as $connection) {
+            if (isset($connection['name']) && $connection['name'] === $router->vpn_username) {
+                // Simpan semua paket PPPoE milik router yang online
+                foreach ($router->paketPppoe as $paket) {
+                    $onlinePackages[] = $paket;
                 }
+                break;
             }
         }
-
-        $paket = PaketPppoe::where('unique_id', auth()->user()->unique_id)->get();
-        // Mengirim hanya router yang online ke view
-        return view('ROLE/MEMBER/IPLAN/PPPOE/index', compact('onlineRouters', 'paket'));
     }
+
+    // Jika tidak ada paket online, beri notifikasi
+    if (empty($onlinePackages)) {
+        return back()->with('error', 'Tidak ada paket PPPoE yang aktif.');
+    }
+
+    return view('ROLE/MEMBER/IPLAN/PPPOE/index', compact('onlinePackages'));
+}
+
+
+
+    
+
+
+    
 
     public function getMikrotikProfiles(Request $request)
     {
         $username = $request->input('username');
-
+        \Log::info($username);
         // Cari data MikroTik berdasarkan unique_id
         $mikrotik = MikroTik::where('username', $username)->first();
 
@@ -357,6 +373,7 @@ class MikrotikController extends Controller
         $portApi = $mikrotik->port_api;
         $Username = $mikrotik->username;
         $Password = $mikrotik->password;
+        \Log::info($portApi);
 
         try {
             $client = new Client([
@@ -389,45 +406,37 @@ class MikrotikController extends Controller
 
     public function tambahpaket(Request $request)
     {
-        // Mendapatkan unique_id dari pengguna yang sedang login
-        $uniqueId = auth()->user()->unique_id;
-        $sites = $request->input('mikrotikSite');
-        // Mendapatkan input dari form
-        $kode_paket = Str::random(10); // Anda bisa menyesuaikan dengan input yang ada
-        $username = $request->input('username');
-
-        $dataMikrotik = Mikrotik::where('username', $username)->first();
-        $site = $dataMikrotik->site;
-
-        $profile = $request->input('profile');
-        $harga_paket = $request->input('hargaPaket'); // Mengambil data hargaPaket dari form
-        $nama_paket = $request->input('namaPaket'); // Mengambil data namaPaket dari form
-
-        // Validasi data jika diperlukan
+        // Mendapatkan pengguna yang sedang login
+        $user = auth()->user();
+    
+        // Validasi input
         $validated = $request->validate([
             'username' => 'required|string',
             'profile' => 'required|string',
             'namaPaket' => 'required|string',
             'hargaPaket' => 'required|numeric|max:1000000',
         ]);
-
-
-        // Menyimpan data ke dalam database
-        DB::table('paketpppoe')->insert([
-            'unique_id' => $uniqueId,
-            'router_id' => $dataMikrotik->router_id,
+    
+        // Cari MikroTik berdasarkan username (dengan relasi)
+        $dataMikrotik = $user->mikrotik()->where('username', $request->username)->firstOrFail();
+    
+        // Data yang akan disimpan
+        $kode_paket = Str::random(10);
+        $site = $dataMikrotik->site;
+        $sites = $request->input('mikrotikSite');
+    
+        // Simpan data menggunakan Eloquent Model
+        PaketPppoe::create([
+            'mikrotik_id' => $dataMikrotik->id, // Ambil ID router dari relasi
             'kode_paket' => $kode_paket,
             'site' => $site,
-            'username' => $username,
-            'profile' => $profile,
-            'harga_paket' => $harga_paket,
-            'nama_paket' => $nama_paket." ".$sites,
-            'created_at' => now(),
-            'updated_at' => now()
-
+            'username' => $request->username,
+            'profile' => $request->profile,
+            'harga_paket' => $request->hargaPaket,
+            'nama_paket' => $request->namaPaket . " " . $sites,
         ]);
-
-        // Redirect atau memberikan respon sesuai kebutuhan
+    
         return redirect()->route('member.pppoe')->with('success', 'Paket berhasil ditambahkan');
     }
+    
 }

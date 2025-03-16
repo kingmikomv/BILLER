@@ -111,12 +111,15 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
     });
 
 
-
+ // usaha
     Route::middleware(['auth', 'role:member'])->group(function () {
         Route::get('/profil-usaha', [UsahaController::class, 'index'])->name('profil.usaha');
         Route::post('/profil/usaha/store-or-update', [UsahaController::class, 'storeOrUpdate'])
         ->name('profil.usaha.storeOrUpdate');
         });
+
+
+        
 });
 
 

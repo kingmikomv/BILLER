@@ -29,11 +29,14 @@
 
                                 <div class="card-header">
                                     <h3 class="card-title">Data Pelanggan</h3>
+                                    @if(in_array(auth()->user()->role, ['member']))
+
                                     <div class="card-tools">
                                         <a class="btn btn-primary btn-sm" href="{{ route('formulir') }}">
                                             <i class="fas fa-plus"></i> Tambah Pelanggan
                                         </a>
                                     </div>
+                                    @endif
                                 </div>
 
 

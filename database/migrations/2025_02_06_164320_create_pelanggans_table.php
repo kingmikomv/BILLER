@@ -14,8 +14,10 @@ return new class extends Migration
         Schema::create('pelanggan', function (Blueprint $table) {
             $table->id();
             $table->string('pelanggan_id')->unique();
+            
+            // Relasi ke tabel mikrotik
+            $table->foreignId('mikrotik_id')->constrained('mikrotik')->onDelete('cascade');
             $table->string('router_id');
-            $table->string('unique_id');
             $table->string('router_username');
             $table->string('kode_paket');
             $table->string('profile_paket');
@@ -31,26 +33,25 @@ return new class extends Migration
             $table->date('tanggal_terpasang')->nullable(); 
             $table->boolean('notified')->default(false);
             $table->boolean('isolated')->default(false);
-            $table->string('nama_ssid')->nullable(); // Kolom nama SSID (opsional)
-            $table->string('password_ssid')->nullable(); // Kolom password SSID (opsional)
-            $table->string('mac_address')->nullable(); // Kolom MAC Address (opsional)
-            $table->string('serialnumber')->nullable(); // Kolom status pasang (opsional)
-            $table->string('odp')->nullable(); // Kolom ODP (opsional)
-            $table->string('olt')->nullable(); // Kolom OLT (opsional)
-            $table->string('no_tiket')->nullable(); // Kolom nomor tiket (opsional)
+            
+            // Informasi tambahan pelanggan
+            $table->string('nama_ssid')->nullable();
+            $table->string('password_ssid')->nullable();
+            $table->string('mac_address')->nullable();
+            $table->string('serialnumber')->nullable();
+            $table->string('odp')->nullable();
+            $table->string('olt')->nullable();
+            $table->string('no_tiket')->nullable();
             $table->string('status_terpasang')->nullable();
             $table->string('dipasang_oleh')->nullable();
-            
-
-            // Tambahkan kolom untuk metode pembayaran (prabayar atau pascabayar)
-            $table->enum('metode_pembayaran', ['Prabayar', 'Pascabayar'])->default('Pascabayar');
         
-            // Status pembayaran hanya untuk pascabayar, prabayar langsung lunas
+            // Metode dan status pembayaran
+            $table->enum('metode_pembayaran', ['Prabayar', 'Pascabayar'])->default('Pascabayar');
             $table->enum('status_pembayaran', ['Sudah Dibayar', 'Belum Dibayar'])->default('Sudah Dibayar'); 
-            
-
+        
             $table->timestamps();
         });
+        
         
     }
 

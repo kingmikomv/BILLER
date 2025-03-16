@@ -14,33 +14,41 @@ return new class extends Migration
         Schema::create('tiketpsb', function (Blueprint $table) {
             $table->id();
             $table->string('no_tiket')->unique();
-            $table->string('unique_id');
             $table->string('status_tiket');
             $table->string('serialnumber')->nullable();
-            $table->string('nama_pelanggan');
-            $table->string('pelanggan_id')->unique();
-            $table->string('router_id');
+            $table->string('parent_id')->nullable();
+
+            // Relasi ke tabel pelanggan
+            $table->foreignId('pelanggan_id')->constrained('pelanggan')->onDelete('cascade');
+            
+            // Relasi ke tabel mikrotik/router
+            $table->foreignId('mikrotik_id')->constrained('mikrotik')->onDelete('cascade');
             $table->string('router_username');
-            $table->string('kode_paket');
-            $table->string('profile_paket');
+            
+            // Relasi ke tabel paketpppoe
+            $table->foreignId('paket_id')->constrained('paketpppoe')->onDelete('cascade');
+            
             $table->string('akun_pppoe')->unique();
             $table->string('password_pppoe');
             $table->longText('alamat');
             $table->string('nomor_telepon');
+            
             $table->date('tanggal_daftar');
             $table->date('pembayaran_selanjutnya')->nullable();
             $table->date('pembayaran_yang_akan_datang')->nullable();
             $table->date('tanggal_ingin_pasang')->nullable();
             $table->date('tanggal_terpasang')->nullable();
-
-            $table->string('nama_ssid')->nullable(); // Kolom nama SSID (opsional)
-            $table->string('password_ssid')->nullable(); // Kolom password SSID (opsional)
-            $table->string('mac_address')->nullable(); // Kolom MAC Address (opsional)
-            $table->string('odp')->nullable(); // Kolom ODP (opsional)
-            $table->string('olt')->nullable(); // Kolom OLT (opsional)
-
+            
+            // Informasi tambahan
+            $table->string('nama_ssid')->nullable();
+            $table->string('password_ssid')->nullable();
+            $table->string('mac_address')->nullable();
+            $table->string('odp')->nullable();
+            $table->string('olt')->nullable();
+            
             $table->timestamps();
         });
+        
     }
 
     /**

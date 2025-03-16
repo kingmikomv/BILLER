@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('mikrotik', function (Blueprint $table) {
             $table->id();
-            $table->string('unique_id');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+
             $table->string('router_id');
             $table->string('site');
             $table->string('port_api')->nullable();
