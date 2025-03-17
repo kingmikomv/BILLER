@@ -14,25 +14,34 @@ use Illuminate\Support\Facades\Response;
 
 class BillingController extends Controller
 {
-    public function unpaid(){
+    public function unpaid() {}
+    public function paid() {}
+    public function riwayat() {}
 
-    }
-    public function paid(){
-        
-    }
-    public function riwayat(){
-        
-    }
-    public function bil_pelanggan(){
-        $pelanggan = Pelanggan::where('unique_id', auth()->user()->unique_id)
-        ->orderBy('id', 'desc') // Mengurutkan dari yang terbaru
-        ->get(); // Jangan lupa panggil get() untuk mengambil data
-        $paketpppoe = PaketPppoe::where('unique_id', auth()->user()->unique_id)->get();
-    return view('ROLE.MEMBER.BILLING.bill_pelanggan', compact('pelanggan', 'paketpppoe'));
+
     
+    public function bil_pelanggan()
+    {
+        $user = auth()->user();
+
+        // Ambil semua MikroTik yang dimiliki user ini
+        $mikrotikIds = $user->mikrotik()->pluck('id');
+
+        // Ambil pelanggan berdasarkan `mikrotik_id`
+        $pelanggan = Pelanggan::whereIn('mikrotik_id', $mikrotikIds)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        // Ambil paket PPPoE berdasarkan `mikrotik_id`
+        $paketpppoe = PaketPppoe::whereIn('mikrotik_id', $mikrotikIds)->get();
+
+        return view('ROLE.MEMBER.BILLING.bill_pelanggan', compact('pelanggan', 'paketpppoe'));
     }
 
-    public function kirimwa(Request $request) {
+
+
+    public function kirimwa(Request $request)
+    {
         $nomor = $request->nomor;
         $pesan = $request->pesan;
         $token = 'g3ZXCoCHeR1y75j4xJoz';
@@ -58,9 +67,7 @@ class BillingController extends Controller
 
 
 
-    public function bcwa(){
-        
-    }
+    public function bcwa() {}
 
 
 
@@ -88,5 +95,4 @@ class BillingController extends Controller
     {
         return Excel::download(new PelangganExport, 'data_pelanggan.xlsx');
     }
-   
 }

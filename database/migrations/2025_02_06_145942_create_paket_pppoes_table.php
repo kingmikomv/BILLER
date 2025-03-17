@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('mikrotik_id')->constrained('mikrotik')->onDelete('cascade'); 
             $table->string('kode_paket');
             $table->string('site');
-            $table->string('username'); // dari mikrotik
+            
             $table->string('profile');
             $table->string('harga_paket');
             $table->string('nama_paket');

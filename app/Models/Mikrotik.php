@@ -20,12 +20,11 @@ class Mikrotik extends Model
 
     public function paketPppoe()
     {
-        return $this->hasMany(PaketPppoe::class, 'mikrotik_id');
+        return $this->hasMany(PaketPppoe::class, 'mikrotik_id', 'id');
     }
+
     function pelanggan()
-{
-    return $this->hasMany(Pelanggan::class, 'mikrotik_id');
-}
-
-
+    {
+        return $this->hasMany(Pelanggan::class, 'mikrotik_id');
+    }
 }

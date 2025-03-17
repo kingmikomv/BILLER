@@ -84,7 +84,8 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
         Route::prefix('pppoe')->controller(MikrotikController::class)->group(function () {
             Route::get('/', 'pppoe')->name('member.pppoe');
             Route::get('/get-mikrotik-profiles', 'getMikrotikProfiles')->name('getMikrotikProfiles');
-            Route::post('/tambahpaket', 'tambahpaket')->name('tambahpaket');
+            Route::get('/add', 'addPppoe')->name('addPppoe');
+            Route::post('/add/tambahpaket', 'tambahpaket')->name('tambahpaket');
         });
     });
 
