@@ -34,7 +34,9 @@
             </a>
           </li>
 
-
+        @if (auth()->user()->role == ['member', 'cs', 'penagih'])
+        
+        
           <li class="nav-item">
             <a href="{{route('pelanggan')}}" class="nav-link {{ request()->routeIs('pelanggan') ? 'active' : '' }}">
               <i class="nav-icon fas fa-user-plus"></i>
@@ -43,6 +45,25 @@
               </p>
             </a>
           </li>
+          @endif
+          @if(auth()->user()->role == 'superadmin')
+          <li class="nav-item">
+            <a href="{{route('pelanggan.aqt')}}" class="nav-link {{ request()->routeIs('pelanggan.aqt') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-user-plus"></i>
+              <p>
+                Data Pelanggan
+              </p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="" class="nav-link ">
+              <i class="nav-icon fas fa-star"></i>
+              <p>
+                Undian Pelanggan
+              </p>
+            </a>
+          </li>
+          @endif
           @if(auth()->user()->role == 'teknisi')
 
           <li class="nav-item">

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\Mikrotik;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -14,4 +16,13 @@ class AdminController extends Controller
         
         // Logika untuk mengelola pengguna
     }
+    public function pelangganaqt()
+{
+    $dataMikrotik = User::whereHas('mikrotik', function ($query) {
+        $query->where('email', 'support-noc@aqtnetwork.my.id');
+    })->get();
+
+    dd($dataMikrotik);
+}
+
 }

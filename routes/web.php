@@ -36,8 +36,8 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 // Middleware for SUPERADMIN, requires authentication and superadmin role
 Route::middleware(['auth', 'role:superadmin'])->group(function () {
-    Route::get('/admin/manage-users', [AdminController::class, 'manageUsers']);
-
+    Route::get('/home/sumin/manage-users', [AdminController::class, 'manageUsers']);
+    Route::get('/home/sumin/pelangganaqt', [AdminController::class, 'pelangganaqt'])->name('pelanggan.aqt');
     // Add other routes for SUPERADMIN
 });
 
