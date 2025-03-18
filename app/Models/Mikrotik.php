@@ -27,4 +27,8 @@ class Mikrotik extends Model
     {
         return $this->hasMany(Pelanggan::class, 'mikrotik_id');
     }
+    public function olt()
+    {
+        return $this->hasMany(OLT::class, 'mikrotik_id', 'id');
+    }
 }

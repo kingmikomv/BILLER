@@ -159,7 +159,7 @@ class PelangganController extends Controller
     }
     public function addPelanggan(Request $request)
 {
-    \Log::info($request->all());
+    //\Log::info($request->all());
 
     $user = auth()->user(); // Ambil user yang login
     $kodePaket = $request->input('kodePaket');
@@ -168,7 +168,7 @@ class PelangganController extends Controller
     $paket = PaketPppoe::where('kode_paket', $kodePaket)->firstOrFail();
 
     // Ambil router dari user berdasarkan username di paket
-    $mikrotik = $user->mikrotik()->where('username', $paket->username)->firstOrFail();
+    $mikrotik = $user->mikrotik()->where('id', $paket->mikrotik_id)->firstOrFail();
 
     // Data pelanggan dari request
     $akunPppoe = $request->input('akunPppoe');
@@ -176,7 +176,7 @@ class PelangganController extends Controller
     $ssidWifi = $request->input('ssid');
     $passWifi = $request->input('passwifi');
     $tanggalinginpasang = $request->input('tip');
-
+   // dd($mikrotik);
     $uniqueId = $user->unique_id;
     try {
         // Koneksi ke MikroTik API

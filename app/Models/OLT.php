@@ -10,4 +10,9 @@ class OLT extends Model
     use HasFactory;
     protected $table = 'olt';
     protected $guarded = [];
+
+    public function mikrotik()
+    {
+        return $this->belongsTo(Mikrotik::class, 'mikrotik_id', 'id');
+    }
 }

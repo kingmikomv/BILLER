@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('olt', function (Blueprint $table) {
             $table->id();
-            $table->string('unique_id')->nullable();
+            $table->foreignId('mikrotik_id')->constrained('mikrotik')->onDelete('cascade'); // Relasi ke Mikrotik
             $table->string('namaolt')->nullable();
             $table->string('ipolt')->nullable();
             $table->string('portolt')->nullable();
