@@ -56,9 +56,7 @@
                                         <table id="exampleTable" class="table">
                                             <thead class="text-center">
                                                 <tr>
-                                                    <th>
-                                                        <input type="checkbox" id="checkAll">
-                                                    </th>
+                                                    
                                                     <th>No</th>
                                                     <th>Kode Pelanggan</th>
                                                     <th>Nama Pelanggan</th>
@@ -73,9 +71,7 @@
                                             <tbody>
                                                 @foreach ($pelanggan as $index => $data)
                                                 <tr class="text-center align-middle">
-                                                    <td>
-                                                        <input type="checkbox" class="check-item" value="{{ $data->id }}">
-                                                    </td>
+                                                  
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>{{ $data->pelanggan_id }}</td>
                                                     <td>{{ $data->nama_pelanggan }}</td>

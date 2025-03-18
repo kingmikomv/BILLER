@@ -89,7 +89,7 @@ class HomeController extends Controller
         if ($user->hasRole('superadmin')) {
 
 
-            return response()->json(['message' => 'superadmin']);
+            return view('ROLE.SUMIN.index');
             
         } elseif ($user->hasRole('member')) {
             $totalPelanggan = $plg->count();

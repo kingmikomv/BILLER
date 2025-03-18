@@ -14,12 +14,29 @@ use Illuminate\Support\Facades\Response;
 
 class BillingController extends Controller
 {
-    public function unpaid() {}
-    public function paid() {}
-    public function riwayat() {}
+    public function unpaid()
+{
+    $belumBayar = Pelanggan::with('mikrotik') // Mengambil data MikroTik Server juga
+        ->where(function ($query) {
+            $query->where('status_pembayaran', 'belum bayar')
+                  ->orWhereDate('pembayaran_selanjutnya', '<=', now())
+                  ->orWhereNull('pembayaran_selanjutnya'); // Pelanggan baru tanpa pembayaran selanjutnya
+        })
+        ->get();
+
+    return view("ROLE.MEMBER.BILLING.unpaid", compact('belumBayar'));
+}
 
 
-    
+    public function paid()
+    {
+    }
+    public function riwayat()
+    {
+    }
+
+
+
     public function bil_pelanggan()
     {
         $user = auth()->user();
@@ -53,10 +70,10 @@ class BillingController extends Controller
         $response = Http::withHeaders([
             'Authorization' => $token
         ])->post('https://api.fonnte.com/send', [
-            'target' => $nomor,
-            'message' => $pesan,
-            'countryCode' => '62', // Kode Negara (62 untuk Indonesia)
-        ]);
+                    'target' => $nomor,
+                    'message' => $pesan,
+                    'countryCode' => '62', // Kode Negara (62 untuk Indonesia)
+                ]);
 
         if ($response->successful()) {
             return response()->json(['success' => true, 'message' => 'Pesan berhasil dikirim.']);
@@ -67,7 +84,9 @@ class BillingController extends Controller
 
 
 
-    public function bcwa() {}
+    public function bcwa()
+    {
+    }
 
 
 

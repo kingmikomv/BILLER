@@ -89,7 +89,6 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(functi
         });
     });
 
-
     // SIDEBAR MENU OLT
     Route::middleware(['role:member,teknisi'])->prefix('olt')->group(function () {
        // EPON
