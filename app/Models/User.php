@@ -79,6 +79,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(Mikrotik::class, 'user_id', 'id');
     }
-    
+    public function pelanggan()
+{
+    return $this->hasManyThrough(Pelanggan::class, Mikrotik::class, 'user_id', 'mikrotik_id');
+}
 
 }

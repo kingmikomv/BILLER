@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Mikrotik;
+use App\Models\Pelanggan;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -13,16 +14,22 @@ class AdminController extends Controller
         if (auth()->user()->role !== 'superadmin') {
             abort(403, 'Unauthorized action.');
         }
-        
+
         // Logika untuk mengelola pengguna
     }
     public function pelangganaqt()
 {
-    $dataMikrotik = User::whereHas('mikrotik', function ($query) {
-        $query->where('email', 'support-noc@aqtnetwork.my.id');
-    })->get();
+    // Ambil data user dengan role 'member' dan MikroTik yang dimiliki
+    $dataMikrotik = User::where('role', 'member')
+        ->with(['mikrotik' => function ($query) {
+            $query->withCount('pelanggan'); // Hitung jumlah pelanggan per MikroTik
+        }])
+        ->get();
 
-    dd($dataMikrotik);
+    return view('ROLE.SUMIN.pelanggan', compact('dataMikrotik'));
 }
+
+
+
 
 }

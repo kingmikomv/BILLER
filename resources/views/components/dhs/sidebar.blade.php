@@ -34,7 +34,7 @@
             </a>
           </li>
 
-        @if (auth()->user()->role == ['member', 'cs', 'penagih'])
+          @if (in_array(auth()->user()->role, ['member', 'cs', 'penagih']))
         
         
           <li class="nav-item">

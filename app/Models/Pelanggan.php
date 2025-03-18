@@ -60,5 +60,9 @@ public function tiket()
 {
     return $this->hasOne(TiketPsb::class, 'pelanggan_id');
 }
+public function pelanggan()
+{
+    return $this->hasMany(Pelanggan::class, 'mikrotik_id');
+}
 
 }
