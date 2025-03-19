@@ -56,12 +56,33 @@
             </a>
           </li>
           <li class="nav-item">
-            <a href="" class="nav-link ">
+            <a href="#" class="nav-link">
               <i class="nav-icon fas fa-star"></i>
               <p>
-                Undian Pelanggan
+                Undian
+                <i class="fas fa-angle-left right"></i>
               </p>
             </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{route('pelanggan.daftarundian')}}" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Daftar Undian</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{ route('undian.kocok') }}" class="nav-link">
+                  <i class="fas fa-ticket-alt nav-icon"></i>
+                  <p>Kocok Undian</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Pemenang Undian</p>
+                </a>
+              </li>
+            </ul>
           </li>
           @endif
           @if(auth()->user()->role == 'teknisi')
@@ -178,7 +199,7 @@
               @endif
             </ul>
           </li>
-
+            <!-- OLT -->
           <li class="nav-item {{ request()->routeIs('olt.epon') ? 'menu-open' : '' }}">
             <a href="#" class="nav-link {{ request()->routeIs('olt.epon') ? 'active' : '' }}">
               <i class="nav-icon fas fa-chart-line"></i>

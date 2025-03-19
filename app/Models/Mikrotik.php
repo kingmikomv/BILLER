@@ -31,4 +31,8 @@ class Mikrotik extends Model
     {
         return $this->hasMany(OLT::class, 'mikrotik_id', 'id');
     }
+    public function undian()
+    {
+        return $this->hasMany(Undian::class, 'mikrotik_id');
+    }
 }

@@ -33,7 +33,7 @@
                                 </div>
                                 <!-- /.card-header -->
                                 <div class="card-body table-responsive">
-                                    <table class="table table-bordered">
+                                    <table id="mikrotikTable" class="table">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
@@ -111,7 +111,19 @@
     <!-- ./wrapper -->
 
     <x-dhs.scripts />
-
+    <script>
+        $(document).ready(function() {
+            $('#mikrotikTable').DataTable({
+                "paging": true,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false
+            });
+        });
+    </script>
+    
 </body>
 
 </html>
