@@ -18,7 +18,7 @@
 
       <p class="mb-1"> 
         Sebelum Di Proses, Silahkan Cek Email Anda Untuk Link Verifikasi. Jika Anda Tidak Menerima Email,
-        <a href="{{ route('verification.send') }}">Klik Disini Untuk Mengirim Link Verifikasi Baru</a>.
+        <a href="{{ route('verification.resend') }}">Klik Disini Untuk Mengirim Link Verifikasi Baru</a>.
       </p>
 
       <p class="mb-0">
