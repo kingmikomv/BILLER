@@ -65,7 +65,7 @@ class AdminController extends Controller
             $foto = $request->file('foto_undian');
         
             // Path penyimpanan di dalam folder subdomain
-            $destinationPath = $_SERVER['DOCUMENT_ROOT'] . '/biller/undian/undian';
+            $destinationPath = $_SERVER['DOCUMENT_ROOT'] . '/undian/undian';
         
             // Pastikan folder tujuan ada
             if (!file_exists($destinationPath)) {
