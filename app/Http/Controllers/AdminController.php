@@ -79,7 +79,7 @@ class AdminController extends Controller
             $foto->move($destinationPath, $fotoName);
         
             // URL akses gambar di subdomain
-            $fotoPath = 'https://biller.aqtnetwork.my.id/undian/undian/' . $fotoName;
+            $fotoPath = 'undian/undian/' . $fotoName;
         }
         
         
