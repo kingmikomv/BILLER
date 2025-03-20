@@ -63,22 +63,25 @@ class AdminController extends Controller
         $fotoPath = null;
         if ($request->hasFile('foto_undian')) {
             $foto = $request->file('foto_undian');
-            
-            // Tentukan path penyimpanan di dalam folder public
-            $destinationPath = $_SERVER['DOCUMENT_ROOT'] . 'biller/undian/undian';
-            
+        
+            // Path penyimpanan di dalam folder subdomain
+            $destinationPath = $_SERVER['DOCUMENT_ROOT'] . '/biller/undian/undian';
+        
             // Pastikan folder tujuan ada
             if (!file_exists($destinationPath)) {
                 mkdir($destinationPath, 0777, true);
             }
-            
+        
             // Simpan file dengan nama unik
-            $fotoName = time() . '_' . $foto->getClientOriginalName();
+            $fotoName = time() . '_' . preg_replace('/\s+/', '_', strtolower($foto->getClientOriginalName()));
+        
+            // Pindahkan file ke folder tujuan
             $foto->move($destinationPath, $fotoName);
-            
-            // Simpan path yang dapat diakses secara publik
-            $fotoPath = 'undian/undian/' . $fotoName;
+        
+            // URL akses gambar di subdomain
+            $fotoUrl = 'https://biller.aqtnetwork.my.id/undian/undian/' . $fotoName;
         }
+        
         
 
         // Simpan Data Undian ke Database
