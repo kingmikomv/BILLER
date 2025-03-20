@@ -24,23 +24,25 @@ class AdminController extends Controller
     {
         // Ambil data user dengan role 'member' dan MikroTik yang dimiliki
         $dataMikrotik = User::where('role', 'member')
-            ->with(['mikrotik' => function ($query) {
-                $query->withCount('pelanggan'); // Hitung jumlah pelanggan per MikroTik
-            }])
+            ->with([
+                'mikrotik' => function ($query) {
+                    $query->withCount('pelanggan'); // Hitung jumlah pelanggan per MikroTik
+                }
+            ])
             ->get();
 
         return view('ROLE.SUMIN.pelanggan', compact('dataMikrotik'));
     }
     public function daftarundian()
     {
-        
+
         $mikrotiks = Mikrotik::with('user')
-        ->whereHas('user', function ($query) {
-            $query->where('email', 'support-noc@aqtnetwork.my.id');
-        })
-        ->get();
+            ->whereHas('user', function ($query) {
+                $query->where('email', 'support-noc@aqtnetwork.my.id');
+            })
+            ->get();
         $dftrundian = Undian::orderBy('created_at', 'desc')->get();
-       // dd($mikrotiks);
+        // dd($mikrotiks);
         return view('ROLE.SUMIN.daftarundian', compact('mikrotiks', 'dftrundian'));
     }
     public function tambahundian(Request $request)
@@ -57,8 +59,23 @@ class AdminController extends Controller
         $fotoPath = null;
         if ($request->hasFile('foto_undian')) {
             $foto = $request->file('foto_undian');
-            $fotoPath = $foto->store('undian/undian', 'public'); // Simpan ke storage/public/undian/undian
+            
+            // Tentukan path penyimpanan di dalam folder public
+            $destinationPath = public_path('undian/undian');
+            
+            // Pastikan folder tujuan ada
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0777, true);
+            }
+            
+            // Simpan file dengan nama unik
+            $fotoName = time() . '_' . $foto->getClientOriginalName();
+            $foto->move($destinationPath, $fotoName);
+            
+            // Simpan path yang dapat diakses secara publik
+            $fotoPath = 'undian/undian/' . $fotoName;
         }
+        
 
         // Simpan Data Undian ke Database
         Undian::create([
@@ -71,44 +88,69 @@ class AdminController extends Controller
 
         return redirect()->back()->with('success', 'Undian berhasil ditambahkan!');
     }
-    public function kocok(){
+    public function kocok()
+    {
 
-        $mikrotik = Undian::get();
-
+        $mikrotik = Undian::whereNull('pemenang')->orWhere('pemenang', '')->get();
         // Ambil semua undian yang berelasi dengan MikroTik tersebut
         //$undians = $mikrotik->undians;
 
 
-        return view ('ROLE.SUMIN.kocok', compact('mikrotik'));
+        return view('ROLE.SUMIN.kocok', compact('mikrotik'));
     }
     public function spinner(Request $request)
-{
-    $kode_undian = $request->input('kode');
+    {
+        $kode_undian = $request->input('kode');
 
-    $kode_undian = Undian::where('kode_undian', $kode_undian)->first();
-    
-    $mikrotik_id = $kode_undian->mikrotik_id;
-    // Ambil data MikroTik berdasarkan ID
-    $mikrotik = Mikrotik::findOrFail($mikrotik_id);
+        $kode_undian = Undian::where('kode_undian', $kode_undian)->first();
 
-    // Koneksi ke MikroTik
-    $client = new Client([
-        'host' =>  'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
-        'user' => $mikrotik->username,
-        'pass' => $mikrotik->password,
-    ]);
+        if ($kode_undian->pemenang == null) {
 
-    // Ambil daftar PPPoE aktif
-    $query = new Query('/ppp/active/print');
-    $activeConnections = $client->query($query)->read();
 
-    // Ambil hanya username dari daftar pengguna aktif
-    
-    // Ambil username dari daftar
-    $usernames = array_map(fn($user) => $user['name'] ?? 'Unknown', $activeConnections);
+            $mikrotik_id = $kode_undian->mikrotik_id;
+            // Ambil data MikroTik berdasarkan ID
+            $mikrotik = Mikrotik::findOrFail($mikrotik_id);
 
-    return view('ROLE.SUMIN.spinner', compact('usernames', 'kode_undian'));
+            // Koneksi ke MikroTik
+            $client = new Client([
+                'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
+                'user' => $mikrotik->username,
+                'pass' => $mikrotik->password,
+            ]);
 
-    //return view('ROLE.SUMIN.spinner', compact('mikrotik', 'usernames'));
-}
+            // Ambil daftar PPPoE aktif
+            $query = new Query('/ppp/active/print');
+            $activeConnections = $client->query($query)->read();
+
+            // Ambil hanya username dari daftar pengguna aktif
+
+            // Ambil username dari daftar
+            $usernames = array_map(fn($user) => $user['name'] ?? 'Unknown', $activeConnections);
+
+            return view('ROLE.SUMIN.spinner', compact('usernames', 'kode_undian'));
+        } else {
+            return redirect()->back()->with('error', 'Undian sudah memiliki pemenang!');
+        }
+    }
+
+
+    public function updateWinner(Request $request)
+    {
+        $winner = $request->input('winner');
+        $kodeUndian = $request->input('kode_undian');
+
+        // Simpan pemenang undian
+        Undian::where('kode_undian', $kodeUndian)->update([
+            'pemenang' => $winner,
+        ]);
+
+
+        return response()->json([
+            'message' => 'Pemenang berhasil diterima!',
+            'winner' => $winner,
+            'kode_undian' => $kodeUndian
+        ]);
+    }
+
+
 }

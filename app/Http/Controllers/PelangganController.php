@@ -276,52 +276,71 @@ class PelangganController extends Controller
 }
 
 
-    public function showPelanggan($id)
-    {
-        $pelanggan = Pelanggan::with('paket')->find($id);
+public function showPelanggan($id)
+{
+    $pelanggan = Pelanggan::with('paket')->find($id);
 
-        if (!$pelanggan) {
-            return response()->json(['error' => 'Pelanggan tidak ditemukan'], 404);
-        }
-
-        $routerId = $pelanggan->router_id;
-        $mikrotik = Mikrotik::where('router_id', $routerId)->first();
-        $akunPelanggan = $pelanggan->akun_pppoe;
-
-        try {
-            // Membuat koneksi ke MikroTik API
-            $client = new Client([
-                'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api, // Pastikan port benar
-                'user' => $mikrotik->username, // Username MikroTik
-                'pass' => $mikrotik->password, // Password MikroTik
-            ]);
-
-            // Query untuk mengambil data koneksi PPPoE
-            $query = new Query('/interface/pppoe-server/print');
-            $activeConnections = $client->query($query)->read();
-
-            // Filter data untuk mencari koneksi dengan nama yang sesuai dengan akun PPPoE
-            $filteredConnections = array_filter($activeConnections, function ($connection) use ($akunPelanggan) {
-                return isset($connection['name']) && $connection['name'] === "<pppoe-" . $akunPelanggan . ">";
-            });
-
-            if (empty($filteredConnections)) {
-                return redirect()->back()->with('error', 'Akun Ini Tidak Terhubung Dengan Server !');
-            }
-
-            $uptime = $filteredConnections[0]['uptime'];
-            $formattedUptime = $this->formatUptime($uptime); // Format uptime
-
-            // Jika diminta untuk menampilkan halaman, kirimkan data pelanggan
-            return view('ROLE.MEMBER.PELANGGAN.data', [
-                'pelanggan' => $pelanggan,
-                'mikrotik' => $mikrotik,
-                'formattedUptime' => $formattedUptime,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Terjadi kesalahan saat menghubungkan ke MikroTik API: ' . $e->getMessage()], 500);
-        }
+    if (!$pelanggan) {
+        return response()->json(['error' => 'Pelanggan tidak ditemukan'], 404);
     }
+
+    $routerId = $pelanggan->router_id;
+    $mikrotik = Mikrotik::where('router_id', $routerId)->first();
+    $akunPelanggan = $pelanggan->akun_pppoe;
+
+    if (!$mikrotik) {
+        return redirect()->back()->with('error', 'Router tidak ditemukan');
+    }
+
+    try {
+        // Membuat koneksi ke MikroTik API
+        $client = new Client([
+            'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api, // Pastikan port benar
+            'user' => $mikrotik->username, // Username MikroTik
+            'pass' => $mikrotik->password, // Password MikroTik
+        ]);
+
+        // Query untuk mengambil data koneksi PPPoE
+        $query = new Query('/interface/pppoe-server/print');
+        $activeConnections = $client->query($query)->read();
+
+        if (!$activeConnections || count($activeConnections) == 0) {
+            return redirect()->back()->with('error', 'Tidak ada koneksi PPPoE aktif di server');
+        }
+
+        // Filter data untuk mencari koneksi dengan nama yang sesuai dengan akun PPPoE
+        $filteredConnections = array_filter($activeConnections, function ($connection) use ($akunPelanggan) {
+            return isset($connection['name']) && $connection['name'] === "<pppoe-" . $akunPelanggan.">";
+        });
+
+        // Jika tidak ditemukan, tampilkan pesan error
+        if (empty($filteredConnections)) {
+            return redirect()->back()->with('error', 'Akun Ini Tidak Terhubung Dengan Server !');
+        }
+
+        // Ambil elemen pertama dari hasil filter
+        $connectionData = array_shift($filteredConnections);
+
+        // Pastikan key 'uptime' ada sebelum mengaksesnya
+        if (!isset($connectionData['uptime'])) {
+            return redirect()->back()->with('error', 'Data uptime tidak ditemukan');
+        }
+
+        $formattedUptime = $this->formatUptime($connectionData['uptime']); // Format uptime
+
+        // Jika diminta untuk menampilkan halaman, kirimkan data pelanggan
+        return view('ROLE.MEMBER.PELANGGAN.data', [
+            'pelanggan' => $pelanggan,
+            'mikrotik' => $mikrotik,
+            'formattedUptime' => $formattedUptime,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Terjadi kesalahan saat menghubungkan ke MikroTik API: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
 
     public function getBandwidth($id)
     {

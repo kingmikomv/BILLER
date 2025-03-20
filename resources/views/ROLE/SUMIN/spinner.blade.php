@@ -14,25 +14,28 @@
 
     /* Panah menghadap ke bawah */
     .arrow {
-    width: 0;
-    height: 0;
-    position: absolute;
-    top: -35px; /* Posisikan lebih tinggi agar lebih jelas */
-    left: 50%;
-    transform: translateX(-50%);
-    
-    border-left: 30px solid transparent;  /* Lebarkan panah */
-    border-right: 30px solid transparent;
-    border-top: 50px solid #ffcc00; /* Warna kuning terang */
-    
-    /* Tambahkan outline hitam agar tidak samar */
-    filter: drop-shadow(2px 2px 2px black);
+        width: 0;
+        height: 0;
+        position: absolute;
+        top: -35px;
+        /* Posisikan lebih tinggi agar lebih jelas */
+        left: 50%;
+        transform: translateX(-50%);
 
-    /* Tambahkan efek bayangan agar tampak timbul */
-    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.5);
+        border-left: 30px solid transparent;
+        /* Lebarkan panah */
+        border-right: 30px solid transparent;
+        border-top: 50px solid #ffcc00;
+        /* Warna kuning terang */
 
-    z-index: 10;
-}
+        /* Tambahkan outline hitam agar tidak samar */
+        filter: drop-shadow(2px 2px 2px black);
+
+        /* Tambahkan efek bayangan agar tampak timbul */
+        box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.5);
+
+        z-index: 10;
+    }
 
 
 
@@ -68,7 +71,9 @@
                         <div class="col-md-12">
                             <div class="card">
                                 <div class="card-header border-transparent">
-                                    <h3 class="card-title">Spinner Undian {{ $kode_undian->kode_undian }} | {{ $kode_undian->nama_undian }}</h3>
+                                    <h3 class="card-title">Spinner Undian {{ $kode_undian->kode_undian }} |
+                                        {{ $kode_undian->nama_undian }}
+                                    </h3>
                                 </div>
                                 <div class="card-body table-responsive text-center">
                                     <div class="spinner-container">
@@ -110,10 +115,10 @@
 
             function getRandomColor() {
                 const colors = [
-                    "#ff5733", "#33ff57", "#5733ff", "#ff33a8", "#33a8ff", "#a833ff", // Warna dasar
-                    "#ffcc33", "#ff6633", "#33ffcc", "#3366ff", "#cc33ff", "#ff3366", // Warna tambahan
-                    "#00b894", "#fdcb6e", "#e17055", "#6c5ce7", "#0984e3", "#d63031", // Warna modern
-                    "#f39c12", "#1abc9c", "#e74c3c", "#8e44ad", "#2ecc71", "#3498db"  // Warna pastel
+                    "#ff5733", "#33ff57", "#5733ff", "#ff33a8", "#33a8ff", "#a833ff",
+                    "#ffcc33", "#ff6633", "#33ffcc", "#3366ff", "#cc33ff", "#ff3366",
+                    "#00b894", "#fdcb6e", "#e17055", "#6c5ce7", "#0984e3", "#d63031",
+                    "#f39c12", "#1abc9c", "#e74c3c", "#8e44ad", "#2ecc71", "#3498db"
                 ];
                 return colors[Math.floor(Math.random() * colors.length)];
             }
@@ -135,15 +140,44 @@
             });
 
             function alertWinner(indicatedSegment) {
+                let winner = indicatedSegment.text;
+
                 Swal.fire({
                     title: "Pemenang!",
-                    text: "Selamat, " + indicatedSegment.text + "!",
+                    text: "Selamat, " + winner + "!",
                     icon: "success",
                     confirmButtonText: "OK"
+                }).then(() => {
+                    updateWinnerInDatabase(winner);
                 });
             }
+
+            function updateWinnerInDatabase(winner) {
+                let kodeUndian = "{{ $kode_undian->kode_undian }}"; // Ambil kode undian dari Blade
+
+                $.ajax({
+                    url: "{{ route('update.winner') }}",
+                    type: "POST",
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        winner: winner,
+                        kode_undian: kodeUndian
+                    },
+                    success: function (response) {
+                        console.log("Response dari server:", response);
+
+                        // Redirect kembali ke halaman sebelumnya setelah sukses
+                        window.location.href = "{{ route('undian.kocok') }}";
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Gagal memperbarui pemenang:", error);
+                    }
+                });
+            }
+
         });
     </script>
+
 
 </body>
 

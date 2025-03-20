@@ -39,7 +39,7 @@
                                             <select class="form-control" name="kode" id="kode" required>
                                                 <option value="">-- Pilih Kode Undian --</option>
                                                 @foreach($mikrotik as $server)
-                                                    <option value="{{ $server->kode_undian }}">{{ $server->kode_undian }} | {{ $server->nama_undian }} | {{ $server->tanggal_kocok }}</option>
+                                                    <option value="{{ $server->kode_undian }}">{{ $server->mikrotik->site }} | {{ $server->kode_undian }} | {{ $server->nama_undian }} | {{ $server->tanggal_kocok }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -67,6 +67,7 @@
         
 
         <x-dhs.footer />
+        <x-dhs.alert />
     </div>
     <!-- ./wrapper -->
 

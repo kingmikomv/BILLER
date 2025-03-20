@@ -43,6 +43,7 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
 
     Route::get('/home/sumin/undian/kocok', [AdminController::class, 'kocok'])->name('undian.kocok');
     Route::get('/home/sumin/undian/spinner', [AdminController::class, 'spinner'])->name('undian.spinner');
+    Route::post('/home/sumin/undian/spinner/update-winner', [AdminController::class, 'updateWinner'])->name('update.winner');
 
 
 
