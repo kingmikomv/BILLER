@@ -65,7 +65,7 @@ class AdminController extends Controller
             $foto = $request->file('foto_undian');
             
             // Tentukan path penyimpanan di dalam folder public
-            $destinationPath = public_path('undian/undian');
+            $destinationPath = $_SERVER['DOCUMENT_ROOT'] . 'biller/undian/undian';
             
             // Pastikan folder tujuan ada
             if (!file_exists($destinationPath)) {
