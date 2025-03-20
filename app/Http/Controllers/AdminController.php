@@ -73,7 +73,7 @@ class AdminController extends Controller
     }
     public function kocok(){
 
-        $mikrotik = Undian::with('mikrotik')->get();
+        $mikrotik = Undian::get();
 
         // Ambil semua undian yang berelasi dengan MikroTik tersebut
         //$undians = $mikrotik->undians;
@@ -82,23 +82,33 @@ class AdminController extends Controller
         return view ('ROLE.SUMIN.kocok', compact('mikrotik'));
     }
     public function spinner(Request $request)
-    {
-        $mikrotik_id = $request->input('server');
+{
+    $kode_undian = $request->input('kode');
 
-        // Ambil data MikroTik berdasarkan ID
-        $mikrotik = Mikrotik::findOrFail($mikrotik_id);
+    $kode_undian = Undian::where('kode_undian', $kode_undian)->first();
+    
+    $mikrotik_id = $kode_undian->mikrotik_id;
+    // Ambil data MikroTik berdasarkan ID
+    $mikrotik = Mikrotik::findOrFail($mikrotik_id);
 
-        // Koneksi ke MikroTik
-        $client = new Client([
-            'host' => 'id-1.aqtnetwork.my.id:'. $mikrotik->port_api,
-            'user' => $mikrotik->username,
-            'pass' => $mikrotik->password,
-        ]);
+    // Koneksi ke MikroTik
+    $client = new Client([
+        'host' =>  'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
+        'user' => $mikrotik->username,
+        'pass' => $mikrotik->password,
+    ]);
 
-        // Ambil data active PPPoE users dari MikroTik
-        $query = new Query('/ppp/active/print');
-        $activeConnections = $client->query($query)->read();
+    // Ambil daftar PPPoE aktif
+    $query = new Query('/ppp/active/print');
+    $activeConnections = $client->query($query)->read();
 
-        return view('ROLE.SUMIN.spinner', compact('mikrotik', 'activeConnections'));
-    }
+    // Ambil hanya username dari daftar pengguna aktif
+    
+    // Ambil username dari daftar
+    $usernames = array_map(fn($user) => $user['name'] ?? 'Unknown', $activeConnections);
+
+    return view('ROLE.SUMIN.spinner', compact('usernames', 'kode_undian'));
+
+    //return view('ROLE.SUMIN.spinner', compact('mikrotik', 'usernames'));
+}
 }

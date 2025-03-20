@@ -29,17 +29,17 @@
 
                             <div class="card">
                                 <div class="card-header border-transparent">
-                                    <h3 class="card-title">Pilih Server</h3>
+                                    <h3 class="card-title">Pilih Kode Undian</h3>
                                 </div>
                                 <!-- /.card-header -->
                                 <div class="card-body table-responsive">
                                     <form action="{{ route('undian.spinner') }}" method="get">
                                         <div class="form-group">
-                                            <label for="server">Server</label>
-                                            <select class="form-control" name="server" id="server" required>
-                                                <option value="">-- Pilih Server --</option>
+                                            <label for="server">Kode Undian</label>
+                                            <select class="form-control" name="kode" id="kode" required>
+                                                <option value="">-- Pilih Kode Undian --</option>
                                                 @foreach($mikrotik as $server)
-                                                    <option value="{{ $server->mikrotik->id }}">{{ $server->mikrotik->site }}</option>
+                                                    <option value="{{ $server->kode_undian }}">{{ $server->kode_undian }} | {{ $server->nama_undian }} | {{ $server->tanggal_kocok }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
