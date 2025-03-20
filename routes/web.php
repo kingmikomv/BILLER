@@ -39,6 +39,8 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
     Route::get('/home/sumin/manage-users', [AdminController::class, 'manageUsers']);
     Route::get('/home/sumin/pelangganaqt', [AdminController::class, 'pelangganaqt'])->name('pelanggan.aqt');
     Route::get('/home/sumin/undian/daftarundian', [AdminController::class, 'daftarundian'])->name('pelanggan.daftarundian');
+    Route::post('/home/sumin/undian/daftarundian/upload-foto-pemenang', [AdminController::class, 'uploadFotoPemenang'])->name('upload.foto.pemenang');
+
     Route::post('/home/sumin/undian/daftarundian/tambahundian', [AdminController::class, 'tambahundian'])->name('undian.tambahundian');
 
     Route::get('/home/sumin/undian/kocok', [AdminController::class, 'kocok'])->name('undian.kocok');

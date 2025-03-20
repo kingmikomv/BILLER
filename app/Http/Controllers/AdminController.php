@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use RouterOS\Query;
 use App\Models\User;
 use RouterOS\Client;
 use App\Models\Undian;
 use App\Models\Mikrotik;
 use App\Models\Pelanggan;
 use Illuminate\Http\Request;
-use RouterOS\Query;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -42,8 +43,11 @@ class AdminController extends Controller
             })
             ->get();
         $dftrundian = Undian::orderBy('created_at', 'desc')->get();
-        // dd($mikrotiks);
-        return view('ROLE.SUMIN.daftarundian', compact('mikrotiks', 'dftrundian'));
+            
+        // dd($mikrotiks);    
+        $pelanggan = Pelanggan::whereIn('pelanggan_id', $dftrundian->pluck('pemenang'))->get()->keyBy('pelanggan_id');
+            //dd($pelanggan);
+        return view('ROLE.SUMIN.daftarundian', compact('mikrotiks', 'dftrundian', 'pelanggan'));
     }
     public function tambahundian(Request $request)
     {
@@ -109,30 +113,16 @@ class AdminController extends Controller
 
             $mikrotik_id = $kode_undian->mikrotik_id;
             // Ambil data MikroTik berdasarkan ID
-            $mikrotik = Mikrotik::findOrFail($mikrotik_id);
+            $pelanggan_id = Pelanggan::where('mikrotik_id',$mikrotik_id)->get();
 
-            // Koneksi ke MikroTik
-            $client = new Client([
-                'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
-                'user' => $mikrotik->username,
-                'pass' => $mikrotik->password,
-            ]);
+            
+           // dd($pelanggan_id);
 
-            // Ambil daftar PPPoE aktif
-            $query = new Query('/ppp/active/print');
-            $activeConnections = $client->query($query)->read();
-
-            // Ambil hanya username dari daftar pengguna aktif
-
-            // Ambil username dari daftar
-            $usernames = array_map(fn($user) => $user['name'] ?? 'Unknown', $activeConnections);
-
-            return view('ROLE.SUMIN.spinner', compact('usernames', 'kode_undian'));
+            return view('ROLE.SUMIN.spinner', compact('pelanggan_id', 'kode_undian'));
         } else {
             return redirect()->back()->with('error', 'Undian sudah memiliki pemenang!');
         }
     }
-
 
     public function updateWinner(Request $request)
     {
@@ -152,5 +142,73 @@ class AdminController extends Controller
         ]);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/////////////////////// API UNDIAN ///////////////////////
+
+    public function getUndianApi(Request $request)
+    {
+        // Ambil token dari header Authorization
+        $token = $request->header('Authorization');
+
+        // Token yang valid
+        $validToken = "Bearer 123456";
+
+        // Cek apakah token sesuai
+        if ($token !== $validToken) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Ambil data undian dari database
+        $undian = DB::table('undian')->orderBy('id', 'DESC')->get(); // Sesuaikan dengan nama tabel
+
+        return response()->json($undian);
+    }
+
+    public function uploadFotoPemenang(Request $request)
+    {
+       // dd($request->all());
+        $request->validate([
+            'undian_id' => 'required|exists:undian,id',
+            'foto_pemenang' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        $undian = Undian::find($request->undian_id);
+
+        // Simpan foto ke folder public/undian/pemenang
+        $file = $request->file('foto_pemenang');
+        $filename = 'pemenang_' . time() . '.' . $file->getClientOriginalExtension();
+        $file->move(public_path('undian/pemenang'), $filename);
+
+        // Update database dengan nama file baru
+        $undian->foto_pemenang = $filename;
+        $undian->save();
+
+        return redirect()->back()->with('success', 'Foto pemenang berhasil diunggah.');
+    }
 
 }
