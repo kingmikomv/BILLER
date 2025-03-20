@@ -210,7 +210,7 @@ class AdminController extends Controller
             $filename = 'pemenang_' . time() . '.' . $file->getClientOriginalExtension();
     
             // Path penyimpanan di subdomain (public_html/biller/undian/pemenang)
-            $destinationPath = $_SERVER['DOCUMENT_ROOT'] . '/biller/undian/pemenang';
+            $destinationPath = $_SERVER['DOCUMENT_ROOT'] . '/undian/pemenang';
     
             // Buat folder jika belum ada
             if (!file_exists($destinationPath)) {
