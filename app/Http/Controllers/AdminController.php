@@ -194,24 +194,40 @@ class AdminController extends Controller
 
     public function uploadFotoPemenang(Request $request)
     {
-       // dd($request->all());
+        // Validasi request
         $request->validate([
             'undian_id' => 'required|exists:undian,id',
             'foto_pemenang' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
-
-        $undian = Undian::find($request->undian_id);
-
-        // Simpan foto ke folder public/undian/pemenang
-        $file = $request->file('foto_pemenang');
-        $filename = 'pemenang_' . time() . '.' . $file->getClientOriginalExtension();
-        $file->move(public_path('undian/pemenang'), $filename);
-
-        // Update database dengan nama file baru
-        $undian->foto_pemenang = $filename;
-        $undian->save();
-
-        return redirect()->back()->with('success', 'Foto pemenang berhasil diunggah.');
+    
+        // Ambil data undian berdasarkan ID
+        $undian = Undian::findOrFail($request->undian_id);
+    
+        if ($request->hasFile('foto_pemenang')) {
+            $file = $request->file('foto_pemenang');
+    
+            // Buat nama file unik
+            $filename = 'pemenang_' . time() . '.' . $file->getClientOriginalExtension();
+    
+            // Path penyimpanan di subdomain (public_html/biller/undian/pemenang)
+            $destinationPath = $_SERVER['DOCUMENT_ROOT'] . '/biller/undian/pemenang';
+    
+            // Buat folder jika belum ada
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0777, true);
+            }
+    
+            // Pindahkan file ke folder tujuan
+            $file->move($destinationPath, $filename);
+    
+            // Update database dengan nama file baru
+            $undian->foto_pemenang = $filename;
+            $undian->save();
+    
+            return redirect()->back()->with('success', 'Foto pemenang berhasil diunggah.');
+        }
+    
+        return redirect()->back()->with('error', 'Gagal mengunggah foto pemenang.');
     }
-
+    
 }
