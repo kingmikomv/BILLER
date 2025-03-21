@@ -43,10 +43,10 @@ class AdminController extends Controller
             })
             ->get();
         $dftrundian = Undian::orderBy('created_at', 'desc')->get();
-            
+
         // dd($mikrotiks);    
         $pelanggan = Pelanggan::whereIn('pelanggan_id', $dftrundian->pluck('pemenang'))->get()->keyBy('pelanggan_id');
-            //dd($pelanggan);
+        //dd($pelanggan);
         return view('ROLE.SUMIN.daftarundian', compact('mikrotiks', 'dftrundian', 'pelanggan'));
     }
     public function tambahundian(Request $request)
@@ -63,26 +63,26 @@ class AdminController extends Controller
         $fotoPath = null;
         if ($request->hasFile('foto_undian')) {
             $foto = $request->file('foto_undian');
-        
+
             // Path penyimpanan di dalam folder subdomain
             $destinationPath = $_SERVER['DOCUMENT_ROOT'] . '/undian/undian';
-        
+
             // Pastikan folder tujuan ada
             if (!file_exists($destinationPath)) {
                 mkdir($destinationPath, 0777, true);
             }
-        
+
             // Simpan file dengan nama unik
             $fotoName = time() . '_' . preg_replace('/\s+/', '_', strtolower($foto->getClientOriginalName()));
-        
+
             // Pindahkan file ke folder tujuan
             $foto->move($destinationPath, $fotoName);
-        
+
             // URL akses gambar di subdomain
             $fotoPath = 'undian/undian/' . $fotoName;
         }
-        
-        
+
+
 
         // Simpan Data Undian ke Database
         Undian::create([
@@ -116,10 +116,10 @@ class AdminController extends Controller
 
             $mikrotik_id = $kode_undian->mikrotik_id;
             // Ambil data MikroTik berdasarkan ID
-            $pelanggan_id = Pelanggan::where('mikrotik_id',$mikrotik_id)->get();
+            $pelanggan_id = Pelanggan::where('mikrotik_id', $mikrotik_id)->get();
 
-            
-           // dd($pelanggan_id);
+
+            // dd($pelanggan_id);
 
             return view('ROLE.SUMIN.spinner', compact('pelanggan_id', 'kode_undian'));
         } else {
@@ -146,6 +146,46 @@ class AdminController extends Controller
     }
 
 
+    public function update(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:undian,id',
+            'kode_undian' => 'required|string|max:255',
+            'nama_undian' => 'required|string|max:255',
+            'tanggal_kocok' => 'required|date',
+        ]);
+
+        // Cari undian berdasarkan ID
+        $undian = Undian::findOrFail($request->id);
+
+        // Update data undian
+        $undian->kode_undian = $request->kode_undian;
+        $undian->nama_undian = $request->nama_undian;
+        $undian->tanggal_kocok = $request->tanggal_kocok;
+        $undian->save();
+
+        return redirect()->back()->with('success', 'Data undian berhasil diperbarui.');
+    }
+
+    public function destroy($id)
+    {
+        // Cari data undian berdasarkan ID
+        $undian = Undian::findOrFail($id);
+    
+        // Jika ada foto pemenang, hapus dari penyimpanan
+        if ($undian->foto_pemenang) {
+            $fotoPath = public_path('undian/pemenang/' . $undian->foto_pemenang);
+            if (file_exists($fotoPath)) {
+                unlink($fotoPath); // Hapus file dari folder
+            }
+        }
+    
+        // Hapus data undian dari database
+        $undian->delete();
+    
+        return redirect()->back()->with('success', 'Data undian berhasil dihapus.');
+    }
+    
 
 
 
@@ -171,7 +211,7 @@ class AdminController extends Controller
 
 
 
-/////////////////////// API UNDIAN ///////////////////////
+    /////////////////////// API UNDIAN ///////////////////////
 
     public function getUndianApi(Request $request)
     {
@@ -199,35 +239,35 @@ class AdminController extends Controller
             'undian_id' => 'required|exists:undian,id',
             'foto_pemenang' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
-    
+
         // Ambil data undian berdasarkan ID
         $undian = Undian::findOrFail($request->undian_id);
-    
+
         if ($request->hasFile('foto_pemenang')) {
             $file = $request->file('foto_pemenang');
-    
+
             // Buat nama file unik
             $filename = 'pemenang_' . time() . '.' . $file->getClientOriginalExtension();
-    
+
             // Path penyimpanan di subdomain (public_html/biller/undian/pemenang)
             $destinationPath = $_SERVER['DOCUMENT_ROOT'] . '/undian/pemenang';
-    
+
             // Buat folder jika belum ada
             if (!file_exists($destinationPath)) {
                 mkdir($destinationPath, 0777, true);
             }
-    
+
             // Pindahkan file ke folder tujuan
             $file->move($destinationPath, $filename);
-    
+
             // Update database dengan nama file baru
             $undian->foto_pemenang = $filename;
             $undian->save();
-    
+
             return redirect()->back()->with('success', 'Foto pemenang berhasil diunggah.');
         }
-    
+
         return redirect()->back()->with('error', 'Gagal mengunggah foto pemenang.');
     }
-    
+
 }

@@ -57,45 +57,60 @@
                                             </thead>
                                             <tbody>
                                                 @foreach($dftrundian as $undian)
-                                                <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td>
-                                                        @if($undian->pemenang != null)
-                                                        <span class="badge badge-success">Sudah Diundi</span>
-                                                        @else
-                                                        <span class="badge badge-danger">Belum Diundi</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ $undian->kode_undian }}</td>
-                                                    <td>{{ $undian->nama_undian }}</td>
-                                                    <td>{{ $undian->mikrotik->site ?? 'Tidak Ada' }}</td>
-                                                    <td>{{ $undian->tanggal_kocok }}</td>
-                                                    <td>{{ $undian->pemenang ?? 'Belum Ada' }} -
-                                                        {{ $pelanggan[$undian->pemenang]->akun_pppoe ?? 'Tidak Ada' }}
+                                                    <tr>
+                                                        <td>{{ $loop->iteration }}</td>
+                                                        <td>
+                                                            @if($undian->pemenang != null)
+                                                                <span class="badge badge-success">Sudah Diundi</span>
+                                                            @else
+                                                                <span class="badge badge-danger">Belum Diundi</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>{{ $undian->kode_undian }}</td>
+                                                        <td>{{ $undian->nama_undian }}</td>
+                                                        <td>{{ $undian->mikrotik->site ?? 'Tidak Ada' }}</td>
+                                                        <td>{{ $undian->tanggal_kocok }}</td>
+                                                        <td>{{ $undian->pemenang ?? 'Belum Ada' }} -
+                                                            {{ $pelanggan[$undian->pemenang]->akun_pppoe ?? 'Tidak Ada' }}
+                                                        </td>
+                                                        <td>
+                                                            @if($undian->foto_pemenang)
+                                                                <img src="{{ asset('/undian/pemenang/' . $undian->foto_pemenang) }}"
+                                                                    alt="Foto Pemenang" class="img-thumbnail"
+                                                                    style="width: 100px; height: 100px;">
+                                                            @else
+                                                                <button class="btn btn-primary btn-sm" data-toggle="modal"
+                                                                    data-target="#uploadModal"
+                                                                    data-id="{{ $undian->id }}">Upload Foto</button>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @if(!$undian->pemenang)
+                                                                <!-- Tombol Edit hanya muncul jika pemenang belum ada -->
+                                                                <button class="btn btn-warning btn-sm" data-toggle="modal"
+                                                                    data-target="#editModal" data-id="{{ $undian->id }}"
+                                                                    data-kode="{{ $undian->kode_undian }}"
+                                                                    data-nama="{{ $undian->nama_undian }}"
+                                                                    data-tanggal="{{ $undian->tanggal_kocok }}">
+                                                                    <i class="fas fa-edit"></i> Edit
+                                                                </button>
+                                                            @endif
 
-                                                    </td>
-                                                    <td>
-                                                        @if($undian->foto_pemenang)
-                                                        <img src="{{ asset('/undian/pemenang/' . $undian->foto_pemenang) }}"
-                                                            alt="Foto Pemenang" class="img-thumbnail"
-                                                            style="width: 100px; height: 100px;">
-                                                        @else
-                                                        <button class="btn btn-primary btn-sm" data-toggle="modal"
-                                                            data-target="#uploadModal"
-                                                            data-id="{{ $undian->id }}">Upload Foto</button>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        <a href="" class="btn btn-warning btn-sm">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <a href="" class="btn btn-danger btn-sm"
-                                                            onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                                                            <i class="fas fa-trash"></i>
-                                                        </a>
-                                                    </td>
-                                                </tr>
+                                                            <!-- Tombol Hapus -->
+                                                            <form action="{{ route('undian.destroy', $undian->id) }}"
+                                                                method="POST" class="d-inline">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-danger btn-sm"
+                                                                    onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                                                    <i class="fas fa-trash"></i> Hapus
+                                                                </button>
+                                                            </form>
+                                                        </td>
+
+                                                    </tr>
                                                 @endforeach
+
                                             </tbody>
                                         </table>
 
@@ -156,6 +171,44 @@
             </section>
             <!-- /.content -->
         </div>
+
+        <!-- Modal Edit -->
+        <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editModalLabel">Edit Undian</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form action="{{ route('undian.update') }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-body">
+                            <input type="hidden" id="edit-id" name="id">
+                            <div class="form-group">
+                                <label>Kode Undian</label>
+                                <input type="text" id="edit-kode" name="kode_undian" class="form-control" required readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Nama Undian</label>
+                                <input type="text" id="edit-nama" name="nama_undian" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Tanggal Kocok</label>
+                                <input type="date" id="edit-tanggal" name="tanggal_kocok" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal Tambah Undian -->
         <div class="modal fade" id="modalTambahUndian" tabindex="-1" role="dialog"
             aria-labelledby="modalTambahUndianLabel" aria-hidden="true">
@@ -175,7 +228,7 @@
                                 <select class="form-control" name="mikrotik_id" required>
                                     <option disabled selected value>Pilih Site</option>
                                     @foreach($mikrotiks as $mikrotik)
-                                    <option value="{{ $mikrotik->id }}">{{ $mikrotik->site }}</option>
+                                        <option value="{{ $mikrotik->id }}">{{ $mikrotik->site }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -224,6 +277,22 @@
             var undianId = button.data('id');
             var modal = $(this);
             modal.find('#undian_id').val(undianId);
+        });
+
+    </script>
+    <script>
+        $('#editModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var id = button.data('id');
+            var kode = button.data('kode');
+            var nama = button.data('nama');
+            var tanggal = button.data('tanggal');
+
+            var modal = $(this);
+            modal.find('#edit-id').val(id);
+            modal.find('#edit-kode').val(kode);
+            modal.find('#edit-nama').val(nama);
+            modal.find('#edit-tanggal').val(tanggal);
         });
 
     </script>

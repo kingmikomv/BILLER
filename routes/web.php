@@ -47,6 +47,9 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
     Route::get('/home/sumin/undian/spinner', [AdminController::class, 'spinner'])->name('undian.spinner');
     Route::post('/home/sumin/undian/spinner/update-winner', [AdminController::class, 'updateWinner'])->name('update.winner');
 
+    Route::delete('/undian/{id}', [AdminController::class, 'destroy'])->name('undian.destroy');
+    Route::put('/undian/update', [AdminController::class, 'update'])->name('undian.update');
+
 
 
 });
