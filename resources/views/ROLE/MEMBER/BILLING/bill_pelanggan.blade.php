@@ -93,9 +93,12 @@
                                                                 data-toggle="modal" data-target="#editModal">
                                                                 <i class="fas fa-edit"></i>
                                                             </button>
-                                                            <button class="btn btn-danger btn-sm" title="Hapus">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
+                                                            <button class="btn btn-danger btn-sm btn-delete" 
+    data-id="{{ $data->id }}" 
+    title="Hapus">
+    <i class="fas fa-trash"></i>
+</button>
+
                                                             <button class="btn btn-success btn-sm btn-whatsapp"
                                                                 data-nama="{{ $data->nama_pelanggan }}"
                                                                 data-nomor="{{ $data->nomor_telepon }}"
@@ -376,5 +379,48 @@
 
 
     </script>
+<script>
+    $(document).on('click', '.btn-delete', function() {
+        var id = $(this).data('id');
+
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: "Data akan dihapus secara permanen!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '{{ route("hapusData", ":id") }}'.replace(':id', id), // Perbaiki parameter id
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire(
+                            'Terhapus!',
+                            'Data berhasil dihapus.',
+                            'success'
+                        ).then(() => {
+                            location.reload(); // Refresh tabel setelah hapus
+                        });
+                    },
+                    error: function() {
+                        Swal.fire(
+                            'Gagal!',
+                            'Terjadi kesalahan saat menghapus data.',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
+    });
+</script>
+
 
     </html>

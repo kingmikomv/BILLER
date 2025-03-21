@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Mikrotik;
 use App\Models\Pelanggan;
+use App\Models\PaketPppoe;
 use Illuminate\Http\Request;
 use App\Exports\PelangganExport;
 use App\Imports\PelangganImport;
-use App\Models\PaketPppoe;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Response;
@@ -15,17 +16,17 @@ use Illuminate\Support\Facades\Response;
 class BillingController extends Controller
 {
     public function unpaid()
-{
-    $belumBayar = Pelanggan::with('mikrotik') // Mengambil data MikroTik Server juga
-        ->where(function ($query) {
-            $query->where('status_pembayaran', 'belum bayar')
-                  ->orWhereDate('pembayaran_selanjutnya', '<=', now())
-                  ->orWhereNull('pembayaran_selanjutnya'); // Pelanggan baru tanpa pembayaran selanjutnya
-        })
-        ->get();
+    {
+        $belumBayar = Pelanggan::with('mikrotik') // Mengambil data MikroTik Server juga
+            ->where(function ($query) {
+                $query->where('status_pembayaran', 'belum bayar')
+                    ->orWhereDate('pembayaran_selanjutnya', '<=', now())
+                    ->orWhereNull('pembayaran_selanjutnya'); // Pelanggan baru tanpa pembayaran selanjutnya
+            })
+            ->get();
 
-    return view("ROLE.MEMBER.BILLING.unpaid", compact('belumBayar'));
-}
+        return view("ROLE.MEMBER.BILLING.unpaid", compact('belumBayar'));
+    }
 
 
     public function paid()
@@ -54,6 +55,76 @@ class BillingController extends Controller
 
         return view('ROLE.MEMBER.BILLING.bill_pelanggan', compact('pelanggan', 'paketpppoe'));
     }
+    public function hapusData($id)
+    {
+        $data = Pelanggan::find($id);
+        if (!$data) {
+            return response()->json(['error' => 'Data tidak ditemukan'], 404);
+        }
+    
+        $mikrotik_id = $data->mikrotik_id;
+        $mikrotik = Mikrotik::find($mikrotik_id);
+    
+        if (!$mikrotik) {
+            return response()->json(['error' => 'MikroTik tidak ditemukan'], 404);
+        }
+    
+        try {
+            // Koneksi ke MikroTik
+            $client = new \RouterOS\Client([
+                'host' => 'id-1.aqtnetwork.my.id',  // Sesuaikan dengan model Anda
+                'user' => $mikrotik->username,
+                'pass' => $mikrotik->password,
+                'port' => (int) $mikrotik->port_api,
+            ]);
+    
+            $akun_pppoe = $data->akun_pppoe;
+    
+            // **Ambil daftar PPP Secret berdasarkan name**
+            $querySecret = (new \RouterOS\Query('/ppp/secret/print'))
+                ->where('name', $akun_pppoe);
+            $secrets = $client->query($querySecret)->read();
+    
+            \Log::info('Data PPP Secret: ' . json_encode($secrets));
+    
+            if (empty($secrets)) {
+                return response()->json(['error' => 'PPP Secret tidak ditemukan untuk akun: ' . $akun_pppoe], 404);
+            }
+    
+            // **Ambil daftar PPP Active berdasarkan name**
+            $queryActive = (new \RouterOS\Query('/ppp/active/print'))
+                ->where('name', $akun_pppoe);
+            $actives = $client->query($queryActive)->read();
+    
+            \Log::info('Data PPP Active: ' . json_encode($actives));
+    
+            // **Hapus PPP SECRET berdasarkan .id**
+            foreach ($secrets as $secret) {
+                $client->query((new \RouterOS\Query('/ppp/secret/remove'))
+                    ->equal('.id', $secret['.id']))
+                    ->read();
+            }
+    
+            // **Hapus PPP ACTIVE berdasarkan name**
+            foreach ($actives as $active) {
+                $client->query((new \RouterOS\Query('/ppp/active/remove'))
+                    ->equal('.id', $active['.id']))
+                    ->read();
+            }
+    
+            // Hapus data pelanggan dari database
+            $data->delete();
+    
+            return response()->json(['success' => 'Data berhasil dihapus']);
+    
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal menghapus data: ' . $e->getMessage()], 500);
+        }
+    }
+    
+
+
+
 
 
 

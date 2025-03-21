@@ -165,6 +165,8 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
     Route::get('/paid', 'paid')->name('paid');
     Route::get('/riwayat', 'riwayat')->name('riwayat');
     Route::get('/bil_pelanggan', 'bil_pelanggan')->name('bil_pelanggan');
+    Route::delete('/bil_pelanggan/hapus-data/{id}', 'hapusData')->name('hapusData');
+
     Route::post('/send-whatsapp', 'kirimwa')->name('send.whatsapp');
 
     Route::get('/bcwa', 'bcwa')->name('bcwa');

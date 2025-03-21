@@ -104,7 +104,7 @@
                                                     <th>Nama Pelanggan</th>
                                                     <th>Paket</th>
                                                     <th>Akun</th>
-                                                    <th>Action</th>
+                                                    
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -147,28 +147,7 @@
                                                     <td>{{ $pelanggan->nama_pelanggan }}</td>
                                                     <td>{{ $pelanggan->paket->nama_paket ?? 'Tidak Ada Paket' }}</td>
                                                     <td>{{ $pelanggan->akun_pppoe }}</td>
-                                                    <td>
-                                                        <div class="dropdown">
-                                                            <button class="btn btn-secondary btn-sm dropdown-toggle"
-                                                                type="button" data-toggle="dropdown"
-                                                                aria-haspopup="true" aria-expanded="false">
-                                                                <i class="fas fa-cog"></i>
-                                                            </button>
-                                                            <div class="dropdown-menu">
-                                                                <!-- Tombol Edit -->
-
-                                                                <!-- Tombol Hapus -->
-                                                                <button class="dropdown-item delete-btn"
-                                                                    data-id="{{ $pelanggan->id }}"
-                                                                    data-nama="{{ $pelanggan->nama_pelanggan }}">
-                                                                    <i class="fas fa-trash-alt text-danger"></i> Hapus
-                                                                </button>
-
-                                                                <!-- Tombol Isolir -->
-
-                                                            </div>
-                                                        </div>
-                                                    </td>
+                                                   
 
 
                                                 </tr>
