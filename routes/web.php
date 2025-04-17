@@ -162,6 +162,11 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home/network/router'
 Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->controller(BillingController::class)->group(function () {
     
     Route::get('/unpaid', 'unpaid')->name('unpaid');
+    Route::get('/unpaid/invoice/{invoice}/bayar', 'bayar')->name('invoice.bayar');
+
+
+
+
     Route::get('/paid', 'paid')->name('paid');
     Route::get('/riwayat', 'riwayat')->name('riwayat');
     Route::get('/bil_pelanggan', 'bil_pelanggan')->name('bil_pelanggan');

@@ -36,6 +36,7 @@
                                                     <th>Invoice ID</th>
                                                     <th>Data Plg.</th>
                                                     <th>Tgl. Tagihan</th>
+                                                    <th>Bulan</th>
                                                     <th>Jml. Tagihan</th>
                                                     <th>Option</th>
                                                 </tr>
@@ -46,39 +47,28 @@
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>{{ $invoice->invoice_id }}</td>
                                                     <td>{{ "ID : ". $invoice->pelanggan->pelanggan_id ?? '-' }} | Site : {{ optional($invoice->pelanggan->mikrotik)->site ?? '-' }} | {{ $invoice->pelanggan->nama_pelanggan ?? '-' }} | {{ $invoice->pelanggan->akun_pppoe ?? '-'}}</td>
-                                                    <td>{{ \Carbon\Carbon::parse($invoice->jatuh_tempo)->format('d/m/Y') }}
-                                                    </td>
-                                                    <td>Rp
-                                                        {{ number_format(optional($invoice->pelanggan->paket)->harga_paket ?? 0, 0, ',', '.') }}
-                                                    </td>
+                                                    <td>{{ \Carbon\Carbon::parse($invoice->jatuh_tempo)->format('d/m/Y') }}</td>
+                                                    <td>{{ $invoice->bulan ?? '-'}}</td>
+                                                    <td>Rp {{ number_format(optional($invoice->pelanggan->paket)->harga_paket ?? 0, 0, ',', '.') }}</td>
                                                     <td>
                                                         <div class="row">
                                                             <div class="col-md-4 mt-1">
-
-                                                                <a href="" class="btn btn-success btn-sm"><i
-                                                                        class="fas fa-check"></i> Bayar</a>
-
+                                                                <!-- Tambahkan data-url ke tombol Bayar -->
+                                                                <a href="#" 
+                                                                   class="btn btn-success btn-sm confirm-bayar" 
+                                                                   data-url="{{ route('invoice.bayar', $invoice->id) }}">
+                                                                    <i class="fas fa-check"></i> Bayar
+                                                                </a>
                                                             </div>
-                                                            <div class="col-md-4 mt-1">
-                                                                <a href="" class="btn btn-primary btn-sm"><i
-                                                                        class="fas fa-eye"></i> Detail</a>
-                                                            </div>
-                                                            <div class="col-md-4  mt-1">
-                                                                <a href="" class="btn btn-secondary btn-sm"><i
-                                                                        class="fas fa-print"></i> Cetak</a>
-
-                                                            </div>
-
+                                                           
                                                         </div>
-
+                                                    </td>
                                                 </tr>
                                                 @endforeach
                                             </tbody>
                                         </table>
-
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -93,9 +83,13 @@
 
     <x-dhs.scripts />
 
-    <!-- DataTables Initialization -->
+    <!-- Load SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- DataTables + SweetAlert2 Script -->
     <script>
         $(document).ready(function () {
+            // Initialize DataTable
             $('#belumBayarTable').DataTable({
                 responsive: true,
                 paging: true,
@@ -105,8 +99,28 @@
                 info: true,
                 autoWidth: false
             });
-        });
 
+            // SweetAlert konfirmasi pembayaran
+            $(document).on('click', '.confirm-bayar', function (e) {
+                e.preventDefault();
+                const url = $(this).data('url');
+
+                Swal.fire({
+                    title: 'Apakah Anda yakin?',
+                    text: "Tagihan ini akan ditandai sebagai LUNAS!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, tandai lunas!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = url;
+                    }
+                });
+            });
+        });
     </script>
 
 </body>

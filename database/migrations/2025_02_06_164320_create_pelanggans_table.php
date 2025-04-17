@@ -28,7 +28,6 @@ return new class extends Migration
             $table->string('nomor_telepon');
             $table->date('tanggal_daftar'); 
             $table->date('pembayaran_selanjutnya')->nullable(); 
-            $table->date('pembayaran_yang_akan_datang')->nullable(); 
             $table->date('tanggal_ingin_pasang')->nullable(); 
             $table->date('tanggal_terpasang')->nullable(); 
             $table->boolean('notified')->default(false);
@@ -48,7 +47,6 @@ return new class extends Migration
         
             // Metode dan status pembayaran
             $table->enum('metode_pembayaran', ['Prabayar', 'Pascabayar'])->default('Pascabayar');
-            $table->enum('status_pembayaran', ['Sudah Dibayar', 'Belum Dibayar'])->default('Sudah Dibayar'); 
         
             $table->timestamps();
         });

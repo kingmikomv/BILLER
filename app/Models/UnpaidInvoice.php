@@ -12,6 +12,8 @@ class UnpaidInvoice extends Model
     protected $fillable = [
         'invoice_id',
         'pelanggan_id',
+        'bulan',
+        'tahun',
         'jatuh_tempo',
         'sudah_dibayar',
     ];

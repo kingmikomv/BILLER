@@ -225,7 +225,6 @@ class PelangganController extends Controller
         'tanggal_ingin_pasang' => $tanggalinginpasang,
         'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
         'metode_pembayaran' => $request->input('metode_pembayaran'),
-        'status_pembayaran' => $statusPembayaran,
     ]);
 
     // **Buat tiket PSB terkait pelanggan**

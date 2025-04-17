@@ -14,10 +14,12 @@ return new class extends Migration
         Schema::create('unpaid_invoices', function (Blueprint $table) {
             $table->id();
             $table->string('invoice_id')->unique();
-            $table->date('jatuh_tempo')->nullable();
+            $table->date('jatuh_tempo');
+            $table->enum('bulan', ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']);
+            $table->year('tahun');
             $table->boolean('sudah_dibayar')->default(false);
             $table->timestamps();
-
+    
             $table->foreignId('pelanggan_id')->constrained('pelanggan')->onDelete('cascade');
         });
     }
