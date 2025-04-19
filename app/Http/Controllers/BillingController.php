@@ -19,7 +19,7 @@ class BillingController extends Controller
     public function unpaid()
     {
         // Ambil jatuh tempo paling baru untuk setiap pelanggan yang belum bayar
-        $latestInvoices = UnpaidInvoice::where('sudah_dibayar', false)
+        $latestInvoices = UnpaidInvoice::where('status_pembayaran', unpaid)
             ->selectRaw('MAX(jatuh_tempo) as jatuh_tempo, pelanggan_id')
             ->groupBy('pelanggan_id');
 
@@ -48,7 +48,7 @@ class BillingController extends Controller
     
         // Check for other unpaid invoices (tunggakan)
         $tunggakan = UnpaidInvoice::where('pelanggan_id', $pelanggan->id)
-            ->where('sudah_dibayar', false)
+            ->where('status_pembayaran', unpaid)
             ->orderBy('jatuh_tempo', 'asc')
             ->get();
     

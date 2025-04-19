@@ -17,7 +17,8 @@ return new class extends Migration
             $table->date('jatuh_tempo');
             $table->enum('bulan', ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']);
             $table->year('tahun');
-            $table->boolean('sudah_dibayar')->default(false);
+            $table->string('status_pembayaran')->default('unpaid');
+            $table->string('dibayar_oleh')->nullable();
             $table->timestamps();
     
             $table->foreignId('pelanggan_id')->constrained('pelanggan')->onDelete('cascade');

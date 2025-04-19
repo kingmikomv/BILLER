@@ -31,7 +31,7 @@ class CheckPembayaranPelanggan extends Command
         foreach ($pelangganHariIni as $pelanggan) {
             $sudahAda = UnpaidInvoice::where('pelanggan_id', $pelanggan->id)
                 ->where('jatuh_tempo', $pelanggan->pembayaran_selanjutnya)
-                ->where('sudah_dibayar', false)
+                ->where('status_pembayaran', unpaid)
                 ->exists();
 
             if (!$sudahAda) {
@@ -90,7 +90,7 @@ class CheckPembayaranPelanggan extends Command
         foreach ($pelangganIsolasi as $pelanggan) {
             $sudahAda = UnpaidInvoice::where('pelanggan_id', $pelanggan->id)
                 ->where('jatuh_tempo', $pelanggan->pembayaran_selanjutnya)
-                ->where('sudah_dibayar', false)
+                ->where('status_pembayaran', unpaid)
                 ->exists();
 
             if (!$sudahAda) {
@@ -131,7 +131,7 @@ class CheckPembayaranPelanggan extends Command
     {
         $jumlahTagihan = optional($pelanggan->paket)->harga_paket ?? 0;
         $invoiceId = \App\Models\UnpaidInvoice::where('pelanggan_id', $pelanggan->id)
-            ->where('sudah_dibayar', false)
+            ->where('status_pembayaran', unpaid)
             ->latest()
             ->value('invoice_id');  // hanya ambil invoice_id
         return "📢 *Pemberitahuan Tagihan Internet*\n\n"
@@ -152,7 +152,7 @@ class CheckPembayaranPelanggan extends Command
     {
         $jumlahTagihan = optional($pelanggan->paket)->harga_paket ?? 0;
         $invoiceId = \App\Models\UnpaidInvoice::where('pelanggan_id', $pelanggan->id)
-            ->where('sudah_dibayar', false)
+            ->where('status_pembayaran', unpaid)
             ->latest()
             ->value('invoice_id');  // hanya ambil invoice_id
         return "⚠️ *Pemberitahuan Pembatasan Layanan*\n\n"
