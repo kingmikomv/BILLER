@@ -159,25 +159,37 @@ class PelangganController extends Controller
     }
     public function addPelanggan(Request $request)
 {
-    //\Log::info($request->all());
-
     $user = auth()->user(); // Ambil user yang login
+    $userId = $user->id;
+
+    // Ambil data paket berdasarkan kode_paket
     $kodePaket = $request->input('kodePaket');
-   
-    // Ambil paket berdasarkan kode_paket
     $paket = PaketPppoe::where('kode_paket', $kodePaket)->firstOrFail();
 
-    // Ambil router dari user berdasarkan username di paket
-    $mikrotik = $user->mikrotik()->where('id', $paket->mikrotik_id)->firstOrFail();
+    // Tentukan router berdasarkan role user
+    if ($user->role === 'member') {
+        $mikrotikQuery = Mikrotik::where('user_id', $userId);
+    } else {
+        // Untuk role teknisi atau cs
+        $mikrotikQuery = Mikrotik::where('user_id', $user->parent_id);
+    }
 
-    // Data pelanggan dari request
+    $mikrotik = $mikrotikQuery->where('id', $paket->mikrotik_id)->first();
+
+    if (!$mikrotik) {
+        return redirect()->back()->withErrors(['mikrotik' => 'Router tidak ditemukan untuk user atau paket yang dipilih.']);
+    }
+
+    // Data input dari request
     $akunPppoe = $request->input('akunPppoe');
     $passPppoe = $request->input('passwordPppoe');
     $ssidWifi = $request->input('ssid');
     $passWifi = $request->input('passwifi');
     $tanggalinginpasang = $request->input('tip');
-   // dd($mikrotik);
-    $uniqueId = $user->unique_id;
+    $tanggalDaftar = now();
+    $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth();
+    $statusPembayaran = $request->input('metode_pembayaran') === 'Prabayar' ? 'Sudah Dibayar' : 'Belum Dibayar';
+
     try {
         // Koneksi ke MikroTik API
         $client = new Client([
@@ -186,30 +198,26 @@ class PelangganController extends Controller
             'pass' => $mikrotik->password,
         ]);
 
-        // Tambahkan akun PPPoE di MikroTik
-        $query = new Query('/ppp/secret/add');
-        $query->equal('name', $akunPppoe);
-        $query->equal('password', $passPppoe);
-        $query->equal('service', 'pppoe');
-        $query->equal('profile', $paket->profile);
+        // Tambahkan akun PPPoE
+        $query = (new Query('/ppp/secret/add'))
+            ->equal('name', $akunPppoe)
+            ->equal('password', $passPppoe)
+            ->equal('service', 'pppoe')
+            ->equal('profile', $paket->profile);
 
         $client->query($query)->read();
+
     } catch (\Exception $e) {
         return redirect()->back()->withErrors(['mikrotik_pppoe' => 'Gagal menambahkan akun PPPoE: ' . $e->getMessage()]);
     }
 
-    // Status pembayaran
-    $tanggalDaftar = now();
-    $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth();
-    $statusPembayaran = $request->input('metode_pembayaran') === 'Prabayar' ? 'Sudah Dibayar' : 'Belum Dibayar';
-    $uuniq = rand(100, 9999999);
-    $kodePsb = $this->generateKodePSB(); // Kode Tiket PSB
+    // Buat data pelanggan
+    $kodePsb = $this->generateKodePSB();
+    $uniqueId = $user->unique_member . rand(100, 9999999);
 
-    // **Buat data pelanggan menggunakan relasi**
     $pelanggan = $mikrotik->pelanggan()->create([
-        'pelanggan_id' => $user->unique_member . $uuniq,
+        'pelanggan_id' => $uniqueId,
         'router_id' => $mikrotik->router_id,
-
         'no_tiket' => $kodePsb,
         'nama_ssid' => $ssidWifi,
         'password_ssid' => $passWifi,
@@ -227,52 +235,41 @@ class PelangganController extends Controller
         'metode_pembayaran' => $request->input('metode_pembayaran'),
     ]);
 
-    // **Buat tiket PSB terkait pelanggan**
-    $tiket = $pelanggan->tiket()->create([
+    // Buat tiket PSB
+    $pelanggan->tiket()->create([
         'no_tiket' => $kodePsb,
         'status_tiket' => 'Belum Dikonfirmasi',
         'serialnumber' => $request->input('serialnumber'),
-        
-        // Relasi pelanggan
         'pelanggan_id' => $pelanggan->id,
-        'parent_id' => $user->id,
-        // Relasi router
+        'parent_id' => $user->parent_id,
         'mikrotik_id' => $mikrotik->id,
         'router_username' => $mikrotik->username,
-    
-        // Relasi paket
-        'paket_id' => $paket->id, // Menggunakan ID paket sesuai schema
-    
-        // Data PPPoE
+        'paket_id' => $paket->id,
         'akun_pppoe' => $akunPppoe,
         'password_pppoe' => $passPppoe,
-    
-        // Informasi pelanggan
         'alamat' => $request->input('alamat'),
         'nomor_telepon' => $request->input('telepon'),
-    
-        // Tanggal & pembayaran
         'tanggal_daftar' => $tanggalDaftar,
         'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
-        'pembayaran_yang_akan_datang' => null,
         'tanggal_ingin_pasang' => $tanggalinginpasang,
-        'tanggal_terpasang' => null, // Sesuai schema
-    
-        // Informasi tambahan
+        'tanggal_terpasang' => null,
+        'pembayaran_yang_akan_datang' => null,
         'nama_ssid' => $ssidWifi,
         'password_ssid' => $passWifi,
         'mac_address' => $request->input('macadress'),
         'odp' => $request->input('odp'),
         'olt' => $request->input('olt'),
     ]);
-    
 
     // Log aktivitas
-    ActivityLogger::log('Menambahkan Pelanggan Baru', 'Nama Pelanggan : '.$pelanggan->nama_pelanggan. " Dengan Nomor Tiket PSB : " .$kodePsb);
+    ActivityLogger::log(
+        'Menambahkan Pelanggan Baru',
+        'Nama Pelanggan : ' . $pelanggan->nama_pelanggan . " Dengan Nomor Tiket PSB : " . $kodePsb
+    );
 
-    // Redirect dengan sukses
     return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan.');
 }
+
 
 
 public function showPelanggan($id)

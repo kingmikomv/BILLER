@@ -29,7 +29,7 @@
 
                                 <div class="card-header">
                                     <h3 class="card-title">Data Pelanggan</h3>
-                                    @if(in_array(auth()->user()->role, ['member']))
+                                    @if(in_array(auth()->user()->role, ['member', 'cs']))
 
                                     <div class="card-tools">
                                         <a class="btn btn-primary btn-sm" href="{{ route('formulir') }}">
@@ -46,6 +46,8 @@
                                     <form id="pelangganForm" method="POST">
                                         @csrf
                                         <meta name="csrf-token" content="{{ csrf_token() }}">
+                                        @if(in_array(auth()->user()->role, ['member']))
+
                                         <div class="mb-4">
                                             <div class="row">
                                                 <div class="col-md-3 mt-2">
@@ -90,6 +92,7 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        @endif
 
                                         <!-- Hidden input to store selected IDs -->
                                         <input type="hidden" name="selected_ids" id="selected_ids" value="[]">

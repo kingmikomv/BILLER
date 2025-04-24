@@ -19,7 +19,7 @@ class TeknisiController extends Controller
     {
         $user = auth()->user();
         $userId = $user->parent_id;
-    
+      
         // Ambil semua pelanggan_id dari TiketPsb yang terkait dengan teknisi (berdasarkan parent_id)
         $pelangganID = TiketPsb::whereHas('mikrotik', function ($query) use ($userId) {
                 $query->where('parent_id', $userId);
@@ -44,7 +44,7 @@ class TeknisiController extends Controller
             ->where('status_terpasang', 'Sudah Dipasang')
             ->with(['mikrotik', 'paket'])
             ->get();
-    
+           // dd($cocokPelanggan, $dataUniqueId, $pelangganID);
         return view('ROLE.PEKERJA.TEKNISI.datapsb', compact('cocokPelanggan', 'riwayatPemasangan'));
     }
     

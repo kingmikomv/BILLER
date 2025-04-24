@@ -106,7 +106,10 @@ class HomeController extends Controller
         } elseif ($user->hasRole('penagih')) {
             return response()->json(['message' => 'penagih']);
         } elseif ($user->hasRole('cs')) {
-            return response()->json(['message' => 'cs']);
+
+            return view('ROLE.CS.index');
+
+            // return response()->json(['message' => 'cs']);
         }
     
         // Default view jika peran tidak terdefinisi

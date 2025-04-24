@@ -55,10 +55,10 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
 });
 
 // Middleware for MEMBER, requires authentication and member role
-Route::middleware(['auth', 'role:member,teknisi'])->prefix('home')->group(function () {
+Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(function () {
 
     // SIDEBAR MENU DATA PELANGGAN
-    Route::middleware(['role:member,teknisi'])->prefix('pelanggan')->controller(PelangganController::class)->group(function () {
+    Route::middleware(['role:member,teknisi,cs'])->prefix('pelanggan')->controller(PelangganController::class)->group(function () {
         Route::get('/', 'index')->name('pelanggan');
         Route::post('/cek-modem', 'cekModem')->name('cek.modem');
         Route::get('/formulir', 'formulir')->name('formulir');
@@ -181,3 +181,4 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
 
 
 });
+
