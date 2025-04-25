@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\PelangganExport;
 use App\Imports\PelangganImport;
+use App\Models\BillingSeting;
 use App\Models\Mikrotik;
 use App\Models\PaketPppoe;
 use App\Models\Pelanggan;
@@ -289,4 +290,23 @@ class BillingController extends Controller
     {
         return Excel::download(new PelangganExport, 'data_pelanggan.xlsx');
     }
+    public function billingSetting()
+    {
+        return view('ROLE.MEMBER.BILLING.billing_setting');
+    }
+    public function store(Request $request)
+{
+    $validated = $request->validate([
+        'prorata_enable' => 'nullable|boolean',
+        'generate_invoice_mode' => 'required|in:tanggal_pembayaran,dimajukan',
+        'dimajukan_hari' => 'nullable|integer|min:0',
+        'default_jatuh_tempo_hari' => 'required|integer|min:1',
+    ]);
+
+    $validated['prorata_enable'] = $request->has('prorata_enable');
+
+    BillingSeting::updateOrCreate(['id' => 1], $validated);
+
+    return back()->with('success', 'Pengaturan billing berhasil disimpan.');
+}
 }

@@ -83,12 +83,18 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
 
     });
 
+
+    // SIdebar SALES member
+
     Route::middleware(['role:member,teknisi,cs'])->prefix('sales')->group(function(){
 
         Route::get('/data_sales', [SalesController::class, 'data_sales'])->name('data_sales');
         Route::get('/data_sales/{id}/acc', [SalesController::class, 'acc'])->name('acc');
         Route::post('/data_sales/{id}/acc/transfer', [SalesController::class, 'addPelanggan'])->name('transfer');
     });
+
+
+    //Sidebar menu billing
 
 
     // SIDEBAR MENU NETWORK
@@ -173,7 +179,8 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
     
     Route::get('/unpaid', 'unpaid')->name('unpaid');
     Route::get('/unpaid/invoice/{invoice}/bayar', 'bayar')->name('invoice.bayar');
-
+    Route::get('/billing_setting', 'billingSetting')->name('billing.setting');
+    Route::post('/setting-billing', 'store')->name('setting-billing.store');
 
 
 

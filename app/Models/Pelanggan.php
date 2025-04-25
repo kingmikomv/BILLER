@@ -71,4 +71,9 @@ class Pelanggan extends Model
     {
         return $this->hasMany(UnpaidInvoice::class);
     }
+    public function tagihan()
+{
+    return $this->hasMany(Tagihan::class);
+}
+
 }

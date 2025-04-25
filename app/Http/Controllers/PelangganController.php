@@ -231,7 +231,6 @@ class PelangganController extends Controller
         'nomor_telepon' => $request->input('telepon'),
         'tanggal_daftar' => $tanggalDaftar,
         'tanggal_ingin_pasang' => $tanggalinginpasang,
-        'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
         'metode_pembayaran' => $request->input('metode_pembayaran'),
     ]);
 
@@ -260,6 +259,51 @@ class PelangganController extends Controller
         'odp' => $request->input('odp'),
         'olt' => $request->input('olt'),
     ]);
+// Ambil pengaturan billing
+$setting = DB::table('billing_seting')->first(); // Ambil pengaturan billing
+
+$tanggalGenerate = now();
+$tanggalJatuhTempo = $tanggalGenerate->copy()->addDays($setting->default_jatuh_tempo_hari);
+
+// Hitung tanggal generate jika mode dimajukan aktif
+if ($setting->generate_invoice_mode === 'dimajukan' && $setting->dimajukan_hari !== null) {
+    $tanggalGenerate = $tanggalPembayaranSelanjutnya->copy()->subDays($setting->dimajukan_hari);
+    $tanggalJatuhTempo = $tanggalGenerate->copy()->addDays($setting->default_jatuh_tempo_hari);
+}
+
+// Tentukan prorata jika aktif
+$prorata = 0; // Default jika tidak ada tanggal mulai atau prorata tidak aktif
+if ($setting->prorata_enable && $pelanggan->tanggal_daftar) {
+    $bulanIni = now();
+    $jumlahHariBulanIni = $bulanIni->daysInMonth;
+    $hariMulai = $pelanggan->tanggal_daftar->day;
+
+    // Menghitung prorata berdasarkan hari yang digunakan dalam bulan ini
+    if ($hariMulai <= $jumlahHariBulanIni) {
+        $prorata = $pelanggan->paket->harga_paket / $jumlahHariBulanIni * ($jumlahHariBulanIni - $hariMulai + 1);
+        
+        // Pembulatan ke kelipatan 1000 terdekat
+        $prorata = round($prorata / 1000) * 1000;
+    }
+} else {
+    // Jika prorata tidak aktif, tagihan penuh
+    $prorata = $pelanggan->paket->harga_paket;
+
+    // Pembulatan ke kelipatan 1000 terdekat
+    $prorata = round($prorata / 1000) * 1000;
+}
+
+// Buat tagihan awal dengan prorata yang sudah dihitung
+$pelanggan->tagihan()->create([
+    'tanggal_generate' => $tanggalGenerate,
+    'tanggal_jatuh_tempo' => $tanggalJatuhTempo,
+    'tanggal_pembayaran' => $statusPembayaran === 'Sudah Dibayar' ? now() : null,
+    'jumlah_tagihan' => $prorata, // Gunakan prorata yang sudah dihitung
+    'prorata' => $setting->prorata_enable,
+    'status' => $statusPembayaran === 'Sudah Dibayar' ? 'Lunas' : 'Belum Lunas',
+]);
+
+
 
     // Log aktivitas
     ActivityLogger::log(

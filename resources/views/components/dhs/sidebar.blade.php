@@ -145,7 +145,12 @@
                   <p>Riwayat Tagihan</p>
                 </a>
               </li>
-            
+              <li class="nav-item">
+                <a href="{{route('billing.setting')}}" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Pengaturan Billing</p>
+                </a>
+              </li>
             </ul>
           </li>
           @endif

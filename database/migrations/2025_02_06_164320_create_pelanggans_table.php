@@ -27,7 +27,6 @@ return new class extends Migration
             $table->longText('alamat');
             $table->string('nomor_telepon');
             $table->date('tanggal_daftar'); 
-            $table->date('pembayaran_selanjutnya')->nullable(); 
             $table->date('tanggal_ingin_pasang')->nullable(); 
             $table->date('tanggal_terpasang')->nullable(); 
             $table->boolean('notified')->default(false);
