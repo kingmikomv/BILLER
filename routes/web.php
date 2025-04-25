@@ -12,6 +12,7 @@ use App\Http\Controllers\PenagihController;
 use App\Http\Controllers\TeknisiController;
 use App\Http\Controllers\MikrotikController;
 use App\Http\Controllers\PelangganController;
+use App\Http\Controllers\SalesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -79,6 +80,8 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
 
         Route::get('/riwayat-pemasangan/{tiket}', [TeknisiController::class, 'show'])->name('riwayat.pemasangan');
 
+
+        Route::get('/data_sales', [SalesController::class, 'data_sales'])->name('data_sales');
     });
 
     // SIDEBAR MENU NETWORK
@@ -182,3 +185,8 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
 
 });
 
+Route::middleware(['auth', 'role:sales'])->prefix('home/sales')->group(function () {
+    Route::get('/data_psbsales', [SalesController::class, 'data_sales'])->name('data_psbsales');
+    Route::get('/tambah_psb_sales', [SalesController::class, 'tambah_psb_sales'])->name('tambah_psb_sales');
+    Route::post('/upload_psb_sales', [SalesController::class, 'upload_psb_sales'])->name('upload_psb_sales');
+});

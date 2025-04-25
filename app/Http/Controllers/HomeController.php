@@ -110,6 +110,9 @@ class HomeController extends Controller
             return view('ROLE.CS.index');
 
             // return response()->json(['message' => 'cs']);
+        } elseif($user->hasRole('sales')){
+            return view('ROLE.SALES.index');
+
         }
     
         // Default view jika peran tidak terdefinisi

@@ -31,7 +31,7 @@ class MemberController extends Controller
             'usernamePekerja' => ['required', 'string', 'max:50', 'unique:users,username'],
             'emailPekerja' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'passwordPekerja' => ['required', 'string', 'min:8', 'confirmed'],
-            'posisiPekerja' => ['required', 'in:teknisi,cs,penagih'],
+            'posisiPekerja' => ['required', 'in:teknisi,cs,penagih,sales'],
             'noTeleponPekerja' => ['required', 'string', 'max:15'],
         ]);
 

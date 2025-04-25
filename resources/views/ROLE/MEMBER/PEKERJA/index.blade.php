@@ -167,6 +167,7 @@
                                     <option disabled selected value>Pilih Posisi</option>
                                     <option value="teknisi">Teknisi</option>
                                     <option value="cs">Customer Service</option>
+                                    <option value="sales">Sales</option>
                                     <option value="penagih">Penagih</option>
                                 </select>
                                 @error('posisiPekerja')

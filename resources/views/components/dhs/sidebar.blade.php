@@ -45,6 +45,14 @@
               </p>
             </a>
           </li>
+          <li class="nav-item">
+            <a href="{{route('data_sales')}}" class="nav-link {{ request()->routeIs('data_sales') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-bullhorn"></i>
+              <p>
+                Data Sales
+              </p>
+            </a>
+          </li>
           @endif
           @if(auth()->user()->role == 'superadmin')
           <li class="nav-item">
@@ -85,6 +93,17 @@
           <li class="nav-item">
             <a href="{{route('datapsb')}}" class="nav-link {{ request()->routeIs('datapsb') ? 'active' : '' }}">
               <i class="nav-icon fas fa-binoculars"></i>
+              <p>
+                Data PSB
+              </p>
+            </a>
+          </li>
+          @endif
+          @if(auth()->user()->role == 'sales')
+
+          <li class="nav-item">
+            <a href="" class="nav-link">
+              <i class="nav-icon fas fa-users"></i>
               <p>
                 Data PSB
               </p>
