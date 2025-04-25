@@ -22,7 +22,7 @@ return new class extends Migration
             $table->date('tanggal_ingin_pasang')->nullable();
             $table->string('telepon')->nullable();
             $table->longText('alasan')->nullable();
-            $table->boolean('status')->default(0);
+            $table->string('status')->nullable();
             $table->string('status_pemasangan')->nullable();
             $table->timestamps();
         });

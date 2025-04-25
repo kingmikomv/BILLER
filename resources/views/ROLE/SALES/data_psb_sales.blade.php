@@ -28,55 +28,76 @@
                                 </div>
                                 <div class="card-body">
                                     <!-- Table for desktop -->
-                                    <div class="d-none d-md-block">
+                                    <!-- Table PSB View -->
+                                    <div class="table-responsive d-none d-md-block">
                                         <table id="example1" class="table table-bordered table-striped">
-                                            <thead>
+                                            <thead class="text-center">
                                                 <tr>
                                                     <th>No</th>
                                                     <th>Nama Sales</th>
                                                     <th>Nama Lengkap</th>
+                                                    <th>Tanggal Ingin Dipasang</th>
                                                     <th>Alamat</th>
                                                     <th>Foto Lokasi</th>
                                                     <th>Paket PSB</th>
                                                     <th>Status Sales</th>
                                                     <th>Status Pemasangan</th>
-                                                    <th>Action</th>
+                                                    <th>Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach ($data as $key => $psb)
                                                 <tr>
-                                                    <td>{{ $key + 1 }}</td>
+                                                    <td class="text-center">{{ $key + 1 }}</td>
                                                     <td>{{ $psb->sales }}</td>
                                                     <td>{{ $psb->nama_psb }}</td>
+                                                    <td>{{ $psb->tanggal_ingin_pasang }}</td>
                                                     <td>{{ $psb->alamat_psb }}</td>
-                                                    <td>
-                                                        <img src="{{ asset($psb->foto_lokasi_psb) }}" alt="Foto Lokasi" width="100" class="img-thumbnail popup-image" data-img="{{ asset($psb->foto_lokasi_psb) }}" style="cursor:pointer;">
+                                                    <td class="text-center">
+                                                        <img src="{{ asset($psb->foto_lokasi_psb) }}" width="100"
+                                                            class="img-thumbnail popup-image"
+                                                            data-img="{{ asset($psb->foto_lokasi_psb) }}"
+                                                            style="cursor:pointer;">
                                                     </td>
                                                     <td>{{ $psb->paket_psb }}</td>
-                                                    <td>
-                                                        @if ($psb->status_sales == 1)
-                                                            <span class="badge badge-success">Disetujui</span>
+                                                    <td class="text-center">
+                                                        @php $status = strtolower($psb->status); @endphp
+                                                        @if ($status == 'belum dikonfirmasi')
+                                                        <span class="badge badge-warning">Belum Dikonfirmasi</span>
                                                         @else
-                                                            <span class="badge badge-secondary">Menunggu</span>
+                                                        <span class="badge badge-success">OK PSB JADI</span>
                                                         @endif
                                                     </td>
-                                                    <td>
+                                                    <td class="text-center">
                                                         @php $status = strtolower($psb->status_pemasangan); @endphp
                                                         @if ($status == 'belum dikonfirmasi')
-                                                            <span class="badge badge-warning">Belum Dikonfirmasi</span>
+                                                        <span class="badge badge-warning">Belum Dikonfirmasi</span>
                                                         @elseif ($status == 'cancel')
-                                                            <span class="badge badge-danger">Cancel</span>
-                                                        @elseif ($status == 'ok')
-                                                            <span class="badge badge-success">OK</span>
+                                                        <span class="badge badge-danger">Cancel</span>
+                                                        @elseif ($status == 'sudah dikonfirmasi')
+                                                        <span class="badge badge-success">Sudah Dikonfirmasi</span>
                                                         @else
-                                                            <span class="badge badge-secondary">Tidak Diketahui</span>
+                                                        <span class="badge badge-secondary">Tidak Diketahui</span>
                                                         @endif
                                                     </td>
-                                                    <td>
+                                                    <td class="text-center">
                                                         @if (in_array(auth()->user()->role, ['member', 'cs']))
-                                                        <button class="btn btn-success btn-sm btn-acc" data-id="{{ $psb->id }}">ACC</button>
-                                                        <button class="btn btn-danger btn-sm btn-cancel" data-id="{{ $psb->id }}" data-toggle="modal" data-target="#cancelModal">Cancel</button>
+                                                        <a class="btn btn-success btn-sm" href="{{ route('acc', $psb->id) }}" ><i class="fas fa-check"></i> ACC</a>
+                                                            
+                                                        <button class="btn btn-danger btn-sm btn-cancel-membercs"
+                                                            data-id="{{ $psb->id }}" data-toggle="modal"
+                                                            data-target="#cancelModal">Cancel</button>
+                                                        @endif
+                                                        @if (in_array(auth()->user()->role, ['sales']))
+
+                                                        @if( $psb->status == 'Jadi')
+                                                            Terima Kasih !
+                                                        @else
+                                                        <a class="btn btn-success btn-sm" href="{{route('acc_psb', $psb->id)}}">ACC</a>
+                                                        <a class="btn btn-danger btn-sm" href="">Cancel</a>
+                                                        @endif
+
+
                                                         @endif
                                                     </td>
                                                 </tr>
@@ -85,47 +106,70 @@
                                         </table>
                                     </div>
 
-                                    <!-- Card for mobile -->
+                                    <!-- Mobile Card View -->
                                     <div class="d-md-none">
                                         @foreach ($data as $key => $psb)
-                                            <div class="card mb-3 shadow-sm">
-                                                <div class="card-body">
-                                                    <p><strong>Sales:</strong> {{ $psb->sales }}</p>
-                                                    <p><strong>Nama :</strong> {{ $psb->nama_psb }}</p>
-                                                    <p><strong>Alamat:</strong> {{ $psb->alamat_psb }}</p>
-                                                    <p><strong>Paket:</strong> {{ $psb->paket_psb }}</p>
-                                                    <p><strong>Status Sales:</strong> 
-                                                        @if ($psb->status_sales == 1)
-                                                            <span class="badge badge-success">Disetujui</span>
-                                                        @else
-                                                            <span class="badge badge-secondary">Menunggu</span>
-                                                        @endif
-                                                    </p>
-                                                    <p><strong>Status Pemasangan:</strong> 
-                                                        @php $status = strtolower($psb->status_pemasangan); @endphp
+                                        <div class="card mb-3 shadow-sm">
+                                            <div class="card-body">
+                                                <p><strong>Sales:</strong> {{ $psb->sales }}</p>
+                                                <p><strong>Nama:</strong> {{ $psb->nama_psb }}</p>
+                                                <p><strong>Tanggal Ingin Dipasang:</strong>
+                                                    {{ $psb->tanggal_ingin_pasang }}</p>
+                                                <p><strong>Alamat:</strong> {{ $psb->alamat_psb }}</p>
+                                                <p><strong>Paket:</strong> {{ $psb->paket_psb }}</p>
+                                                <p><strong>Status Sales:</strong>
+                                                    @php $status = strtolower($psb->status); @endphp
                                                         @if ($status == 'belum dikonfirmasi')
-                                                            <span class="badge badge-warning">Belum Dikonfirmasi</span>
-                                                        @elseif ($status == 'cancel')
-                                                            <span class="badge badge-danger">Cancel</span>
-                                                        @elseif ($status == 'ok')
-                                                            <span class="badge badge-success">OK</span>
+                                                        <span class="badge badge-warning">Belum Dikonfirmasi</span>
                                                         @else
-                                                            <span class="badge badge-secondary">Tidak Diketahui</span>
+                                                        <span class="badge badge-success">OK PSB JADI</span>
                                                         @endif
-                                                    </p>
-                                                    <p><strong>Foto Lokasi:</strong><br>
-                                                        <img src="{{ asset($psb->foto_lokasi_psb) }}" width="100" class="img-thumbnail popup-image" data-img="{{ asset($psb->foto_lokasi_psb) }}" style="cursor:pointer;">
-                                                    </p>
+                                                </p>
+                                                <p><strong>Status Pemasangan:</strong>
+                                                    @php $status = strtolower($psb->status_pemasangan); @endphp
+                                                    @if ($status == 'belum dikonfirmasi')
+                                                    <span class="badge badge-warning">Belum Dikonfirmasi</span>
+                                                    @elseif ($status == 'cancel')
+                                                    <span class="badge badge-danger">Cancel</span>
+                                                    @elseif ($status == 'sudah dikonfirmasi')
+                                                    <span class="badge badge-success">Sudah Dikonfirmasi</span>
+                                                    @else
+                                                    <span class="badge badge-secondary">Tidak Diketahui</span>
+                                                    @endif
+                                                </p>
+                                                <p><strong>Foto Lokasi:</strong><br>
+                                                    <img src="{{ asset($psb->foto_lokasi_psb) }}" width="100"
+                                                        class="img-thumbnail popup-image"
+                                                        data-img="{{ asset($psb->foto_lokasi_psb) }}"
+                                                        style="cursor:pointer;">
+                                                </p>
+                                                <div class="mt-3">
                                                     @if (in_array(auth()->user()->role, ['member', 'cs']))
-                                                    <div class="mt-2">
-                                                        <button class="btn btn-success btn-sm btn-acc" data-id="{{ $psb->id }}">ACC</button>
-                                                        <button class="btn btn-danger btn-sm btn-cancel" data-id="{{ $psb->id }}" data-toggle="modal" data-target="#cancelModal">Cancel</button>
-                                                    </div>
+                                                    <button class="btn btn-success btn-sm btn-acc-membercs"
+                                                        data-id="{{ $psb->id }}">ACC</button>
+                                                    <button class="btn btn-danger btn-sm btn-cancel-membercs"
+                                                        data-id="{{ $psb->id }}" data-toggle="modal"
+                                                        data-target="#cancelModal">Cancel</button>
+                                                    @endif
+                                                    @if (in_array(auth()->user()->role, ['sales']))
+                                                        @if( $psb->status == 'Jadi')
+                                                            Terima Kasih !
+                                                        @else
+                                                        <a class="btn btn-success btn-block "
+                                                        href="{{route('acc_psb', $psb->id)}}">ACC</a>
+
+                                                       
+                                                        <a class="btn btn-danger btn-block" href="">Cancel</a>
+                                                        @endif
+                                                  
+                                                   
                                                     @endif
                                                 </div>
                                             </div>
+                                        </div>
                                         @endforeach
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -146,7 +190,8 @@
         </div>
 
         <!-- Cancel Modal -->
-        <div class="modal fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModalLabel" aria-hidden="true">
+        <div class="modal fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <form id="cancelForm" method="POST" action="">
                     @csrf
@@ -159,7 +204,8 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <textarea name="alasan" class="form-control" rows="4" placeholder="Tulis alasan pembatalan..." required></textarea>
+                            <textarea name="alasan" class="form-control" rows="4"
+                                placeholder="Tulis alasan pembatalan..." required></textarea>
                         </div>
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-danger">Kirim</button>
@@ -174,6 +220,7 @@
     </div>
 
     <x-dhs.scripts />
+    <x-dhs.alert />
     <script>
         $(document).ready(function () {
             $('#example1').DataTable();
@@ -184,10 +231,16 @@
                 $('#imageModal').modal('show');
             });
 
-            $('.btn-cancel').on('click', function () {
+            // Aksi untuk member/cs
+            $('.btn-cancel-membercs').on('click', function () {
                 $('#cancel_id').val($(this).data('id'));
             });
+
+            
         });
+
     </script>
+
 </body>
+
 </html>

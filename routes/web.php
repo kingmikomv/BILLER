@@ -81,8 +81,15 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
         Route::get('/riwayat-pemasangan/{tiket}', [TeknisiController::class, 'show'])->name('riwayat.pemasangan');
 
 
-        Route::get('/data_sales', [SalesController::class, 'data_sales'])->name('data_sales');
     });
+
+    Route::middleware(['role:member,teknisi,cs'])->prefix('sales')->group(function(){
+
+        Route::get('/data_sales', [SalesController::class, 'data_sales'])->name('data_sales');
+        Route::get('/data_sales/{id}/acc', [SalesController::class, 'acc'])->name('acc');
+        Route::post('/data_sales/{id}/acc/transfer', [SalesController::class, 'addPelanggan'])->name('transfer');
+    });
+
 
     // SIDEBAR MENU NETWORK
     Route::middleware(['role:member,teknisi'])->prefix('network')->group(function () {
@@ -189,4 +196,7 @@ Route::middleware(['auth', 'role:sales'])->prefix('home/sales')->group(function 
     Route::get('/data_psbsales', [SalesController::class, 'data_sales'])->name('data_psbsales');
     Route::get('/tambah_psb_sales', [SalesController::class, 'tambah_psb_sales'])->name('tambah_psb_sales');
     Route::post('/upload_psb_sales', [SalesController::class, 'upload_psb_sales'])->name('upload_psb_sales');
+
+    Route::get('/data_psbsales/{id}/acc', [SalesController::class, 'acc_psb'])->name('acc_psb');
+
 });
