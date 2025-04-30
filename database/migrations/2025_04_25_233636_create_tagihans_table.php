@@ -25,6 +25,13 @@ return new class extends Migration
             $table->boolean('prorata')->default(false);
             $table->enum('status', ['Lunas', 'Belum Lunas', 'Tertunggak'])->default('Belum Lunas');
         
+
+            $table->string('xendit_invoice_id')->nullable(); // ID dari Xendit
+            $table->string('link_pembayaran')->nullable();      // URL invoice
+            $table->string('payment_method')->nullable();         // VA / QR / dll
+            $table->string('payment_channel')->nullable();         // BRI / BCA / dll
+            $table->timestamp('xendit_paid_at')->nullable();   // Waktu dibayar
+            $table->string('xendit_status')->nullable();            // PAID / EXPIRED / PENDING
             $table->timestamps();
         });
         
