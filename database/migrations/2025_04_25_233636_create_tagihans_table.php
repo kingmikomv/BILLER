@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('tagihan', function (Blueprint $table) {
             $table->id();
+            $table->string('invoice_id')->unique(); // Tambahkan ini
+
             $table->foreignId('pelanggan_id')->constrained('pelanggan')->onDelete('cascade');
         
             $table->date('tanggal_generate');
@@ -25,6 +27,7 @@ return new class extends Migration
         
             $table->timestamps();
         });
+        
         
     }
 

@@ -295,6 +295,7 @@ if ($setting->prorata_enable && $pelanggan->tanggal_daftar) {
 
 // Buat tagihan awal dengan prorata yang sudah dihitung
 $pelanggan->tagihan()->create([
+    'invoice_id' => $this->generateInvoiceId(),
     'tanggal_generate' => $tanggalGenerate,
     'tanggal_jatuh_tempo' => $tanggalJatuhTempo,
     'tanggal_pembayaran' => $statusPembayaran === 'Sudah Dibayar' ? now() : null,
@@ -312,6 +313,9 @@ $pelanggan->tagihan()->create([
     );
 
     return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan.');
+}
+function generateInvoiceId() {
+    return 'INV-' . date('Ymd') . strtoupper(Str::random(6));
 }
 
 
