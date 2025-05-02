@@ -15,6 +15,11 @@
         <a href="{{route('company')}}" class="nav-link">Profile Perusahaan</a>
       </li>
       @endif
+      @if (Auth::user()->role == 'member')
+      <li class="nav-item d-none d-sm-inline-block">
+        <a href="{{route('whatsapp')}}" class="nav-link">Whatsapp</a>
+      </li>
+      @endif
     </ul>
 
     <!-- Right navbar links -->

@@ -14,6 +14,7 @@ use App\Http\Controllers\PenagihController;
 use App\Http\Controllers\TeknisiController;
 use App\Http\Controllers\MikrotikController;
 use App\Http\Controllers\PelangganController;
+use App\Http\Controllers\WhatsappController;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,6 +59,12 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
 
 // Middleware for MEMBER, requires authentication and member role
 Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(function () {
+
+    Route::middleware(['role:member'])->prefix('whatsapp')->group(function () {
+        Route::get('/whatsapp', [WhatsappController::class, 'index'])->name('whatsapp');
+       // Route::post('/send-whatsapp', [WhatsappHelper::class, 'sendMessage'])->name('send.whatsapp');
+    });
+
 
     // SIDEBAR MENU DATA PELANGGAN
     Route::middleware(['role:member,teknisi,cs'])->prefix('pelanggan')->controller(PelangganController::class)->group(function () {
