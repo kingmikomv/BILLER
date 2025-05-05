@@ -54,34 +54,55 @@
 
     <script>
         const sessionId = "{{ auth()->user()->unique_member }}";
+        const API_BASE_URL = "http://wa.aqtnetwork.my.id:3000";
+    
         let pollingQRInterval = null;
         let pollingStatusInterval = null;
-
-        document.getElementById('generateQR').addEventListener('click', function () {
-            fetch(`http://localhost:3000/api/start?session_id=${sessionId}`)
+    
+        document.addEventListener('DOMContentLoaded', function () {
+            cekStatusAwal(); // Cek status saat halaman pertama kali dimuat
+    
+            document.getElementById('generateQR').addEventListener('click', mulaiSesi);
+        });
+    
+        function mulaiSesi() {
+            document.getElementById('wa-status').innerText = 'Memulai sesi...';
+    
+            fetch(`${API_BASE_URL}/api/start?session_id=${sessionId}`)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('wa-status').innerText = 'Menunggu QR...';
-                    fetchQRCode(); // Tampilkan pertama kali
-                    if (pollingQRInterval) clearInterval(pollingQRInterval);
-                    pollingQRInterval = setInterval(fetchQRCode, 15000); // QR diperbarui tiap 15 detik
-
-                    if (pollingStatusInterval) clearInterval(pollingStatusInterval);
-                    pollingStatusInterval = setInterval(fetchStatus, 5000);
+    
+                    ambilQRCode(); // QR pertama kali
+    
+                    clearInterval(pollingQRInterval);
+                    pollingQRInterval = setInterval(ambilQRCode, 5000);
+    
+                    clearInterval(pollingStatusInterval);
+                    pollingStatusInterval = setInterval(ambilStatus, 5000);
+    
+                    // Ubah tombol Generate QR menjadi tombol Disconnect hanya setelah terhubung
+                    document.getElementById('generateQR').innerText = 'Menunggu Scan...';
+                    document.getElementById('generateQR').removeEventListener('click', mulaiSesi);
+                    document.getElementById('generateQR').addEventListener('click', disconnectSesi);
                 })
                 .catch(error => {
-                    console.error('Gagal memulai session:', error);
+                    console.error('Gagal memulai sesi:', error);
                     alert('Gagal generate QR');
                 });
-        });
-
-        function fetchQRCode() {
-            fetch(`http://localhost:3000/api/qr?session_id=${sessionId}`)
+        }
+    
+        function ambilQRCode() {
+            fetch(`${API_BASE_URL}/api/qr?session_id=${sessionId}`)
                 .then(res => res.json())
                 .then(data => {
-                    if (data.qrImage) {
-                        document.getElementById('qr-code').innerHTML = `<img src="${data.qrImage}" alt="QR Code" />`;
+                    if (data.status === 'scan' && data.qrImage) {
                         document.getElementById('wa-status').innerText = 'Menunggu Scan...';
+                        document.getElementById('qr-code').innerHTML = `<img src="${data.qrImage}" alt="QR Code" style="max-width:200px;" />`;
+                    } else if (data.status === 'connected') {
+                        ambilStatus(); // Langsung ambil data lengkap
+                        clearInterval(pollingQRInterval);
+                        clearInterval(pollingStatusInterval);
                     } else {
                         document.getElementById('wa-status').innerText = data.message || 'QR tidak tersedia';
                         document.getElementById('qr-code').innerHTML = '';
@@ -89,28 +110,73 @@
                 })
                 .catch(err => {
                     console.error('Gagal ambil QR:', err);
+                    document.getElementById('wa-status').innerText = 'Gagal ambil QR';
                 });
         }
-
-        function fetchStatus() {
-            fetch(`http://localhost:3000/api/status?session_id=${sessionId}`)
+    
+        function ambilStatus() {
+            fetch(`${API_BASE_URL}/api/status?session_id=${sessionId}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data && data.status === true) {
-                        document.getElementById('wa-status').innerText = 'Terhubung';
-                        document.getElementById('wa-id').innerText = data.user.id || '-';
-                        document.getElementById('wa-name').innerText = data.user.name || '-';
-                        document.getElementById('wa-battery').innerText = data.user.battery || '-';
-
+                        perbaruiUIYangTerhubung(data);
                         clearInterval(pollingQRInterval);
                         clearInterval(pollingStatusInterval);
-                        document.getElementById('qr-code').innerHTML = '';
                     }
                 })
                 .catch(err => {
                     console.error('Gagal ambil status:', err);
                 });
         }
+    
+        function cekStatusAwal() {
+            fetch(`${API_BASE_URL}/api/status?session_id=${sessionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.status === true) {
+                        perbaruiUIYangTerhubung(data);
+                    } else {
+                        document.getElementById('wa-status').innerText = 'No Instance';
+                        document.getElementById('generateQR').innerText = 'Generate QR Code';
+                        document.getElementById('generateQR').removeEventListener('click', disconnectSesi);
+                        document.getElementById('generateQR').addEventListener('click', mulaiSesi);
+                    }
+                })
+                .catch(err => {
+                    console.error('Gagal cek status awal:', err);
+                    document.getElementById('wa-status').innerText = 'Gagal cek status';
+                });
+        }
+    
+        function perbaruiUIYangTerhubung(data) {
+            document.getElementById('wa-status').innerText = '✅ Terhubung';
+            document.getElementById('wa-id').innerText = data.user?.id || '-';
+            document.getElementById('wa-name').innerText = data.user?.name || '-';
+            document.getElementById('wa-battery').innerText = data.user?.battery || '-';
+            document.getElementById('qr-code').innerHTML = '';
+    
+            // Ubah tombol menjadi Disconnect
+            document.getElementById('generateQR').innerText = 'Disconnect';
+            document.getElementById('generateQR').removeEventListener('click', mulaiSesi);
+            document.getElementById('generateQR').addEventListener('click', disconnectSesi);
+        }
+    
+        function disconnectSesi() {
+            fetch(`${API_BASE_URL}/api/disconnect?session_id=${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('wa-status').innerText = 'Disconnected';
+                    document.getElementById('qr-code').innerHTML = '';
+                    document.getElementById('generateQR').innerText = 'Generate QR Code';
+                    document.getElementById('generateQR').removeEventListener('click', disconnectSesi);
+                    document.getElementById('generateQR').addEventListener('click', mulaiSesi);
+                })
+                .catch(error => {
+                    console.error('Gagal disconnect sesi:', error);
+                    alert('Gagal disconnect');
+                });
+        }
     </script>
+
 </body>
 </html>

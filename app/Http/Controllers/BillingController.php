@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\Mikrotik;
+use App\Models\Pelanggan;
+use App\Models\PaketPppoe;
+use Illuminate\Http\Request;
+use App\Models\BillingSeting;
+use App\Models\UnpaidInvoice;
+use Illuminate\Support\Carbon;
 use App\Exports\PelangganExport;
 use App\Imports\PelangganImport;
-use App\Models\BillingSeting;
-use App\Models\Mikrotik;
-use App\Models\PaketPppoe;
-use App\Models\Pelanggan;
-use App\Models\UnpaidInvoice;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Response;
 
 class BillingController extends Controller
 {
@@ -247,31 +248,80 @@ class BillingController extends Controller
             return response()->json(['error' => 'Gagal menghapus data: ' . $e->getMessage()], 500);
         }
     }
+    
+
 
     public function kirimwa(Request $request)
     {
+        $user = auth()->user();
+    
+        // Ambil session_id berdasarkan role user
+        if ($user->role === 'member') {
+            $session_id = $user->unique_member;
+        } else {
+            // Cek apakah ada anak user yang memiliki session_id
+            $child = User::where('parent_id', $user->id)->first();
+            $session_id = $child?->unique_member; // null safe jika child tidak ada
+        }
+    
+        // Cek apakah session_id ditemukan
+        if (!$session_id) {
+            return response()->json(['success' => false, 'message' => 'Session ID tidak ditemukan.']);
+        }
+    
+        // Ambil nomor tujuan dan pesan
         $nomor = $request->nomor;
         $pesan = $request->pesan;
-        $token = 'g3ZXCoCHeR1y75j4xJoz';
-
-        if (!$token) {
-            return response()->json(['success' => false, 'message' => 'Token API tidak ditemukan.'], 400);
-        }
-
-        $response = Http::withHeaders([
-            'Authorization' => $token
-        ])->post('https://api.fonnte.com/send', [
-            'target' => $nomor,
-            'message' => $pesan,
-            'countryCode' => '62',  // Kode Negara (62 untuk Indonesia)
-        ]);
-
-        if ($response->successful()) {
-            return response()->json(['success' => true, 'message' => 'Pesan berhasil dikirim.']);
-        } else {
-            return response()->json(['success' => false, 'message' => 'Gagal mengirim pesan.']);
+    
+        try {
+            // Kirim request POST ke server WhatsApp API dengan Content-Type: application/json
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post('http://wa.aqtnetwork.my.id:3000/api/send', [
+                'session_id' => $session_id,
+                'number' => $nomor,
+                'message' => $pesan,
+            ]);
+    
+            // Log response dari server
+            \Log::info('Response dari server WhatsApp:', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+    
+            // Cek jika request berhasil
+            if ($response->successful()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pesan berhasil dikirim',
+                    'data' => $response->body(),
+                ]);
+            } else {
+                // Jika request gagal
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengirim pesan',
+                    'error' => $response->body(),
+                ], $response->status());
+            }
+        } catch (\Exception $e) {
+            // Menangani error jika terjadi masalah saat koneksi ke server WhatsApp
+            \Log::error('Error saat menghubungi server WhatsApp:', [
+                'message' => $e->getMessage(),
+                'stack' => $e->getTraceAsString(),
+            ]);
+    
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan koneksi ke server WhatsApp',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
+    
+
+
+    
 
     public function bcwa() {}
 
