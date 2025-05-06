@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\MessageTemplate;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 
 class WhatsappController extends Controller
@@ -12,14 +14,26 @@ class WhatsappController extends Controller
     public function index(){
         return view('ROLE.MEMBER.WHATSAPP.index');
     }
-    public function startSession(Request $request)
-    {
-        $sessionId = auth()->user()->unique_member;
+    public function template(){
+        $templates = \App\Models\MessageTemplate::all()->keyBy('name');
 
-        $response = Http::get("http://127.0.0.1:3000/api/start", [
-            'session_id' => $sessionId,
+        return view('ROLE.MEMBER.WHATSAPP.template', compact('templates'));
+    }
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'content' => 'required|string',
         ]);
 
-        return $response->body(); // akan mengembalikan HTML QR dari Node.js
+        $user = Auth::user();
+
+        // Update if already exists, else create
+        $template = MessageTemplate::updateOrCreate(
+            ['user_id' => $user->id, 'name' => $request->name],
+            ['content' => $request->content]
+        );
+
+        return redirect()->back()->with('success', 'Template saved successfully!');
     }
 }

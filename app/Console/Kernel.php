@@ -74,33 +74,44 @@ class Kernel extends ConsoleKernel
             );
 
             // ✅ Tambahan: Buat invoice di Xendit
-            if (empty($tagihan->link_pembayaran)) {
-                try {
-                    Xendit::setApiKey(config('services.xendit.api_key'));
+            if (empty($tagihan->link_pembayaran) || $tagihan->midtrans_transaction_status === 'expire') {
+    try {
+        \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('services.midtrans.is_production');
+        \Midtrans\Config::$isSanitized = true;
+        \Midtrans\Config::$is3ds = true;
 
-                    $params = [
-                        'external_id' => $tagihan->invoice_id,
-                        'payer_email' => $pelanggan->email ?? 'test@example.com',
-                        'description' => 'Pembayaran tagihan pelanggan #' . $pelanggan->id,
-                        'amount' => $tagihan->jumlah_tagihan,
-                        'invoice_duration' => 86400,
-                        'customer' => [
-                            'given_names' => $pelanggan->nama ?? 'Customer',
-                            'email' => $pelanggan->email ?? 'test@example.com',
-                        ],
-                    ];
+        // Gunakan order_id unik, misalnya pakai timestamp
+       // $newInvoiceId = 'INV-' . date('Ymd-His') . strtoupper(Str::random(4));
 
-                    $invoice = Invoice::create($params);
+        $params = [
+            'transaction_details' => [
+                'order_id' => $tagihan->invoice_id, // ✅ pakai yang sudah dibuat
+                'gross_amount' => $tagihan->jumlah_tagihan,
+            ],
+            'customer_details' => [
+                'first_name' => $pelanggan->nama,
+                'phone' => $pelanggan->nomor_telepon,
+            ]
+        ];
 
-                    $tagihan->update([
-                        'xendit_invoice_id' => $invoice['id'],
-                        'link_pembayaran' => $invoice['invoice_url'],
-                        'xendit_status' => $invoice['status'],
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Gagal generate invoice Xendit: ' . $e->getMessage());
-                }
-            }
+        $transaction = \Midtrans\Snap::createTransaction($params);
+
+        $tagihan->update([
+            'midtrans_order_id' => $tagihan->invoice_id,
+            'link_pembayaran' => $transaction->redirect_url,
+            'payment_method' => null,
+            'payment_channel' => null,
+            'midtrans_paid_at' => null,
+            'midtrans_transaction_status' => 'pending',
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Gagal generate invoice Midtrans: ' . $e->getMessage());
+    }
+}
+
+            
+            
         }
     })->monthlyOn(1, '00:00');
 

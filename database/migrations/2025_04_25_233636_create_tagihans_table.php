@@ -26,12 +26,23 @@ return new class extends Migration
             $table->enum('status', ['Lunas', 'Belum Lunas', 'Tertunggak'])->default('Belum Lunas');
         
 
-            $table->string('xendit_invoice_id')->nullable(); // ID dari Xendit
-            $table->string('link_pembayaran')->nullable();      // URL invoice
-            $table->string('payment_method')->nullable();         // VA / QR / dll
-            $table->string('payment_channel')->nullable();         // BRI / BCA / dll
-            $table->timestamp('xendit_paid_at')->nullable();   // Waktu dibayar
-            $table->string('xendit_status')->nullable();            // PAID / EXPIRED / PENDING
+            // $table->string('xendit_invoice_id')->nullable(); // ID dari Xendit
+            // $table->string('link_pembayaran')->nullable();      // URL invoice
+            // $table->string('payment_method')->nullable();         // VA / QR / dll
+            // $table->string('payment_channel')->nullable();         // BRI / BCA / dll
+            // $table->timestamp('xendit_paid_at')->nullable();   // Waktu dibayar
+            // $table->string('xendit_status')->nullable();            // PAID / EXPIRED / PENDING
+
+
+    // Kolom untuk Midtrans
+    $table->string('midtrans_order_id')->nullable();           // Sama dengan invoice_id
+    $table->string('link_pembayaran')->nullable();             // Snap URL
+    $table->string('payment_method')->nullable();              // Credit Card / bank_transfer / dll
+    $table->string('payment_channel')->nullable();             // Mandiri / BRI / Gopay dll
+    $table->timestamp('midtrans_paid_at')->nullable();         // Waktu dibayar
+    $table->string('midtrans_transaction_status')->nullable(); // settlement / pending / expire / cancel
+
+            
             $table->timestamps();
         });
         

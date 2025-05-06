@@ -18,27 +18,34 @@
                                 <span class="info-box-icon bg-purple elevation-1"><i class="fab fa-whatsapp"></i></span>
 
                                 <div class="info-box-content">
-                                    <span class="info-box-text font-weight-bold">WhatsApp Messages</span>
-                                    <span>Gunakan Account WhatsApp Sendiri</span>
-
-                                    <div class="mt-2 d-flex align-items-center">
-                                        <label class="mr-2">Status</label> : <span id="wa-status" class="ml-2">No Instance</span>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <span class="info-box-text font-weight-bold">WhatsApp Messages</span>
+                                            <span>Gunakan Account WhatsApp Sendiri</span>
+        
+                                            <div class="mt-2 d-flex align-items-center">
+                                                <label class="mr-2">Status</label> : <span id="wa-status" class="ml-2">No Instance</span>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <label class="mr-2">ID</label> : <span id="wa-id" class="ml-2">-</span>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <label class="mr-2">Name</label> : <span id="wa-name" class="ml-2">-</span>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <label class="mr-2">Battery</label> : <span id="wa-battery" class="ml-2">-</span>
+                                            </div>
+        
+                                            <div class="mt-3">
+                                                <button class="btn btn-primary btn-sm" id="generateQR">Generate QR Code</button>
+                                            </div>
+        
+                                            <div class="mt-3" id="qr-code"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <a href="{{route('whatsapp.template')}}" class="btn btn-secondary btn-block"><i class="fab fa-whatsapp"></i> Template WA</a>
+                                        </div>
                                     </div>
-                                    <div class="d-flex align-items-center">
-                                        <label class="mr-2">ID</label> : <span id="wa-id" class="ml-2">-</span>
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <label class="mr-2">Name</label> : <span id="wa-name" class="ml-2">-</span>
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <label class="mr-2">Battery</label> : <span id="wa-battery" class="ml-2">-</span>
-                                    </div>
-
-                                    <div class="mt-3">
-                                        <button class="btn btn-primary btn-sm" id="generateQR">Generate QR Code</button>
-                                    </div>
-
-                                    <div class="mt-3" id="qr-code"></div>
                                 </div>
                             </div>
                         </div>

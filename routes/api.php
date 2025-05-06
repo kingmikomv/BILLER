@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\MidtransWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,7 @@ use App\Http\Controllers\AdminController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+Route::post('/midtrans/webhook', [MidtransWebhookController::class, 'handle']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

@@ -13,8 +13,9 @@ use App\Http\Controllers\BillingController;
 use App\Http\Controllers\PenagihController;
 use App\Http\Controllers\TeknisiController;
 use App\Http\Controllers\MikrotikController;
-use App\Http\Controllers\PelangganController;
 use App\Http\Controllers\WhatsappController;
+use App\Http\Controllers\PelangganController;
+use App\Http\Controllers\MidtransWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +27,8 @@ use App\Http\Controllers\WhatsappController;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+// routes/api.php
+//Route::post('/midtrans/webhook', [MidtransWebhookController::class, 'handle']);
 
 Route::get('/', function () {
     return redirect()->to('/login');
@@ -62,6 +65,9 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
 
     Route::middleware(['role:member'])->prefix('whatsapp')->group(function () {
         Route::get('/whatsapp', [WhatsappController::class, 'index'])->name('whatsapp');
+        Route::get('/whatsapp/template', [WhatsappController::class, 'template'])->name('whatsapp.template');
+        Route::post('/whatsapp/template', [WhatsappController::class, 'store'])->name('whatsapp.store');
+
        // Route::post('/send-whatsapp', [WhatsappHelper::class, 'sendMessage'])->name('send.whatsapp');
     });
 
