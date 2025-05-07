@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\MidtransWebhookController;
 
 /*
@@ -16,7 +17,7 @@ use App\Http\Controllers\MidtransWebhookController;
 |
 */
 Route::post('/midtrans/webhook', [MidtransWebhookController::class, 'handle']);
-
+Route::get('/invoice/{invoice_id}', [BillingController::class, 'cariInvoice'])->name('invoice.cari');
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });

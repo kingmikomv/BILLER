@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Tagihan;
 use App\Models\Mikrotik;
 use App\Models\Pelanggan;
 use App\Models\PaketPppoe;
@@ -44,72 +45,71 @@ class BillingController extends Controller
         $invoice = UnpaidInvoice::findOrFail($invoiceId);
         $invoice->sudah_dibayar = true;
         $invoice->save();
-    
+
         // Retrieve the customer with related data
         $pelanggan = Pelanggan::with('paket', 'mikrotik')->find($invoice->pelanggan_id);
-    
+
         // Check for other unpaid invoices (tunggakan)
         $tunggakan = UnpaidInvoice::where('pelanggan_id', $pelanggan->id)
             ->where('status_pembayaran', unpaid)
             ->orderBy('jatuh_tempo', 'asc')
             ->get();
-    
+
         // Retrieve the latest invoice
         $latestInvoice = UnpaidInvoice::where('pelanggan_id', $pelanggan->id)
             ->orderBy('jatuh_tempo', 'desc')
             ->first();
-    
+
         if ($latestInvoice && $latestInvoice->id == $invoice->id) {
             // If the latest invoice was paid
-    
+
             // Update the customer's isolation status
             $pelanggan->isolated = false;
             $pelanggan->notified = false;
             $pelanggan->notified_at = null;
-    
+
             // Calculate the next payment due date
             $tanggalPemasangan = Carbon::parse($pelanggan->tanggal_pemasangan);
             $sekarang = Carbon::now();
-    
+
             if ($sekarang->day >= $tanggalPemasangan->day) {
                 $jatuhTempoBaru = $tanggalPemasangan->copy()->addMonthsNoOverflow($sekarang->diffInMonths($tanggalPemasangan) + 1);
             } else {
                 $jatuhTempoBaru = $tanggalPemasangan->copy()->addMonthsNoOverflow($sekarang->diffInMonths($tanggalPemasangan));
             }
-    
+
             $pelanggan->pembayaran_selanjutnya = $jatuhTempoBaru->setDay($tanggalPemasangan->day);
-    
+
             // Now update the MikroTik profile based on the customer's package
             $this->updateMikrotikProfile($pelanggan);
-    
         } else {
             // If there are still unpaid invoices, keep the customer isolated
             $pelanggan->isolated = true;
             $pelanggan->notified = false;
             $pelanggan->notified_at = null;
-    
+
             if ($tunggakan->count() > 0) {
                 $pelanggan->pembayaran_selanjutnya = $tunggakan->first()->jatuh_tempo;
             }
         }
-    
+
         // Save the updated customer data
         $pelanggan->save();
-    
+
         // Redirect back with a success message
         return redirect()->back()->with('success', 'Tagihan berhasil dibayar.');
     }
-    
+
     private function updateMikrotikProfile($pelanggan)
     {
         // Retrieve the MikroTik router data
         $router = Mikrotik::where('router_id', $pelanggan->router_id)->first();
-    
+
         if (!$router) {
             \Log::error('Router tidak ditemukan untuk pelanggan ID: ' . $pelanggan->id);
             return;
         }
-    
+
         try {
             // Connect to the MikroTik API
             $client = new \RouterOS\Client([
@@ -117,11 +117,11 @@ class BillingController extends Controller
                 'user' => $router->username,
                 'pass' => $router->password,
             ]);
-    
+
             // Retrieve PPPoE secrets (users)
             $querySecret = new \RouterOS\Query('/ppp/secret/print');
             $secretUsers = $client->query($querySecret)->read();
-    
+
             // Find the matching PPPoE user
             foreach ($secretUsers as $user) {
                 if ($user['name'] === trim($pelanggan->akun_pppoe)) {
@@ -129,37 +129,36 @@ class BillingController extends Controller
                     $updateProfileQuery = new \RouterOS\Query('/ppp/secret/set');
                     $updateProfileQuery->equal('.id', $user['.id']);
                     $updateProfileQuery->equal('profile', $pelanggan->profile_paket);
-    
+
                     $client->query($updateProfileQuery)->read();
-    
+
                     \Log::info("✅ Pelanggan ID: {$pelanggan->id} profile PPPoE diubah ke {$pelanggan->profile_paket}.");
-    
+
                     // Check for and disconnect any active connection
                     $queryActive = new \RouterOS\Query('/ppp/active/print');
                     $activeUsers = $client->query($queryActive)->read();
-    
+
                     foreach ($activeUsers as $active) {
                         if ($active['name'] === trim($pelanggan->akun_pppoe)) {
                             // Disconnect the active user to apply the new profile
                             $removeActive = new \RouterOS\Query('/ppp/active/remove');
                             $removeActive->equal('.id', $active['.id']);
                             $client->query($removeActive)->read();
-    
+
                             \Log::info("⚡ Koneksi aktif pelanggan ID: {$pelanggan->id} telah diputus, profile baru akan diterapkan.");
                         }
                     }
-    
+
                     return;
                 }
             }
-    
+
             \Log::warning("⚠️ Akun PPPoE '{$pelanggan->akun_pppoe}' tidak ditemukan di router {$router->ip_address}.");
-    
         } catch (\Exception $e) {
             \Log::error("❌ Gagal update profile pelanggan ID {$pelanggan->id}: " . $e->getMessage());
         }
     }
-    
+
     public function paid() {}
     public function riwayat() {}
 
@@ -248,13 +247,13 @@ class BillingController extends Controller
             return response()->json(['error' => 'Gagal menghapus data: ' . $e->getMessage()], 500);
         }
     }
-    
+
 
 
     public function kirimwa(Request $request)
     {
         $user = auth()->user();
-    
+
         // Ambil session_id berdasarkan role user
         if ($user->role === 'member') {
             $session_id = $user->unique_member;
@@ -263,16 +262,16 @@ class BillingController extends Controller
             $child = User::where('parent_id', $user->id)->first();
             $session_id = $child?->unique_member; // null safe jika child tidak ada
         }
-    
+
         // Cek apakah session_id ditemukan
         if (!$session_id) {
             return response()->json(['success' => false, 'message' => 'Session ID tidak ditemukan.']);
         }
-    
+
         // Ambil nomor tujuan dan pesan
         $nomor = $request->nomor;
         $pesan = $request->pesan;
-    
+
         try {
             // Kirim request POST ke server WhatsApp API dengan Content-Type: application/json
             $response = Http::withHeaders([
@@ -282,13 +281,13 @@ class BillingController extends Controller
                 'number' => $nomor,
                 'message' => $pesan,
             ]);
-    
+
             // Log response dari server
             \Log::info('Response dari server WhatsApp:', [
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-    
+
             // Cek jika request berhasil
             if ($response->successful()) {
                 return response()->json([
@@ -310,7 +309,7 @@ class BillingController extends Controller
                 'message' => $e->getMessage(),
                 'stack' => $e->getTraceAsString(),
             ]);
-    
+
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan koneksi ke server WhatsApp',
@@ -318,10 +317,10 @@ class BillingController extends Controller
             ], 500);
         }
     }
-    
 
 
-    
+
+
 
     public function bcwa() {}
 
@@ -345,18 +344,29 @@ class BillingController extends Controller
         return view('ROLE.MEMBER.BILLING.billing_setting');
     }
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'prorata_enable' => 'nullable|boolean',
-        'generate_invoice_mode' => 'required|in:tanggal_pembayaran,dimajukan',
-        'dimajukan_hari' => 'nullable|integer|min:0',
-        'default_jatuh_tempo_hari' => 'required|integer|min:1',
-    ]);
+    {
+        $validated = $request->validate([
+            'prorata_enable' => 'nullable|boolean',
+            'generate_invoice_mode' => 'required|in:tanggal_pembayaran,dimajukan',
+            'dimajukan_hari' => 'nullable|integer|min:0',
+            'default_jatuh_tempo_hari' => 'required|integer|min:1',
+        ]);
 
-    $validated['prorata_enable'] = $request->has('prorata_enable');
+        $validated['prorata_enable'] = $request->has('prorata_enable');
 
-    BillingSeting::updateOrCreate(['id' => 1], $validated);
+        BillingSeting::updateOrCreate(['id' => 1], $validated);
 
-    return back()->with('success', 'Pengaturan billing berhasil disimpan.');
-}
+        return back()->with('success', 'Pengaturan billing berhasil disimpan.');
+    }
+    public function cariInvoice(Request $request) {
+       
+
+        $invoice = Tagihan::where('invoice_id', $request->invoice_id)->first();
+
+        if ($invoice) {
+            return view('ROLE.MEMBER.BILLING.cari_invoice', compact('invoice'));
+        } else {
+            return response()->json(['success' => false, 'message' => 'Invoice tidak ditemukan']);
+        }
+    }
 }

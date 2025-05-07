@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Usaha;
 use App\Models\ActivityLog;
-use App\Helpers\ActivityLogger;
-
 use Illuminate\Http\Request;
+
+use Intervention\Image\Image;
+use App\Helpers\ActivityLogger;
 use Illuminate\Support\Facades\File;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 
 
 class UsahaController extends Controller
@@ -50,11 +53,14 @@ class UsahaController extends Controller
                 File::delete(public_path('usaha_logos/' . $usaha->logo_usaha));
             }
         
-            // Simpan logo baru ke public/usaha_logos/
-            $file = $request->file('logo_usaha');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('usaha_logos'), $filename);
-            
+            // Buat manager dan proses gambar ke JPEG
+            $manager = new ImageManager(new GdDriver());
+                $image = $manager->read($request->file('logo_usaha'))->toPng(); // encode to JPEG
+        
+            $filename = 'Logo.jpeg';
+            $path = public_path('usaha_logos/' . $filename);
+            $image->save($path);
+        
             $data['logo_usaha'] = $filename;
         }
         
