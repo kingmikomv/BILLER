@@ -87,7 +87,7 @@
          @endif
        </p>
        <p class="mb-0">
-         <a href="{{ route('register') }}" class="text-center">Belum Punya Akun ? Daftar Member</a>
+         {{-- <a href="" class="text-center">Belum Punya Akun ? Daftar Member</a> --}}
        </p>
      </div>
      <!-- /.card-body -->
