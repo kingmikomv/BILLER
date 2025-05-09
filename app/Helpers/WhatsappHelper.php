@@ -7,11 +7,10 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappHelper
 {
-    protected static $token = 'g3ZXCoCHeR1y75j4xJoz'; // Ganti dengan token Fonnte kamu
     public static function sendWa($nomor, $pesan)
     {
         try {
-           $response = Http::post('http://localhost:3000/api/send', [
+           $response = Http::post('http://wa.aqtnetwork.my.id:3000/api/send', [
                 'session_id' => 'main-session',
                 'number' => $nomor,
                 'message' => $pesan,

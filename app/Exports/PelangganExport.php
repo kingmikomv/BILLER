@@ -7,9 +7,6 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class PelangganExport implements FromCollection, WithHeadings
 {
-    /**
-     * Mengambil data pelanggan dari database
-     */
     public function collection()
     {
         return Pelanggan::select(
@@ -24,8 +21,6 @@ class PelangganExport implements FromCollection, WithHeadings
             'alamat', 
             'nomor_telepon', 
             'tanggal_daftar', 
-            'pembayaran_selanjutnya', 
-            'status_pembayaran',
             'metode_pembayaran'
         )->get()->map(function ($item) {
             return [
@@ -33,24 +28,18 @@ class PelangganExport implements FromCollection, WithHeadings
                 'Nama Pelanggan' => $item->nama_pelanggan ?? '-',
                 'Router ID' => $item->router_id ?? '-',
                 'Router Username' => $item->router_username ?? '-',
-                'Kode Paket' => "'" . ($item->kode_paket ?? '-'), // Menjaga format angka sebagai string
+                'Kode Paket' => "'" . ($item->kode_paket ?? '-'),
                 'Profil Paket' => $item->profile_paket ?? '-',
                 'Akun PPPoE' => $item->akun_pppoe,
                 'Password PPPoE' => $item->password_pppoe,
                 'Alamat' => $item->alamat,
-                'Nomor Telepon' => "'" . ($item->nomor_telepon ?? '-'), // Menjaga angka nol di awal
+                'Nomor Telepon' => "'" . ($item->nomor_telepon ?? '-'),
                 'Tanggal Daftar' => $item->tanggal_daftar ? \Carbon\Carbon::parse($item->tanggal_daftar)->format('Y-m-d') : '-',
-                'Pembayaran Selanjutnya' => $item->pembayaran_selanjutnya ? \Carbon\Carbon::parse($item->pembayaran_selanjutnya)->format('Y-m-d') : '-',
-                'Status Pembayaran' => $item->status_pembayaran,
                 'Metode Pembayaran' => $item->metode_pembayaran,
-
             ];
         });
     }
-    
-    /**
-     * Menentukan header kolom dalam file Excel
-     */
+
     public function headings(): array
     {
         return [
@@ -65,11 +54,7 @@ class PelangganExport implements FromCollection, WithHeadings
             'Alamat', 
             'Nomor Telepon', 
             'Tanggal Daftar', 
-            'Pembayaran Selanjutnya', 
-            'Status Pembayaran',
             'Metode Pembayaran'
-
         ];
     }
-    
 }
