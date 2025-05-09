@@ -35,7 +35,7 @@ Route::get('/', function () {
 });
 
 // Auth routes with email verification
-Auth::routes(['verify' => true]);
+Auth::routes(['verify' => true, 'register' => false]);
 
 // Route to home page after login
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
