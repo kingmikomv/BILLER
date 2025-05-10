@@ -13,31 +13,30 @@ use App\Models\UnpaidInvoice;
 use Illuminate\Support\Carbon;
 use App\Exports\PelangganExport;
 use App\Imports\PelangganImport;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Response;
 
 class BillingController extends Controller
 {
-    public function unpaid()
-    {
-        // Ambil jatuh tempo paling baru untuk setiap pelanggan yang belum bayar
-        $latestInvoices = UnpaidInvoice::where('status_pembayaran', 'unpaid')
-            ->selectRaw('MAX(jatuh_tempo) as jatuh_tempo, pelanggan_id')
-            ->groupBy('pelanggan_id');
+   public function unpaid()
+{
+    $currentMonth = now()->month;  // Mendapatkan bulan sekarang
+    $currentYear = now()->year;    // Mendapatkan tahun sekarang
 
-        // Gabungkan untuk ambil data lengkap dari tagihan tersebut
-        $unpaidInvoices = UnpaidInvoice::with('pelanggan', 'pelanggan.mikrotik', 'pelanggan.paket')
-            ->joinSub($latestInvoices, 'latest', function ($join) {
-                $join
-                    ->on('unpaid_invoices.pelanggan_id', '=', 'latest.pelanggan_id')
-                    ->on('unpaid_invoices.jatuh_tempo', '=', 'latest.jatuh_tempo');
-            })
-            ->orderBy('unpaid_invoices.jatuh_tempo', 'asc')
-            ->get();
+    $unpaidInvoices = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
+        ->whereIn('status', ['Belum Lunas', 'Tertunggak'])
+        ->whereMonth('tanggal_jatuh_tempo', $currentMonth)  // Filter berdasarkan bulan sekarang
+        ->whereYear('tanggal_jatuh_tempo', $currentYear)    // Filter berdasarkan tahun sekarang
+        ->latest('tanggal_jatuh_tempo')
+        ->get();
 
-        return view('ROLE.MEMBER.BILLING.unpaid', compact('unpaidInvoices'));
-    }
+    return view('ROLE.MEMBER.BILLING.unpaid', compact('unpaidInvoices'));
+}
+
+
+
 
     public function bayar($invoiceId)
     {
@@ -159,8 +158,41 @@ class BillingController extends Controller
         }
     }
 
-    public function paid() {}
-    public function riwayat() {}
+   public function paid()
+{
+    $paidInvoices = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
+        ->where('status', 'Lunas')
+        ->orderByDesc('tanggal_pembayaran')
+        ->get();
+
+    return view('ROLE.MEMBER.BILLING.paid', compact('paidInvoices'));
+}
+
+
+   public function riwayatTagihan()
+{
+    $currentMonth = now()->month;  // Mendapatkan bulan sekarang
+    $currentYear = now()->year;    // Mendapatkan tahun sekarang
+
+    // Mengambil data tagihan yang sudah dibayar (Lunas) dan yang belum dibayar (Belum Lunas/Tertunggak)
+    $invoices = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
+        ->whereIn('status', ['Lunas', 'Belum Lunas', 'Tertunggak'])
+        ->where(function ($query) use ($currentMonth, $currentYear) {
+            // Filter berdasarkan bulan dan tahun saat ini untuk tagihan yang belum dibayar
+            $query->whereMonth('tanggal_jatuh_tempo', $currentMonth)
+                  ->whereYear('tanggal_jatuh_tempo', $currentYear);
+        })
+        ->orWhere(function ($query) {
+            // Untuk tagihan yang sudah dibayar, tidak perlu filter bulan/tahun
+            $query->where('status', 'Lunas');
+        })
+        ->orderByDesc('tanggal_pembayaran')  // Urutkan berdasarkan tanggal pembayaran jika ada
+        ->orderByDesc('tanggal_jatuh_tempo') // Atau urutkan berdasarkan tanggal jatuh tempo jika pembayaran belum dilakukan
+        ->get();
+
+    return view('ROLE.MEMBER.BILLING.riwayat', compact('invoices'));
+}
+
 
     public function bil_pelanggan()
     {
@@ -277,10 +309,10 @@ class BillingController extends Controller
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
             ])->post('http://wa.aqtnetwork.my.id:3000/api/send', [
-                'session_id' => $session_id,
-                'number' => $nomor,
-                'message' => $pesan,
-            ]);
+                        'session_id' => $session_id,
+                        'number' => $nomor,
+                        'message' => $pesan,
+                    ]);
 
             // Log response dari server
             \Log::info('Response dari server WhatsApp:', [
@@ -322,7 +354,9 @@ class BillingController extends Controller
 
 
 
-    public function bcwa() {}
+    public function bcwa()
+    {
+    }
 
     public function importExcel(Request $request)
     {
@@ -358,8 +392,9 @@ class BillingController extends Controller
 
         return back()->with('success', 'Pengaturan billing berhasil disimpan.');
     }
-    public function cariInvoice(Request $request) {
-       
+    public function cariInvoice(Request $request)
+    {
+
 
         $invoice = Tagihan::where('invoice_id', $request->invoice_id)->first();
 

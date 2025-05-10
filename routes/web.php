@@ -35,7 +35,7 @@ Route::get('/', function () {
 });
 
 // Auth routes with email verification
-Auth::routes(['verify' => true, 'register' => false]);
+Auth::routes(['verify' => true, 'register' => true]);
 
 // Route to home page after login
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
@@ -199,7 +199,7 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
 
 
     Route::get('/paid', 'paid')->name('paid');
-    Route::get('/riwayat', 'riwayat')->name('riwayat');
+    Route::get('/riwayat', 'riwayatTagihan')->name('riwayat');
     Route::get('/bil_pelanggan', 'bil_pelanggan')->name('bil_pelanggan');
     Route::delete('/bil_pelanggan/hapus-data/{id}', 'hapusData')->name('hapusData');
 
