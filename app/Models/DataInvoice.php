@@ -5,21 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Tagihan extends Model
+class DataInvoice extends Model
 {
     use HasFactory;
-
-
-    protected $table = 'tagihan';
+    protected $table = "data_invoices";
     protected $guarded = [];
-    public function pelanggan()
+    // app/Models/DataInvoice.php
+
+public function pelanggan()
 {
     return $this->belongsTo(Pelanggan::class);
 }
 
-public function dataInvoice()
+public function tagihan()
 {
-    return $this->hasOne(DataInvoice::class);
+    return $this->belongsTo(Tagihan::class);
 }
 
 

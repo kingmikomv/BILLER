@@ -14,9 +14,7 @@
 
         <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper" style="margin-bottom: 50px">
-            <!-- Content Header (Page header) -->
             <x-dhs.content-header />
-            <!-- /.content-header -->
 
             <!-- Main content -->
             <section class="content">
@@ -53,14 +51,15 @@
                                                     <td>
                                                         <div class="row">
                                                             <div class="col-md-4 mt-1">
-                                                                <!-- Tambahkan data-url ke tombol Bayar -->
-                                                                <a href="#" 
-                                                                   class="btn btn-success btn-sm confirm-bayar" 
-                                                                   data-url="{{ route('invoice.bayar', $invoice->id) }}">
+                                                                <a href="#"
+                                                                   class="btn btn-success btn-sm confirm-bayar"
+                                                                   data-id="{{ $invoice->id }}"
+                                                                   data-nama="{{ $invoice->pelanggan->nama_pelanggan ?? '-' }}"
+                                                                   data-invoice="{{ $invoice->invoice_id }}"
+                                                                   data-jumlah="{{ number_format(optional($invoice->pelanggan->paket)->harga_paket ?? 0, 0, ',', '.') }}">
                                                                     <i class="fas fa-check"></i> Bayar
                                                                 </a>
                                                             </div>
-                                                           
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -74,54 +73,90 @@
                     </div>
                 </div>
             </section>
-            <!-- /.content -->
         </div>
 
         <x-dhs.footer />
     </div>
-    <!-- ./wrapper -->
 
     <x-dhs.scripts />
-
-    <!-- Load SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- DataTables + SweetAlert2 Script -->
-    <script>
-        $(document).ready(function () {
-            // Initialize DataTable
-            $('#belumBayarTable').DataTable({
-                responsive: true,
-                paging: true,
-                lengthChange: false,
-                searching: true,
-                ordering: true,
-                info: true,
-                autoWidth: false
-            });
+   <script>
+    $(document).ready(function () {
+        $('#belumBayarTable').DataTable({
+            responsive: true,
+            paging: true,
+            lengthChange: false,
+            searching: true,
+            ordering: true,
+            info: true,
+            autoWidth: false
+        });
 
-            // SweetAlert konfirmasi pembayaran
-            $(document).on('click', '.confirm-bayar', function (e) {
-                e.preventDefault();
-                const url = $(this).data('url');
+        $(document).on('click', '.confirm-bayar', function (e) {
+            e.preventDefault();
 
-                Swal.fire({
-                    title: 'Apakah Anda yakin?',
-                    text: "Tagihan ini akan ditandai sebagai LUNAS!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, tandai lunas!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = url;
+            const invoiceId = $(this).data('id');
+            const nama = $(this).data('nama');
+            const invoice = $(this).data('invoice');
+            const jumlah = $(this).data('jumlah');
+
+            Swal.fire({
+                title: 'Konfirmasi Pembayaran',
+         html: `
+    <div class="text-start small">
+        <div class="mb-2"><strong>Nama:</strong> ${nama}</div>
+        <div class="mb-2"><strong>Invoice ID:</strong> ${invoice}</div>
+        <div class="mb-3"><strong>Jumlah Tagihan:</strong> Rp ${jumlah}</div>
+
+        <div class="form-group mb-0">
+            <label for="swal-metode" class="form-label"><strong>Pilih Metode Pembayaran:</strong></label>
+            <select id="swal-metode" class="form-control form-control-sm mt-1">
+                <option value="">-- Pilih Metode --</option>
+                <option value="Cash">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+        </div>
+    </div>
+`,
+
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Bayar Sekarang',
+                cancelButtonText: 'Batal',
+                preConfirm: () => {
+                    const metode = document.getElementById('swal-metode').value;
+                    if (!metode) {
+                        Swal.showValidationMessage('Silakan pilih metode pembayaran');
                     }
-                });
+                    return metode;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const metode = result.value;
+
+                    $.ajax({
+                        url: "", // <-- sesuaikan dengan route Anda
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            id: invoiceId,
+                            metode: metode
+                        },
+                        success: function (res) {
+                            Swal.fire('Berhasil!', res.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        },
+                        error: function () {
+                            Swal.fire('Gagal!', 'Terjadi kesalahan saat memproses pembayaran.', 'error');
+                        }
+                    });
+                }
             });
         });
-    </script>
+    });
+</script>
 
 </body>
 

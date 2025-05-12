@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use session;
 use Illuminate\Http\Request;
 use App\Models\MessageTemplate;
+use App\Models\WhatsappSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 
@@ -35,5 +37,16 @@ class WhatsappController extends Controller
         );
 
         return redirect()->back()->with('success', 'Template saved successfully!');
+    }
+    public function saveAdminNumber(Request $request)
+    {
+       
+        // Simpan ke database
+        WhatsappSession::updateOrCreate(
+            ['session_id' => $request->session_id],
+            ['admin_number' =>  $request->admin_number]
+        );
+
+        return response()->json(['message' => 'Data berhasil disimpan']);
     }
 }

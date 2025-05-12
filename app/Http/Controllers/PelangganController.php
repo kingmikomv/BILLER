@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use RouterOS\Query;
 use RouterOS\Client;
 use App\Models\Invoice;
@@ -9,11 +10,11 @@ use App\Models\Mikrotik;
 use App\Models\TiketPsb;
 use App\Models\Pelanggan;
 use App\Models\PaketPppoe;
-use App\Helpers\ActivityLogger;
 
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Mix;
+use App\Helpers\ActivityLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -23,7 +24,7 @@ class PelangganController extends Controller
     {
         $user = auth()->user(); // Ambil user yang sedang login
         $userId = $user->id;
-    
+
         // Cek apakah user adalah member atau bukan
         if ($user->role == 'member') {
             // Jika member, ambil router berdasarkan user_id
@@ -32,17 +33,17 @@ class PelangganController extends Controller
             // Jika bukan member (misal teknisi), ambil router berdasarkan parent_id
             $mikrotikRouters = Mikrotik::where('user_id', $user->parent_id)->get();
         }
-    
+
         // Ambil semua pelanggan terkait router yang dimiliki user
         $plg = Pelanggan::whereIn('mikrotik_id', $mikrotikRouters->pluck('id'))
             ->with('paket')->get();
-    
+
         // Inisialisasi array untuk menyimpan status pelanggan
         $onlineStatus = [];
-    
+
         // Buat mapping router berdasarkan ID untuk akses cepat
         $routerMapping = $mikrotikRouters->keyBy('id');
-    
+
         foreach ($mikrotikRouters as $mikrotik) {
             try {
                 // Buat koneksi ke MikroTik API
@@ -51,25 +52,25 @@ class PelangganController extends Controller
                     'user' => $mikrotik->username,
                     'pass' => $mikrotik->password,
                 ]);
-    
+
                 // Ambil daftar active connections
                 $query = new Query('/ppp/active/print');
                 $activeConnections = collect($client->query($query)->read());
-    
+
                 // Proses setiap pelanggan yang ada di router ini
                 foreach ($plg->where('mikrotik_id', $mikrotik->id) as $pelanggan) {
                     // Cari koneksi aktif berdasarkan akun PPPoE
                     $activeConnection = $activeConnections->firstWhere('name', $pelanggan->akun_pppoe);
-    
+
                     // Cek apakah pelanggan sedang online
                     $isOnline = !is_null($activeConnection);
-    
+
                     // Ambil IP pelanggan dari koneksi aktif (jika ada)
                     $ipAddress = $activeConnection['address'] ?? null;
-    
+
                     // Cek apakah IP pelanggan dimulai dengan '172'
                     $isIsolir = $ipAddress && str_starts_with($ipAddress, '172');
-    
+
                     // Tentukan status pelanggan
                     $onlineStatus[$pelanggan->akun_pppoe] = $isIsolir ? 'Isolir' : ($isOnline ? 'Online' : 'Offline');
                 }
@@ -80,23 +81,23 @@ class PelangganController extends Controller
                 }
             }
         }
-    
+
         // Gabungkan data pelanggan dengan status online
         foreach ($plg as $pelanggan) {
             $pelanggan->status = $onlineStatus[$pelanggan->akun_pppoe] ?? 'Offline';
         }
-    
+
         // Return ke view dengan data pelanggan
         return view('ROLE.MEMBER.PELANGGAN.index', compact('plg', 'mikrotikRouters'));
     }
-    
+
 
 
     public function formulir()
     {
         $user = auth()->user(); // Ambil user yang sedang login
         $userId = $user->id;
-    
+
         // Cek apakah user adalah member atau bukan
         if ($user->role == 'member') {
             // Jika member, ambil router berdasarkan user_id
@@ -105,7 +106,7 @@ class PelangganController extends Controller
             // Jika bukan member (misal teknisi), ambil router berdasarkan parent_id
             $mikrotik = Mikrotik::where('user_id', $user->parent_id)->get();
         }
-    
+
         // Membuat koneksi API MikroTik
         try {
             $client = new Client([
@@ -113,20 +114,20 @@ class PelangganController extends Controller
                 'user' => 'admin',
                 'pass' => 'bakpao1922',
             ]);
-    
+
             $query = new Query('/ppp/active/print');
             $response = $client->query($query)->read();
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal terhubung ke MikroTik API');
         }
-    
+
         // Array untuk menyimpan router yang online
         $onlineRouters = [];
-    
+
         // Loop untuk mengecek koneksi di active-connection
         foreach ($mikrotik as $router) {
             $vpnUsername = $router->vpn_username; // Ambil vpn_username dari database
-    
+
             // Loop untuk mengecek apakah vpn_username ada di active-connection
             foreach ($response as $connection) {
                 if (isset($connection['name']) && $connection['name'] === $vpnUsername) {
@@ -136,57 +137,55 @@ class PelangganController extends Controller
                 }
             }
         }
-    
+
         // Mengubah $onlineRouters menjadi Collection
         $onlineRoutersCollection = collect($onlineRouters);
-    
+
         // Jika ada router yang online, ambil data dari model PaketPPPoE
         if ($onlineRoutersCollection->isNotEmpty()) {
             // Mengambil data paket PPPoE yang sesuai dari model PaketPPPoE
             $paketPPPoEs = PaketPPPoE::whereIn('mikrotik_id', $onlineRoutersCollection->pluck('id'))->get();
-    
+
             // Mengirim data paket PPPoE dan router yang online ke view
             return view('ROLE.MEMBER.PELANGGAN.formulir', compact('paketPPPoEs', 'onlineRouters'));
         } else {
             return redirect()->back()->with('error', 'Tidak Ada Mikrotik Yang Aktif');
         }
     }
-    
+
 
     function generateKodePSB()
     {
         return now()->format('ymd') . mt_rand(100, 999);
     }
+
     public function addPelanggan(Request $request)
 {
-    $user = auth()->user(); // Ambil user yang login
+    $user = auth()->user();
     $userId = $user->id;
 
-    // Ambil data paket berdasarkan kode_paket
+    // Ambil data paket
     $kodePaket = $request->input('kodePaket');
     $paket = PaketPppoe::where('kode_paket', $kodePaket)->firstOrFail();
 
-    // Tentukan router berdasarkan role user
-    if ($user->role === 'member') {
-        $mikrotikQuery = Mikrotik::where('user_id', $userId);
-    } else {
-        // Untuk role teknisi atau cs
-        $mikrotikQuery = Mikrotik::where('user_id', $user->parent_id);
-    }
+    // Tentukan router
+    $mikrotikQuery = $user->role === 'member'
+        ? Mikrotik::where('user_id', $userId)
+        : Mikrotik::where('user_id', $user->parent_id);
 
     $mikrotik = $mikrotikQuery->where('id', $paket->mikrotik_id)->first();
 
     if (!$mikrotik) {
-        return redirect()->back()->withErrors(['mikrotik' => 'Router tidak ditemukan untuk user atau paket yang dipilih.']);
+        return redirect()->back()->withErrors(['mikrotik' => 'Router tidak ditemukan.']);
     }
 
-    // Data input dari request
+    // Data input
     $akunPppoe = $request->input('akunPppoe');
     $passPppoe = $request->input('passwordPppoe');
     $ssidWifi = $request->input('ssid');
     $passWifi = $request->input('passwifi');
     $tanggalinginpasang = $request->input('tip');
-    $tanggalDaftar = now();
+    $tanggalDaftar = Carbon::now();
     $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth();
     $statusPembayaran = $request->input('metode_pembayaran') === 'Prabayar' ? 'Sudah Dibayar' : 'Belum Dibayar';
 
@@ -259,52 +258,60 @@ class PelangganController extends Controller
         'odp' => $request->input('odp'),
         'olt' => $request->input('olt'),
     ]);
-// Ambil pengaturan billing
-$setting = DB::table('billing_seting')->first(); // Ambil pengaturan billing
 
-$tanggalGenerate = now();
-$tanggalJatuhTempo = $tanggalGenerate->copy()->addDays($setting->default_jatuh_tempo_hari);
+    // Ambil pengaturan billing
+    $setting = DB::table('billing_seting')->first();
 
-// Hitung tanggal generate jika mode dimajukan aktif
-if ($setting->generate_invoice_mode === 'dimajukan' && $setting->dimajukan_hari !== null) {
-    $tanggalGenerate = $tanggalPembayaranSelanjutnya->copy()->subDays($setting->dimajukan_hari);
+    $tanggalGenerate = Carbon::now();
     $tanggalJatuhTempo = $tanggalGenerate->copy()->addDays($setting->default_jatuh_tempo_hari);
-}
 
-// Tentukan prorata jika aktif
-$prorata = 0; // Default jika tidak ada tanggal mulai atau prorata tidak aktif
-if ($setting->prorata_enable && $pelanggan->tanggal_daftar) {
-    $bulanIni = now();
-    $jumlahHariBulanIni = $bulanIni->daysInMonth;
-    $hariMulai = $pelanggan->tanggal_daftar->day;
-
-    // Menghitung prorata berdasarkan hari yang digunakan dalam bulan ini
-    if ($hariMulai <= $jumlahHariBulanIni) {
-        $prorata = $pelanggan->paket->harga_paket / $jumlahHariBulanIni * ($jumlahHariBulanIni - $hariMulai + 1);
-        
-        // Pembulatan ke kelipatan 1000 terdekat
-        $prorata = round($prorata / 1000) * 1000;
+    // Hitung tanggal generate jika mode dimajukan aktif
+    if ($setting->generate_invoice_mode === 'dimajukan' && $setting->dimajukan_hari !== null) {
+        $tanggalGenerate = $tanggalPembayaranSelanjutnya->copy()->subDays($setting->dimajukan_hari);
+        $tanggalJatuhTempo = $tanggalGenerate->copy()->addDays($setting->default_jatuh_tempo_hari);
     }
-} else {
-    // Jika prorata tidak aktif, tagihan penuh
-    $prorata = $pelanggan->paket->harga_paket;
 
-    // Pembulatan ke kelipatan 1000 terdekat
-    $prorata = round($prorata / 1000) * 1000;
-}
+    // Tentukan prorata jika aktif
+    $prorata = 0;
+    if ($setting->prorata_enable && $pelanggan->tanggal_daftar) {
+        $bulanIni = Carbon::now();
+        $jumlahHariBulanIni = $bulanIni->daysInMonth;
+        $hariMulai = $pelanggan->tanggal_daftar->day;
 
-// Buat tagihan awal dengan prorata yang sudah dihitung
-$pelanggan->tagihan()->create([
-    'invoice_id' => $this->generateInvoiceId(),
-    'tanggal_generate' => $tanggalGenerate,
-    'tanggal_jatuh_tempo' => $tanggalJatuhTempo,
-    'tanggal_pembayaran' => $statusPembayaran === 'Sudah Dibayar' ? now() : null,
-    'jumlah_tagihan' => $prorata, // Gunakan prorata yang sudah dihitung
-    'prorata' => $setting->prorata_enable,
-    'status' => $statusPembayaran === 'Sudah Dibayar' ? 'Lunas' : 'Belum Lunas',
-]);
+        if ($hariMulai <= $jumlahHariBulanIni) {
+            $prorata = $paket->harga_paket / $jumlahHariBulanIni * ($jumlahHariBulanIni - $hariMulai + 1);
+            $prorata = round($prorata / 1000) * 1000;
+        }
+    } else {
+        $prorata = round($paket->harga_paket / 1000) * 1000;
+    }
 
+    // Buat tagihan awal dengan prorata
+    $pelanggan->tagihan()->create([
+        'invoice_id' => $this->generateInvoiceId(),
+        'tanggal_generate' => $tanggalGenerate,
+        'tanggal_jatuh_tempo' => $tanggalJatuhTempo,
+        'tanggal_pembayaran' => $statusPembayaran === 'Sudah Dibayar' ? Carbon::now() : null,
+        'jumlah_tagihan' => $prorata,
+        'prorata' => $setting->prorata_enable,
+        'status' => $statusPembayaran === 'Sudah Dibayar' ? 'Lunas' : 'Belum Lunas',
+    ]);
 
+    // Buat tagihan bulan depan jika prabayar
+    if ($request->input('metode_pembayaran') === 'Prabayar') {
+        $bulanDepan = Carbon::now()->addMonth()->startOfMonth();
+        $tanggalJatuhTempoDepan = $bulanDepan->copy()->addDays($setting->default_jatuh_tempo_hari);
+
+        $pelanggan->tagihan()->create([
+            'invoice_id' => $this->generateInvoiceId(),
+            'tanggal_generate' => $bulanDepan,
+            'tanggal_jatuh_tempo' => $tanggalJatuhTempoDepan,
+            'tanggal_pembayaran' => null,
+            'jumlah_tagihan' => $paket->harga_paket,
+            'prorata' => false,
+            'status' => 'Belum Lunas',
+        ]);
+    }
 
     // Log aktivitas
     ActivityLogger::log(
@@ -314,76 +321,77 @@ $pelanggan->tagihan()->create([
 
     return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan.');
 }
-function generateInvoiceId() {
-    return 'INV-' . date('Ymd') . strtoupper(Str::random(6));
-}
-
-
-
-public function showPelanggan($id)
-{
-    $pelanggan = Pelanggan::with('paket')->find($id);
-
-    if (!$pelanggan) {
-        return response()->json(['error' => 'Pelanggan tidak ditemukan'], 404);
+    function generateInvoiceId()
+    {
+        return 'INV-' . date('Ymd') . strtoupper(Str::random(6));
     }
 
-    $routerId = $pelanggan->router_id;
-    $mikrotik = Mikrotik::where('router_id', $routerId)->first();
-    $akunPelanggan = $pelanggan->akun_pppoe;
 
-    if (!$mikrotik) {
-        return redirect()->back()->with('error', 'Router tidak ditemukan');
+
+    public function showPelanggan($id)
+    {
+        $pelanggan = Pelanggan::with('paket')->find($id);
+
+        if (!$pelanggan) {
+            return response()->json(['error' => 'Pelanggan tidak ditemukan'], 404);
+        }
+
+        $routerId = $pelanggan->router_id;
+        $mikrotik = Mikrotik::where('router_id', $routerId)->first();
+        $akunPelanggan = $pelanggan->akun_pppoe;
+
+        if (!$mikrotik) {
+            return redirect()->back()->with('error', 'Router tidak ditemukan');
+        }
+
+        try {
+            // Membuat koneksi ke MikroTik API
+            $client = new Client([
+                'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api, // Pastikan port benar
+                'user' => $mikrotik->username, // Username MikroTik
+                'pass' => $mikrotik->password, // Password MikroTik
+            ]);
+
+            // Query untuk mengambil data koneksi PPPoE
+            $query = new Query('/interface/pppoe-server/print');
+            $activeConnections = $client->query($query)->read();
+
+            if (!$activeConnections || count($activeConnections) == 0) {
+                return redirect()->back()->with('error', 'Tidak ada koneksi PPPoE aktif di server');
+            }
+
+            // Filter data untuk mencari koneksi dengan nama yang sesuai dengan akun PPPoE
+            $filteredConnections = array_filter($activeConnections, function ($connection) use ($akunPelanggan) {
+                return isset($connection['name']) && $connection['name'] === "<pppoe-" . $akunPelanggan . ">";
+            });
+
+            // Jika tidak ditemukan, tampilkan pesan error
+            if (empty($filteredConnections)) {
+                return redirect()->back()->with('error', 'Akun Ini Tidak Terhubung Dengan Server !');
+            }
+
+            // Ambil elemen pertama dari hasil filter
+            $connectionData = array_shift($filteredConnections);
+
+            // Pastikan key 'uptime' ada sebelum mengaksesnya
+            if (!isset($connectionData['uptime'])) {
+                return redirect()->back()->with('error', 'Data uptime tidak ditemukan');
+            }
+
+            $formattedUptime = $this->formatUptime($connectionData['uptime']); // Format uptime
+
+            // Jika diminta untuk menampilkan halaman, kirimkan data pelanggan
+            return view('ROLE.MEMBER.PELANGGAN.data', [
+                'pelanggan' => $pelanggan,
+                'mikrotik' => $mikrotik,
+                'formattedUptime' => $formattedUptime,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Terjadi kesalahan saat menghubungkan ke MikroTik API: ' . $e->getMessage()
+            ], 500);
+        }
     }
-
-    try {
-        // Membuat koneksi ke MikroTik API
-        $client = new Client([
-            'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api, // Pastikan port benar
-            'user' => $mikrotik->username, // Username MikroTik
-            'pass' => $mikrotik->password, // Password MikroTik
-        ]);
-
-        // Query untuk mengambil data koneksi PPPoE
-        $query = new Query('/interface/pppoe-server/print');
-        $activeConnections = $client->query($query)->read();
-
-        if (!$activeConnections || count($activeConnections) == 0) {
-            return redirect()->back()->with('error', 'Tidak ada koneksi PPPoE aktif di server');
-        }
-
-        // Filter data untuk mencari koneksi dengan nama yang sesuai dengan akun PPPoE
-        $filteredConnections = array_filter($activeConnections, function ($connection) use ($akunPelanggan) {
-            return isset($connection['name']) && $connection['name'] === "<pppoe-" . $akunPelanggan.">";
-        });
-
-        // Jika tidak ditemukan, tampilkan pesan error
-        if (empty($filteredConnections)) {
-            return redirect()->back()->with('error', 'Akun Ini Tidak Terhubung Dengan Server !');
-        }
-
-        // Ambil elemen pertama dari hasil filter
-        $connectionData = array_shift($filteredConnections);
-
-        // Pastikan key 'uptime' ada sebelum mengaksesnya
-        if (!isset($connectionData['uptime'])) {
-            return redirect()->back()->with('error', 'Data uptime tidak ditemukan');
-        }
-
-        $formattedUptime = $this->formatUptime($connectionData['uptime']); // Format uptime
-
-        // Jika diminta untuk menampilkan halaman, kirimkan data pelanggan
-        return view('ROLE.MEMBER.PELANGGAN.data', [
-            'pelanggan' => $pelanggan,
-            'mikrotik' => $mikrotik,
-            'formattedUptime' => $formattedUptime,
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Terjadi kesalahan saat menghubungkan ke MikroTik API: ' . $e->getMessage()
-        ], 500);
-    }
-}
 
 
     public function getBandwidth($id)
@@ -451,13 +459,13 @@ public function showPelanggan($id)
 
         // Mencari jumlah hari, jam, dan menit dari string uptime
         if (preg_match('/(\d+)d/', $uptime, $matches)) {
-            $days = (int)$matches[1];
+            $days = (int) $matches[1];
         }
         if (preg_match('/(\d+)h/', $uptime, $matches)) {
-            $hours = (int)$matches[1];
+            $hours = (int) $matches[1];
         }
         if (preg_match('/(\d+)m/', $uptime, $matches)) {
-            $minutes = (int)$matches[1];
+            $minutes = (int) $matches[1];
         }
 
         $formatted = [];
@@ -610,22 +618,22 @@ public function showPelanggan($id)
         // Cari data MikroTik berdasarkan router_id
         $mikrotik = Mikrotik::where('router_id', $roId)->first();
 
-    
+
         // Jika router tidak ditemukan, kembalikan error
         if (!$mikrotik) {
             return redirect()->back()->with('error', 'Router tidak ditemukan.');
         }
-    
+
         // Cari data pelanggan berdasarkan mikrotik_id dan akun PPPoE
         $dataPppoe = Pelanggan::where('mikrotik_id', $mikrotik->id)
             ->where('akun_pppoe', $pppoeAkun)
             ->first();
-    
+
         // Jika data PPPoE tidak ditemukan, kembalikan error
         if (!$dataPppoe) {
             return redirect()->back()->with('error', 'Data pelanggan tidak ditemukan.');
         }
-    
+
         try {
             // Membuat koneksi ke MikroTik API
             $client = new Client([
@@ -633,50 +641,50 @@ public function showPelanggan($id)
                 'user' => $mikrotik->username,
                 'pass' => $mikrotik->password,
             ]);
-    
+
             // Ambil IP address dari Active Connection berdasarkan akun PPPoE
             $query = (new Query('/ppp/active/print'))
                 ->where('name', $dataPppoe->akun_pppoe);
-    
+
             $activeConnections = $client->query($query)->read();
-    
+
             if (empty($activeConnections)) {
                 return redirect()->back()->with('error', 'Koneksi aktif tidak ditemukan untuk pelanggan.');
             }
-    
+
             // Ambil IP address dari koneksi aktif
             $ipAddress = $activeConnections[0]['address'] ?? null;
-    
+
             if (!$ipAddress) {
                 return redirect()->back()->with('error', 'IP address tidak ditemukan untuk pelanggan.');
             }
-    
+
             // Cari dan update rule NAT dengan komentar "Biller_remod"
             $natQuery = (new Query('/ip/firewall/nat/print'))
                 ->where('comment', 'Biller_Remod');
-    
+
             $natRules = $client->query($natQuery)->read();
-    
+
             if (empty($natRules)) {
                 return redirect()->back()->with('error', 'Rule NAT dengan komentar "Biller_remod" tidak ditemukan.');
             }
-    
+
             // Update rule NAT dengan IP address yang diambil
             $natRuleId = $natRules[0]['.id']; // Pastikan Anda mengambil .id dengan benar
-    
+
             // Update rule NAT dengan parameter yang valid
             $updateQuery = (new Query('/ip/firewall/nat/set'))
                 ->equal('.id', $natRuleId)
                 ->equal('to-addresses', $ipAddress)
                 ->equal('to-ports', $remotePort);
-    
+
             // Kirim query untuk memperbarui NAT
             $response = $client->query($updateQuery)->read();
-    
+
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menghubungkan ke MikroTik: ' . $e->getMessage());
         }
-    
+
         // Redirect kembali dengan pesan sukses
         return redirect()->back()->with('success_script', "
             Swal.fire({
@@ -691,7 +699,7 @@ public function showPelanggan($id)
             });
         ");
     }
-    
+
 
 
 
@@ -1210,10 +1218,10 @@ public function showPelanggan($id)
                         $response = Http::withHeaders([
                             'Authorization' => $token
                         ])->post('https://api.fonnte.com/send', [
-                            'target' => $telepon,
-                            'message' => $pesan,
-                            'countryCode' => '62', // Kode Negara (62 untuk Indonesia)
-                        ]);
+                                    'target' => $telepon,
+                                    'message' => $pesan,
+                                    'countryCode' => '62', // Kode Negara (62 untuk Indonesia)
+                                ]);
 
                         $apiResponses[] = [
                             'id_pelanggan' => $pelanggan['id_pelanggan'],
@@ -1299,10 +1307,10 @@ public function showPelanggan($id)
                             $response = Http::withHeaders([
                                 'Authorization' => $token
                             ])->post('https://api.fonnte.com/send', [
-                                'target' => $phoneNumber,
-                                'message' => $message,
-                                'countryCode' => '62', // Kode Negara (62 untuk Indonesia)
-                            ]);
+                                        'target' => $phoneNumber,
+                                        'message' => $message,
+                                        'countryCode' => '62', // Kode Negara (62 untuk Indonesia)
+                                    ]);
                         }
                     }
                 }
@@ -1322,5 +1330,5 @@ public function showPelanggan($id)
         }
     }
 
-    
+
 }
