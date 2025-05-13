@@ -29,16 +29,15 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
-                                        <table class="table table-bordered">
+                                        <table class="table table-sm table-small-font" id="belumBayarTable">
                                             <thead>
                                                 <tr>
                                                     <th>#</th>
                                                     <th>Invoice ID</th>
-                                                    <th>Pelanggan ID</th>
-                                                    <th>Nama Pelanggan</th>
-                                                    <th>Site</th>
-                                                    <th>Tanggal Tagihan</th>
-                                                    <th>Jumlah Tagihan</th>
+                                                    <th>Data Plg.</th>
+                                                    <th>Tgl. Tagihan</th>
+                                                    <th>Jml. Tagihan</th>
+                                                    <th>Option</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -46,15 +45,32 @@
                                                 <tr>
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>{{ $invoice->invoice_id }}</td>
-                                                    <td>{{ $invoice->pelanggan->pelanggan_id ?? '-' }}</td>
-                                                    <td>{{ $invoice->pelanggan->nama_pelanggan ?? '-' }}</td>
-                                                    <td>{{ optional($invoice->pelanggan->mikrotik)->site ?? '-' }}</td>
+                                                    <td>{{ "ID : ". $invoice->pelanggan->pelanggan_id ?? '-' }} | Site : {{ optional($invoice->pelanggan->mikrotik)->site ?? '-' }} | {{ $invoice->pelanggan->nama_pelanggan ?? '-' }} | {{ $invoice->pelanggan->akun_pppoe ?? '-'}}</td>
                                                     <td>{{ \Carbon\Carbon::parse($invoice->jatuh_tempo)->format('d/m/Y') }}
                                                     </td>
                                                     <td>Rp
                                                         {{ number_format(optional($invoice->pelanggan->paket)->harga_paket ?? 0, 0, ',', '.') }}
                                                     </td>
-                                                   
+                                                    <td>
+                                                        <div class="row">
+                                                            <div class="col-md-4 mt-1">
+
+                                                                <a href="" class="btn btn-success btn-sm"><i
+                                                                        class="fas fa-check"></i> Bayar</a>
+
+                                                            </div>
+                                                            <div class="col-md-4 mt-1">
+                                                                <a href="" class="btn btn-primary btn-sm"><i
+                                                                        class="fas fa-eye"></i> Detail</a>
+                                                            </div>
+                                                            <div class="col-md-4  mt-1">
+                                                                <a href="" class="btn btn-secondary btn-sm"><i
+                                                                        class="fas fa-print"></i> Cetak</a>
+
+                                                            </div>
+
+                                                        </div>
+
                                                 </tr>
                                                 @endforeach
                                             </tbody>
