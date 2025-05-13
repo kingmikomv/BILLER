@@ -29,50 +29,37 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
-                                    <table id="belumBayarTable" class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Number</th>
-                    <th>Full Name</th>
-                    <th>Site</th>
-                    <th>Invoice Date</th>
-                    <th>Due Date</th>
-                    <th>Subscription Period</th>
-                    <th>Total</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($belumBayar as $index => $p)
-                <tr>
-    <td>{{ $index + 1 }}</td>
-    <td>{{ $p->nomor_pelanggan }}</td>
-    <td>{{ $p->nama_pelanggan }}</td>
-    <td>{{ $p->mikrotik->site ?? '-' }}</td>
-    <td>
-        {{ $p->pembayaran_selanjutnya ? \Carbon\Carbon::parse($p->pembayaran_selanjutnya)->subDays(7)->format('d/m/Y') : '-' }}
-    </td>
-    <td>
-        {{ $p->pembayaran_selanjutnya ? \Carbon\Carbon::parse($p->pembayaran_selanjutnya)->format('d/m/Y') : '-' }}
-    </td>
-    <td>
-        {{ $p->tanggal_daftar ? \Carbon\Carbon::parse($p->tanggal_daftar)->format('d/m/Y') : '-' }} 
-        s.d 
-        {{ $p->pembayaran_selanjutnya ? \Carbon\Carbon::parse($p->pembayaran_selanjutnya)->format('d/m/Y') : '-' }}
-    </td>
-    <td>Rp {{ number_format($p->total_tagihan, 0, ',', '.') }}</td>
-    <td>
-        <a href="" class="btn btn-primary">PAY</a>
-        <button class="btn btn-danger">✖</button>
-        <button class="btn btn-warning">📋</button>
-        <button class="btn btn-success">📲</button>
-    </td>
-</tr>
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Invoice ID</th>
+                                                    <th>Pelanggan ID</th>
+                                                    <th>Nama Pelanggan</th>
+                                                    <th>Site</th>
+                                                    <th>Tanggal Tagihan</th>
+                                                    <th>Jumlah Tagihan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($unpaidInvoices as $index => $invoice)
+                                                <tr>
+                                                    <td>{{ $index + 1 }}</td>
+                                                    <td>{{ $invoice->invoice_id }}</td>
+                                                    <td>{{ $invoice->pelanggan->pelanggan_id ?? '-' }}</td>
+                                                    <td>{{ $invoice->pelanggan->nama_pelanggan ?? '-' }}</td>
+                                                    <td>{{ optional($invoice->pelanggan->mikrotik)->site ?? '-' }}</td>
+                                                    <td>{{ \Carbon\Carbon::parse($invoice->jatuh_tempo)->format('d/m/Y') }}
+                                                    </td>
+                                                    <td>Rp
+                                                        {{ number_format(optional($invoice->pelanggan->paket)->harga_paket ?? 0, 0, ',', '.') }}
+                                                    </td>
+                                                   
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
 
-                @endforeach
-            </tbody>
-        </table>
                                     </div>
                                 </div>
 

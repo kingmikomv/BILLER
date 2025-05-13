@@ -12,9 +12,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
 {
+
+    
+    $schedule->command('pelanggan:check-pembayaran')->dailyAt('08:00');
+
     // Jalankan command setiap hari pukul 08:00
-    $schedule->command('pelanggan:check-pembayaran')->everyMinute();
-}
+   }
 
     /**
      * Register the commands for the application.

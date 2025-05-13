@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Pelanggan extends Model
 {
     use HasFactory;
+
     protected $table = 'pelanggan';
     protected $guarded = [];
 
@@ -16,7 +17,7 @@ class Pelanggan extends Model
         return $this->belongsTo(PaketPppoe::class, 'kode_paket', 'kode_paket');
     }
 
-/**
+    /**
      * Update status pembayaran setelah pembayaran berhasil.
      */
     public function updateTanggalPembayaran()
@@ -25,7 +26,7 @@ class Pelanggan extends Model
             'pembayaran_selanjutnya' => now(),
             'pembayaran_yang_akan_datang' => now()->addMonth(),
             'status_pembayaran' => 'Sudah Dibayar',
-            'notified' => false, // Reset notifikasi untuk bulan berikutnya
+            'notified' => false,  // Reset notifikasi untuk bulan berikutnya
         ]);
 
         // Kirim konfirmasi pembayaran berhasil
@@ -40,9 +41,9 @@ class Pelanggan extends Model
         $nomor = str_replace('+62', '', $this->nomor_telepon);
         $nomor = ltrim($nomor, '0');
 
-        $pesan = "Terima kasih! Pembayaran Anda telah berhasil. Layanan Anda tetap aktif. Sampai jumpa di bulan berikutnya!";
+        $pesan = 'Terima kasih! Pembayaran Anda telah berhasil. Layanan Anda tetap aktif. Sampai jumpa di bulan berikutnya!';
 
-        Http::withHeaders([ 
+        Http::withHeaders([
             'Authorization' => 'g3ZXCoCHeR1y75j4xJoz'
         ])->post('https://api.fonnte.com/send', [
             'target' => $nomor,
@@ -52,17 +53,22 @@ class Pelanggan extends Model
     }
 
     public function mikrotik()
-{
-    return $this->belongsTo(Mikrotik::class, 'mikrotik_id');
-}
+    {
+        return $this->belongsTo(Mikrotik::class, 'mikrotik_id');
+    }
 
-public function tiket()
-{
-    return $this->hasOne(TiketPsb::class, 'pelanggan_id');
-}
-public function pelanggan()
-{
-    return $this->hasMany(Pelanggan::class, 'mikrotik_id');
-}
+    public function tiket()
+    {
+        return $this->hasOne(TiketPsb::class, 'pelanggan_id');
+    }
 
+    public function pelanggan()
+    {
+        return $this->hasMany(Pelanggan::class, 'mikrotik_id');
+    }
+
+    public function unpaidInvoices()
+    {
+        return $this->hasMany(UnpaidInvoice::class);
+    }
 }

@@ -32,6 +32,7 @@ return new class extends Migration
             $table->date('tanggal_ingin_pasang')->nullable(); 
             $table->date('tanggal_terpasang')->nullable(); 
             $table->boolean('notified')->default(false);
+            $table->date('notified_at')->nullable();
             $table->boolean('isolated')->default(false);
             
             // Informasi tambahan pelanggan

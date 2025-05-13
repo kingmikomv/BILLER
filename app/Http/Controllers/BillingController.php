@@ -6,6 +6,7 @@ use App\Models\Mikrotik;
 use App\Models\Pelanggan;
 use App\Models\PaketPppoe;
 use Illuminate\Http\Request;
+use App\Models\UnpaidInvoice;
 use App\Exports\PelangganExport;
 use App\Imports\PelangganImport;
 use Illuminate\Support\Facades\Http;
@@ -16,17 +17,16 @@ use Illuminate\Support\Facades\Response;
 class BillingController extends Controller
 {
     public function unpaid()
-    {
-        $belumBayar = Pelanggan::with('mikrotik') // Mengambil data MikroTik Server juga
-            ->where(function ($query) {
-                $query->where('status_pembayaran', 'belum bayar')
-                    ->orWhereDate('pembayaran_selanjutnya', '<=', now())
-                    ->orWhereNull('pembayaran_selanjutnya'); // Pelanggan baru tanpa pembayaran selanjutnya
-            })
-            ->get();
+{
+    $unpaidInvoices = UnpaidInvoice::with('pelanggan', 'pelanggan.mikrotik', 'pelanggan.paket')
+        ->where('sudah_dibayar', false)
+        ->get();
 
-        return view("ROLE.MEMBER.BILLING.unpaid", compact('belumBayar'));
-    }
+    return view("ROLE.MEMBER.BILLING.unpaid", compact('unpaidInvoices'));
+
+}
+
+
 
 
     public function paid()
