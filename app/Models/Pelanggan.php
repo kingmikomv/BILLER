@@ -71,8 +71,9 @@ class Pelanggan extends Model
         return $this->hasMany(Tagihan::class);
     }
 
-    public function paket()
-    {
-        return $this->belongsTo(PaketPppoe::class, 'paketpppoe_id');
-    }
+   public function paket()
+{
+    return $this->belongsTo(PaketPppoe::class, 'paketpppoe_id');
+}
+
 }

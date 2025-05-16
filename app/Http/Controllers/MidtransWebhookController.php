@@ -55,19 +55,20 @@ class MidtransWebhookController extends Controller
                 $data = [
                     'full_name' => $data_invoice->pelanggan->nama_pelanggan ?? 'Pelanggan',
                     'no_invoice' => $data_invoice->tagihan->invoice_id,
-                    'total' => number_format($tagihan->nominal, 0, ',', '.'), // Format Rupiah
+                    'total' => number_format($data_invoice->nominal, 0, ',', '.'), // Format Rupiah
                     'invoice_date' => Carbon::now()->format('d-m-Y'),
                     'footer' => 'Hubungi CS jika ada pertanyaan.',
                 ];
 
-                WhatsappHelper::sendWaTemplate(
-                    $data_invoice->tagihan->invoice_id ?? null,  // Nomor HP pelanggan
-                    'Payment Paid',                                   // Nama template WA
-                    $data,
-                    $data_invoice->pelanggan->user_id ?? null,        // user_id (posisi ke-4)
-                    $data_invoice->unique_member ?? null              // session_id (posisi ke-5)
-                );
 
+               
+             WhatsappHelper::sendWaTemplate(
+    $data_invoice->nomor_telepon,
+    'Payment Paid',
+    $data,
+    $data_invoice->pelanggan->user_id ?? null,  // user_id di posisi ke-4
+    $data_invoice->unique_member                // session_id di posisi ke-5
+);
 
                 Log::info("Tagihan {$orderId} berhasil dibayar.");
                 break;

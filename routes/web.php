@@ -192,8 +192,12 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home/network/router'
 Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->controller(BillingController::class)->group(function () {
     
     Route::get('/unpaid', 'unpaid')->name('unpaid');
+Route::post('/unpaid/confirm-bayar', 'confirmBayar')->name('tagihan.confirmBayar');
+
 Route::get('/unpaid/detail/{id}', 'showUnpaidDetail')->name('billing.unpaid.detail');
     Route::get('/unpaid/invoice/{invoice}/bayar', 'bayar')->name('invoice.bayar');
+
+
     Route::get('/billing_setting', 'billingSetting')->name('billing.setting');
     Route::post('/setting-billing', 'store')->name('setting-billing.store');
 

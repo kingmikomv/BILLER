@@ -7,10 +7,12 @@ use App\Models\Tagihan;
 use App\Models\Mikrotik;
 use App\Models\Pelanggan;
 use App\Models\PaketPppoe;
+use App\Models\DataInvoice;
 use Illuminate\Http\Request;
 use App\Models\BillingSeting;
 use App\Models\UnpaidInvoice;
 use Illuminate\Support\Carbon;
+use App\Helpers\WhatsappHelper;
 use App\Exports\PelangganExport;
 use App\Imports\PelangganImport;
 use Illuminate\Support\Facades\DB;
@@ -20,20 +22,20 @@ use Illuminate\Support\Facades\Response;
 
 class BillingController extends Controller
 {
-   public function unpaid()
-{
-    $currentMonth = now()->month;  // Mendapatkan bulan sekarang
-    $currentYear = now()->year;    // Mendapatkan tahun sekarang
+    public function unpaid()
+    {
+        $currentMonth = now()->month;  // Mendapatkan bulan sekarang
+        $currentYear = now()->year;    // Mendapatkan tahun sekarang
 
-    $unpaidInvoices = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
-        ->whereIn('status', ['Belum Lunas', 'Tertunggak'])
-        ->whereMonth('tanggal_jatuh_tempo', $currentMonth)  // Filter berdasarkan bulan sekarang
-        ->whereYear('tanggal_jatuh_tempo', $currentYear)    // Filter berdasarkan tahun sekarang
-        ->latest('tanggal_jatuh_tempo')
-        ->get();
+        $unpaidInvoices = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
+            ->whereIn('status', ['Belum Lunas', 'Tertunggak'])
+            ->whereMonth('tanggal_jatuh_tempo', $currentMonth)  // Filter berdasarkan bulan sekarang
+            ->whereYear('tanggal_jatuh_tempo', $currentYear)    // Filter berdasarkan tahun sekarang
+            ->latest('tanggal_jatuh_tempo')
+            ->get();
 
-    return view('ROLE.MEMBER.BILLING.unpaid', compact('unpaidInvoices'));
-}
+        return view('ROLE.MEMBER.BILLING.unpaid', compact('unpaidInvoices'));
+    }
 
 
 
@@ -158,40 +160,40 @@ class BillingController extends Controller
         }
     }
 
-   public function paid()
-{
-    $paidInvoices = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
-        ->where('status', 'Lunas')
-        ->orderByDesc('tanggal_pembayaran')
-        ->get();
+    public function paid()
+    {
+        $paidInvoices = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
+            ->where('status', 'Lunas')
+            ->orderByDesc('tanggal_pembayaran')
+            ->get();
 
-    return view('ROLE.MEMBER.BILLING.paid', compact('paidInvoices'));
-}
+        return view('ROLE.MEMBER.BILLING.paid', compact('paidInvoices'));
+    }
 
 
-   public function riwayatTagihan()
-{
-    $currentMonth = now()->month;  // Mendapatkan bulan sekarang
-    $currentYear = now()->year;    // Mendapatkan tahun sekarang
+    public function riwayatTagihan()
+    {
+        $currentMonth = now()->month;  // Mendapatkan bulan sekarang
+        $currentYear = now()->year;    // Mendapatkan tahun sekarang
 
-    // Mengambil data tagihan yang sudah dibayar (Lunas) dan yang belum dibayar (Belum Lunas/Tertunggak)
-    $invoices = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
-        ->whereIn('status', ['Lunas', 'Belum Lunas', 'Tertunggak'])
-        ->where(function ($query) use ($currentMonth, $currentYear) {
-            // Filter berdasarkan bulan dan tahun saat ini untuk tagihan yang belum dibayar
-            $query->whereMonth('tanggal_jatuh_tempo', $currentMonth)
-                  ->whereYear('tanggal_jatuh_tempo', $currentYear);
-        })
-        ->orWhere(function ($query) {
-            // Untuk tagihan yang sudah dibayar, tidak perlu filter bulan/tahun
-            $query->where('status', 'Lunas');
-        })
-        ->orderByDesc('tanggal_pembayaran')  // Urutkan berdasarkan tanggal pembayaran jika ada
-        ->orderByDesc('tanggal_jatuh_tempo') // Atau urutkan berdasarkan tanggal jatuh tempo jika pembayaran belum dilakukan
-        ->get();
+        // Mengambil data tagihan yang sudah dibayar (Lunas) dan yang belum dibayar (Belum Lunas/Tertunggak)
+        $invoices = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
+            ->whereIn('status', ['Lunas', 'Belum Lunas', 'Tertunggak'])
+            ->where(function ($query) use ($currentMonth, $currentYear) {
+                // Filter berdasarkan bulan dan tahun saat ini untuk tagihan yang belum dibayar
+                $query->whereMonth('tanggal_jatuh_tempo', $currentMonth)
+                    ->whereYear('tanggal_jatuh_tempo', $currentYear);
+            })
+            ->orWhere(function ($query) {
+                // Untuk tagihan yang sudah dibayar, tidak perlu filter bulan/tahun
+                $query->where('status', 'Lunas');
+            })
+            ->orderByDesc('tanggal_pembayaran')  // Urutkan berdasarkan tanggal pembayaran jika ada
+            ->orderByDesc('tanggal_jatuh_tempo') // Atau urutkan berdasarkan tanggal jatuh tempo jika pembayaran belum dilakukan
+            ->get();
 
-    return view('ROLE.MEMBER.BILLING.riwayat', compact('invoices'));
-}
+        return view('ROLE.MEMBER.BILLING.riwayat', compact('invoices'));
+    }
 
 
     public function bil_pelanggan()
@@ -392,26 +394,27 @@ class BillingController extends Controller
 
         return back()->with('success', 'Pengaturan billing berhasil disimpan.');
     }
-   public function showDetail($id)
-{
-    $invoice = Tagihan::with(['pelanggan.mikrotik'])
-        ->where('invoice_id', $id)
-        ->firstOrFail();
-    
-    return view('ROLE.MEMBER.BILLING._detail', compact('invoice'));
-}
-public function showUnpaidDetail($id)
-{
-   $invoice = Tagihan::with(['pelanggan.mikrotik'])
-        ->where('invoice_id', $id)
-        ->firstOrFail();
-    return view('ROLE.MEMBER.BILLING._detail', compact('invoice'));
-}
+    public function showDetail($id)
+    {
+        $invoice = Tagihan::with(['pelanggan.mikrotik'])
+            ->where('invoice_id', $id)
+            ->firstOrFail();
+
+        return view('ROLE.MEMBER.BILLING._detail', compact('invoice'));
+    }
+    public function showUnpaidDetail($id)
+    {
+        $invoice = Tagihan::with(['pelanggan.mikrotik'])
+            ->where('invoice_id', $id)
+            ->firstOrFail();
+        return view('ROLE.MEMBER.BILLING._detail', compact('invoice'));
+    }
     public function cariInvoice(Request $request)
     {
 
-
-        $invoice = Tagihan::where('invoice_id', $request->invoice_id)->first();
+        $invoice = Tagihan::with('pelanggan.paket')
+            ->where('invoice_id', $request->invoice_id)
+            ->first();
 
         if ($invoice) {
             return view('ROLE.MEMBER.BILLING.cari_invoice', compact('invoice'));
@@ -419,8 +422,58 @@ public function showUnpaidDetail($id)
             return response()->json(['success' => false, 'message' => 'Invoice tidak ditemukan']);
         }
     }
-    public function success(){
+    public function success()
+    {
         return view('ROLE.MEMBER.BILLING.success');
     }
+   public function confirmBayar(Request $request)
+{
+       
+    \Log::info($request);
+    try {
+     
 
+        // Ambil data tagihan berdasarkan ID
+        $tagihan = Tagihan::with(['pelanggan'])->findOrFail($request->id);
+        $data_invoice = DataInvoice::where('tagihan_id', $tagihan->id)->first();
+
+        // Update status tagihan
+        $tagihan->update([
+            'status' => 'Lunas',
+            'metode' => $request->metode,
+            'penagih' => auth()->user()->name,
+            'tanggal_dibayar' => Carbon::now(),
+        ]);
+        $data_invoice->update(
+            [
+                'status' => 'Lunas',
+            ]
+            );
+
+        // Siapkan data WA
+        $data = [
+            'full_name' => $tagihan->pelanggan->nama_pelanggan ?? 'Pelanggan',
+            'no_invoice' => $tagihan->invoice_id,
+            'total' => number_format($tagihan->jumlah_tagihan, 0, ',', '.'),
+            'invoice_date' => Carbon::now()->format('d-m-Y'),
+            'footer' => 'Hubungi CS jika ada pertanyaan.',
+        ];
+
+        // Kirim pesan WA jika ada pelanggan
+        if ($tagihan->pelanggan) {
+            WhatsappHelper::sendWaTemplate(
+                $tagihan->pelanggan->nomor_telepon,
+                'Payment Paid',
+                $data,
+                $tagihan->pelanggan->user_id ?? null,
+                $data_invoice->unique_member
+            );
+        }
+
+        return response()->json(['message' => 'Pembayaran berhasil dikonfirmasi.']);
+    } catch (\Exception $e) {
+        \Log::error('❌ Konfirmasi bayar gagal: ' . $e->getMessage());
+        return response()->json(['message' => 'Terjadi kesalahan saat memproses pembayaran.'], 500);
+    }
+}
 }

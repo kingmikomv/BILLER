@@ -162,25 +162,32 @@
                         const metode = result.value;
 
                         $.ajax({
-                            url: "", // <-- sesuaikan dengan route Anda
-                            method: 'POST',
+        url: "{{ route('tagihan.confirmBayar') }}",
+                            type: 'POST',
                             data: {
-                                _token: '{{ csrf_token() }}',
+                                _token: '{{ csrf_token() }}', // Token CSRF wajib untuk POST
                                 id: invoiceId,
                                 metode: metode
                             },
-                            success: function(res) {
-                                Swal.fire('Berhasil!', res.message, 'success').then(
-                                () => {
-                                        location.reload();
+                            success: function(response) {
+                                Swal.fire('Berhasil!', response.message, 'success')
+                                    .then(() => {
+                                        location
+                                    .reload(); // Reload halaman setelah sukses
                                     });
                             },
-                            error: function() {
-                                Swal.fire('Gagal!',
-                                    'Terjadi kesalahan saat memproses pembayaran.',
-                                    'error');
+                            error: function(xhr) {
+                                // Menampilkan pesan error dari Laravel (jika ada)
+                                let message =
+                                    'Terjadi kesalahan saat memproses pembayaran.';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    message = xhr.responseJSON.message;
+                                }
+
+                                Swal.fire('Gagal!', message, 'error');
                             }
                         });
+
                     }
                 });
             });

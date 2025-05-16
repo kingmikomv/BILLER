@@ -32,7 +32,7 @@ class WhatsappHelper
             }
 
             $template = $template->first();
-                Log::info($sessionId);
+            Log::info($sessionId);
 
             if (!$template) {
                 Log::warning("❗ Template '{$templateName}' tidak ditemukan.");
@@ -40,12 +40,12 @@ class WhatsappHelper
             }
 
             // Replace placeholder {{key}} dengan value dari $data
-           $pesan = $template->content;
-foreach ($data as $key => $value) {
-    $pesan = str_replace('[' . $key . ']', $value, $pesan);
-}
+            $pesan = $template->content;
+            foreach ($data as $key => $value) {
+                $pesan = str_replace('[' . $key . ']', $value, $pesan);
+            }
 
- Log::info($data);
+            Log::info($data);
 
             // Kirim WA
             $response = Http::post('http://localhost:3000/api/send', [
@@ -53,7 +53,11 @@ foreach ($data as $key => $value) {
                 'number' => $nomor,
                 'message' => $pesan,
             ]);
-
+Log::info('SEND WA PARAMETER', [
+    'session_id' => $sessionId,
+    'number' => $nomor,
+    'message' => $pesan
+]);
             if ($response->successful()) {
                 Log::info("📨 Pesan template '{$templateName}' terkirim ke {$nomor}");
             } else {

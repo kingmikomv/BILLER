@@ -243,7 +243,7 @@
                         <tr>
                             <td>
                                 Pembayaran Internet Bulan {{ \Carbon\Carbon::parse($invoice->tanggal_generate)->translatedFormat('F Y') }} <br>
-                                Paket : 
+Paket: {{ $invoice->pelanggan->paket->nama_paket }}
                             </td>
                             <td class="text-right">
                                 Rp{{ number_format($invoice->jumlah_tagihan, 0, ',', '.') }}

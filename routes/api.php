@@ -21,7 +21,6 @@ Route::post('/midtrans/webhook', [MidtransWebhookController::class, 'handle'])->
 Route::get('/invoice/success', [BillingController::class, 'success'])->withoutMiddleware(['throttle:api'])->name('invoice.success');
 
 Route::get('/invoice/{invoice_id}', [BillingController::class, 'cariInvoice'])->withoutMiddleware(['throttle:api'])->name('invoice.cari');
-Route::get('/invoice/success', [BillingController::class, 'success'])->withoutMiddleware(['throttle:api'])->name('invoice.success');
 
 
 
