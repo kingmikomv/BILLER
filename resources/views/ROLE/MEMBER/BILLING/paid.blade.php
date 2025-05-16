@@ -55,8 +55,8 @@
                                                             </a>
                                                         </td>
                                                         <td>
-                                                            {{ 'ID : ' . $invoice->pelanggan->pelanggan_id ?? '-' }} |
-                                                            {{ $invoice->pelanggan->nama_pelanggan ?? '-' }}
+                                                            {{ $invoice->pelanggan->nama_pelanggan ?? '-' }} |
+                                                            {{ $invoice->pelanggan->akun_pppoe ?? '-' }}
 
                                                         </td>
                                                         <td>{{ \Carbon\Carbon::parse($invoice->tanggal_pembayaran)->format('d/m/Y') }}

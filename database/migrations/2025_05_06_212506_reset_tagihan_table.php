@@ -19,6 +19,7 @@ class ResetTagihanTable extends Migration
             $table->date('tanggal_generate');
             $table->date('tanggal_jatuh_tempo');
             $table->date('tanggal_pembayaran')->nullable();
+            $table->date('tanggal_dibayar')->nullable();
 
             $table->integer('jumlah_tagihan');
             $table->boolean('prorata')->default(false);

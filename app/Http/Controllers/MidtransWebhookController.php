@@ -42,7 +42,7 @@ class MidtransWebhookController extends Controller
             case 'settlement':
                 $tagihan->update([
                     'status' => 'Lunas',
-                    'tanggal_pembayaran' => $settlementTime ? Carbon::parse($settlementTime)->toDateString() : Carbon::now()->toDateString(),
+                    'tanggal_dibayar' => $settlementTime ? Carbon::parse($settlementTime)->toDateString() : Carbon::now()->toDateString(),
                     'payment_method' => $paymentType,
                     'payment_channel' => $paymentChannel,
                     'midtrans_paid_at' => $settlementTime ?? Carbon::now(),

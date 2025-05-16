@@ -3,6 +3,7 @@
         <div class="col-md-6">
             <p><strong>Invoice ID:</strong> {{ $invoice->invoice_id }}</p>
             <p><strong>Nama Pelanggan:</strong> {{ $invoice->pelanggan->nama_pelanggan ?? '-' }}</p>
+            <p><strong>ID Pelanggan:</strong> {{ $invoice->pelanggan->pelanggan_id ?? '-' }}</p>
             <p><strong>PPPoE:</strong> {{ $invoice->pelanggan->akun_pppoe ?? '-' }}</p>
             <p><strong>
                 {{ $invoice->tanggal_pembayaran ? 'Tanggal Bayar:' : 'Jatuh Tempo:' }}

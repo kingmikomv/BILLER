@@ -294,6 +294,7 @@ class PelangganController extends Controller
             'tanggal_generate' => $tanggalGenerate,
             'tanggal_jatuh_tempo' => $tanggalJatuhTempo,
             'tanggal_pembayaran' => $statusPembayaran === 'Sudah Dibayar' ? Carbon::now() : null,
+             'tanggal_dibayar' => $statusPembayaran === 'Sudah Dibayar' ? Carbon::now() : null,
             'jumlah_tagihan' => $prorata,
             'prorata' => $setting->prorata_enable,
             'status' => $statusPembayaran === 'Sudah Dibayar' ? 'Lunas' : 'Belum Lunas',
