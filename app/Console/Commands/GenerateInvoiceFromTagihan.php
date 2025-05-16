@@ -67,7 +67,7 @@ if (!$user || $user->role !== 'member') {
                     ->first();
 
                 if (!$existingNextMonthTagihan) {
-                    $invoiceId = 'INV-' . strtoupper(Str::random(8));
+                    $invoiceId = 'INV-' . date('Ymd') . strtoupper(Str::random(6));
 
                     $newTagihan = Tagihan::create([
                         'invoice_id' => $invoiceId,
@@ -116,6 +116,9 @@ if (!$user || $user->role !== 'member') {
                         'customer_details' => [
                             'first_name' => $pelanggan->nama,
                             'phone' => $pelanggan->nomor_telepon,
+                        ],
+                        'callbacks' => [
+                            'finish' => config('app.url'). '/api/invoice/success',
                         ],
                     ];
 

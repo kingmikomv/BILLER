@@ -20,6 +20,6 @@ class PaketPppoe extends Model
     }
     public function pelanggan()
     {
-        return $this->hasMany(Pelanggan::class, 'paket_id');
+        return $this->hasMany(Pelanggan::class, 'paketpppoe_id');
     }
 }

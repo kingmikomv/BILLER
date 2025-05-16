@@ -47,13 +47,17 @@
                                                 @foreach ($paidInvoices as $index => $invoice)
                                                     <tr>
                                                         <td>{{ $index + 1 }}</td>
-                                                        <td>{{ $invoice->invoice_id }}</td>
+                                                        <td>
+                                                            <a href="#" class="text-primary show-invoice-detail"
+                                                                data-id="{{ $invoice->invoice_id }}" data-toggle="modal"
+                                                                data-target="#invoiceDetailModal">
+                                                                {{ $invoice->invoice_id }}
+                                                            </a>
+                                                        </td>
                                                         <td>
                                                             {{ 'ID : ' . $invoice->pelanggan->pelanggan_id ?? '-' }} |
-                                                            Site :
-                                                            {{ optional($invoice->pelanggan->mikrotik)->site ?? '-' }} |
-                                                            {{ $invoice->pelanggan->nama_pelanggan ?? '-' }} |
-                                                            {{ $invoice->pelanggan->akun_pppoe ?? '-' }}
+                                                            {{ $invoice->pelanggan->nama_pelanggan ?? '-' }}
+
                                                         </td>
                                                         <td>{{ \Carbon\Carbon::parse($invoice->tanggal_pembayaran)->format('d/m/Y') }}
                                                         </td>
@@ -63,21 +67,19 @@
                                                             {{ number_format(optional($invoice->pelanggan->paket)->harga_paket ?? 0, 0, ',', '.') }}
                                                         </td>
                                                         <td><span class="badge badge-success">Lunas</span></td>
-                                                       <td>
-    <div class="d-flex gap-1 flex-wrap">
-        <a href=""
-           target="_blank"
-           class="btn btn-sm btn-success">
-            <i class="fab fa-whatsapp"></i> WA
-        </a>
+                                                        <td>
+                                                            <div class="d-flex gap-1 flex-wrap">
+                                                                <a href="" target="_blank"
+                                                                    class="btn btn-sm btn-success">
+                                                                    <i class="fab fa-whatsapp"></i> WA
+                                                                </a>
 
-        <a href=""
-           target="_blank"
-           class="btn btn-sm btn-primary">
-            <i class="fas fa-print"></i> Cetak
-        </a>
-    </div>
-</td>
+                                                                <a href="" target="_blank"
+                                                                    class="btn btn-sm btn-primary">
+                                                                    <i class="fas fa-print"></i> Cetak
+                                                                </a>
+                                                            </div>
+                                                        </td>
 
 
                                                     </tr>
@@ -93,12 +95,47 @@
             </section>
             <!-- /.content -->
         </div>
+        <!-- Modal Global -->
+        <div class="modal fade" id="invoiceDetailModal" tabindex="-1" role="dialog"
+            aria-labelledby="invoiceDetailLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Detail Invoice</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="invoiceDetailContent">
+                        <p class="text-center">Memuat data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <x-dhs.footer />
     </div>
     <!-- ./wrapper -->
 
     <x-dhs.scripts />
+    <script>
+        $(document).on('click', '.show-invoice-detail', function() {
+            const invoiceId = $(this).data('id');
+            $('#invoiceDetailContent').html('<p class="text-center">Memuat data...</p>');
+
+            $.ajax({
+                url: '/home/billing/paid/detail/' + invoiceId,
+                type: 'GET',
+                success: function(response) {
+                    $('#invoiceDetailContent').html(response);
+                },
+                error: function() {
+                    $('#invoiceDetailContent').html(
+                        '<p class="text-danger text-center">Gagal memuat data.</p>');
+                }
+            });
+        });
+    </script>
 
     <!-- DataTables -->
     <script>

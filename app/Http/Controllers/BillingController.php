@@ -392,6 +392,21 @@ class BillingController extends Controller
 
         return back()->with('success', 'Pengaturan billing berhasil disimpan.');
     }
+   public function showDetail($id)
+{
+    $invoice = Tagihan::with(['pelanggan.mikrotik'])
+        ->where('invoice_id', $id)
+        ->firstOrFail();
+    
+    return view('ROLE.MEMBER.BILLING._detail', compact('invoice'));
+}
+public function showUnpaidDetail($id)
+{
+   $invoice = Tagihan::with(['pelanggan.mikrotik'])
+        ->where('invoice_id', $id)
+        ->firstOrFail();
+    return view('ROLE.MEMBER.BILLING._detail', compact('invoice'));
+}
     public function cariInvoice(Request $request)
     {
 
@@ -404,4 +419,8 @@ class BillingController extends Controller
             return response()->json(['success' => false, 'message' => 'Invoice tidak ditemukan']);
         }
     }
+    public function success(){
+        return view('ROLE.MEMBER.BILLING.success');
+    }
+
 }

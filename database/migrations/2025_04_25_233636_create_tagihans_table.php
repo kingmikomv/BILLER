@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('tanggal_generate');
             $table->date('tanggal_jatuh_tempo');
             $table->date('tanggal_pembayaran')->nullable();
-
+            $table->date('tanggal_dibayar')->nullable();
             $table->integer('jumlah_tagihan');
             $table->boolean('prorata')->default(false);
             $table->enum('status', ['Lunas', 'Belum Lunas', 'Tertunggak'])->default('Belum Lunas');
@@ -32,7 +32,8 @@ return new class extends Migration
             $table->string('payment_channel')->nullable();             // Mandiri / BRI / Gopay dll
             $table->timestamp('midtrans_paid_at')->nullable();         // Waktu dibayar
             $table->string('midtrans_transaction_status')->nullable(); // settlement / pending / expire / cancel
-
+            $table->string('metode')->nullable();
+            $table->string('penagih')->nullable();
 
             $table->timestamps();
         });

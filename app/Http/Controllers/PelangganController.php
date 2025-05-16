@@ -160,167 +160,169 @@ class PelangganController extends Controller
     }
 
     public function addPelanggan(Request $request)
-{
-    $user = auth()->user();
-    $userId = $user->id;
+    {
+        $user = auth()->user();
+        $userId = $user->id;
 
-    // Ambil data paket
-    $kodePaket = $request->input('kodePaket');
-    $paket = PaketPppoe::where('kode_paket', $kodePaket)->firstOrFail();
+        // Ambil data paket
+        $kodePaket = $request->input('kodePaket');
+        $paket = PaketPppoe::where('kode_paket', $kodePaket)->firstOrFail();
 
-    // Tentukan router
-    $mikrotikQuery = $user->role === 'member'
-        ? Mikrotik::where('user_id', $userId)
-        : Mikrotik::where('user_id', $user->parent_id);
+        // Tentukan router
+        $mikrotikQuery = $user->role === 'member'
+            ? Mikrotik::where('user_id', $userId)
+            : Mikrotik::where('user_id', $user->parent_id);
 
-    $mikrotik = $mikrotikQuery->where('id', $paket->mikrotik_id)->first();
+        $mikrotik = $mikrotikQuery->where('id', $paket->mikrotik_id)->first();
 
-    if (!$mikrotik) {
-        return redirect()->back()->withErrors(['mikrotik' => 'Router tidak ditemukan.']);
-    }
+        if (!$mikrotik) {
+            return redirect()->back()->withErrors(['mikrotik' => 'Router tidak ditemukan.']);
+        }
 
-    // Data input
-    $akunPppoe = $request->input('akunPppoe');
-    $passPppoe = $request->input('passwordPppoe');
-    $ssidWifi = $request->input('ssid');
-    $passWifi = $request->input('passwifi');
-    $tanggalinginpasang = $request->input('tip');
-    $tanggalDaftar = Carbon::now();
-    $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth();
-    $statusPembayaran = $request->input('metode_pembayaran') === 'Prabayar' ? 'Sudah Dibayar' : 'Belum Dibayar';
+        // Data input
+        $akunPppoe = $request->input('akunPppoe');
+        $passPppoe = $request->input('passwordPppoe');
+        $ssidWifi = $request->input('ssid');
+        $passWifi = $request->input('passwifi');
+        $tanggalinginpasang = $request->input('tip');
+        $tanggalDaftar = Carbon::now();
+        $tanggalPembayaranSelanjutnya = $tanggalDaftar->copy()->addMonth();
+        $statusPembayaran = $request->input('metode_pembayaran') === 'Prabayar' ? 'Sudah Dibayar' : 'Belum Dibayar';
 
-    try {
-        // Koneksi ke MikroTik API
-        $client = new Client([
-            'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
-            'user' => $mikrotik->username,
-            'pass' => $mikrotik->password,
+        try {
+            // Koneksi ke MikroTik API
+            $client = new Client([
+                'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
+                'user' => $mikrotik->username,
+                'pass' => $mikrotik->password,
+            ]);
+
+            // Tambahkan akun PPPoE
+            $query = (new Query('/ppp/secret/add'))
+                ->equal('name', $akunPppoe)
+                ->equal('password', $passPppoe)
+                ->equal('service', 'pppoe')
+                ->equal('profile', $paket->profile);
+
+            $client->query($query)->read();
+
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['mikrotik_pppoe' => 'Gagal menambahkan akun PPPoE: ' . $e->getMessage()]);
+        }
+
+        // Buat data pelanggan
+        $kodePsb = $this->generateKodePSB();
+        $uniqueId = $user->unique_member . rand(100, 9999999);
+
+        $pelanggan = $mikrotik->pelanggan()->create([
+            'pelanggan_id' => $uniqueId,
+            'router_id' => $mikrotik->router_id,
+            'no_tiket' => $kodePsb,
+            'nama_ssid' => $ssidWifi,
+            'password_ssid' => $passWifi,
+            'router_username' => $mikrotik->username,
+            'paketpppoe_id' => $paket->id, // ✅ tambahkan relasi ini
+            'nama_pelanggan' => $request->input('namaPelanggan'),
+            'akun_pppoe' => $akunPppoe,
+            'password_pppoe' => $passPppoe,
+            'alamat' => $request->input('alamat'),
+            'nomor_telepon' => $request->input('telepon'),
+            'tanggal_daftar' => $tanggalDaftar,
+            'tanggal_ingin_pasang' => $tanggalinginpasang,
+            'metode_pembayaran' => $request->input('metode_pembayaran'),
+            'diskon' => $request->input('diskon'),
+            'ppn' => $request->input('ppn'),
+            'kode_promo' => $request->input('kode_promo'),
         ]);
 
-        // Tambahkan akun PPPoE
-        $query = (new Query('/ppp/secret/add'))
-            ->equal('name', $akunPppoe)
-            ->equal('password', $passPppoe)
-            ->equal('service', 'pppoe')
-            ->equal('profile', $paket->profile);
+        // Buat tiket PSB
+        $pelanggan->tiket()->create([
+            'no_tiket' => $kodePsb,
+            'status_tiket' => 'Belum Dikonfirmasi',
+            'serialnumber' => $request->input('serialnumber'),
+            'pelanggan_id' => $pelanggan->id,
+            'parent_id' => $user->parent_id,
+            'mikrotik_id' => $mikrotik->id,
+            'router_username' => $mikrotik->username,
+            'paket_id' => $paket->id,
+            'akun_pppoe' => $akunPppoe,
+            'password_pppoe' => $passPppoe,
+            'alamat' => $request->input('alamat'),
+            'nomor_telepon' => $request->input('telepon'),
+            'tanggal_daftar' => $tanggalDaftar,
+            'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
+            'tanggal_ingin_pasang' => $tanggalinginpasang,
+            'tanggal_terpasang' => null,
+            'pembayaran_yang_akan_datang' => null,
+            'nama_ssid' => $ssidWifi,
+            'password_ssid' => $passWifi,
+            'mac_address' => $request->input('macadress'),
+            'odp' => $request->input('odp'),
+            'olt' => $request->input('olt'),
+        ]);
 
-        $client->query($query)->read();
+        // Ambil pengaturan billing
+        $setting = DB::table('billing_seting')->first();
 
-    } catch (\Exception $e) {
-        return redirect()->back()->withErrors(['mikrotik_pppoe' => 'Gagal menambahkan akun PPPoE: ' . $e->getMessage()]);
-    }
-
-    // Buat data pelanggan
-    $kodePsb = $this->generateKodePSB();
-    $uniqueId = $user->unique_member . rand(100, 9999999);
-
-    $pelanggan = $mikrotik->pelanggan()->create([
-        'pelanggan_id' => $uniqueId,
-        'router_id' => $mikrotik->router_id,
-        'no_tiket' => $kodePsb,
-        'nama_ssid' => $ssidWifi,
-        'password_ssid' => $passWifi,
-        'router_username' => $mikrotik->username,
-        'kode_paket' => $kodePaket,
-        'profile_paket' => $paket->profile,
-        'nama_pelanggan' => $request->input('namaPelanggan'),
-        'akun_pppoe' => $akunPppoe,
-        'password_pppoe' => $passPppoe,
-        'alamat' => $request->input('alamat'),
-        'nomor_telepon' => $request->input('telepon'),
-        'tanggal_daftar' => $tanggalDaftar,
-        'tanggal_ingin_pasang' => $tanggalinginpasang,
-        'metode_pembayaran' => $request->input('metode_pembayaran'),
-    ]);
-
-    // Buat tiket PSB
-    $pelanggan->tiket()->create([
-        'no_tiket' => $kodePsb,
-        'status_tiket' => 'Belum Dikonfirmasi',
-        'serialnumber' => $request->input('serialnumber'),
-        'pelanggan_id' => $pelanggan->id,
-        'parent_id' => $user->parent_id,
-        'mikrotik_id' => $mikrotik->id,
-        'router_username' => $mikrotik->username,
-        'paket_id' => $paket->id,
-        'akun_pppoe' => $akunPppoe,
-        'password_pppoe' => $passPppoe,
-        'alamat' => $request->input('alamat'),
-        'nomor_telepon' => $request->input('telepon'),
-        'tanggal_daftar' => $tanggalDaftar,
-        'pembayaran_selanjutnya' => $tanggalPembayaranSelanjutnya,
-        'tanggal_ingin_pasang' => $tanggalinginpasang,
-        'tanggal_terpasang' => null,
-        'pembayaran_yang_akan_datang' => null,
-        'nama_ssid' => $ssidWifi,
-        'password_ssid' => $passWifi,
-        'mac_address' => $request->input('macadress'),
-        'odp' => $request->input('odp'),
-        'olt' => $request->input('olt'),
-    ]);
-
-    // Ambil pengaturan billing
-    $setting = DB::table('billing_seting')->first();
-
-    $tanggalGenerate = Carbon::now();
-    $tanggalJatuhTempo = $tanggalGenerate->copy()->addDays($setting->default_jatuh_tempo_hari);
-
-    // Hitung tanggal generate jika mode dimajukan aktif
-    if ($setting->generate_invoice_mode === 'dimajukan' && $setting->dimajukan_hari !== null) {
-        $tanggalGenerate = $tanggalPembayaranSelanjutnya->copy()->subDays($setting->dimajukan_hari);
+        $tanggalGenerate = Carbon::now();
         $tanggalJatuhTempo = $tanggalGenerate->copy()->addDays($setting->default_jatuh_tempo_hari);
-    }
 
-    // Tentukan prorata jika aktif
-    $prorata = 0;
-    if ($setting->prorata_enable && $pelanggan->tanggal_daftar) {
-        $bulanIni = Carbon::now();
-        $jumlahHariBulanIni = $bulanIni->daysInMonth;
-        $hariMulai = $pelanggan->tanggal_daftar->day;
-
-        if ($hariMulai <= $jumlahHariBulanIni) {
-            $prorata = $paket->harga_paket / $jumlahHariBulanIni * ($jumlahHariBulanIni - $hariMulai + 1);
-            $prorata = round($prorata / 1000) * 1000;
+        // Hitung tanggal generate jika mode dimajukan aktif
+        if ($setting->generate_invoice_mode === 'dimajukan' && $setting->dimajukan_hari !== null) {
+            $tanggalGenerate = $tanggalPembayaranSelanjutnya->copy()->subDays($setting->dimajukan_hari);
+            $tanggalJatuhTempo = $tanggalGenerate->copy()->addDays($setting->default_jatuh_tempo_hari);
         }
-    } else {
-        $prorata = round($paket->harga_paket / 1000) * 1000;
-    }
 
-    // Buat tagihan awal dengan prorata
-    $pelanggan->tagihan()->create([
-        'invoice_id' => $this->generateInvoiceId(),
-        'tanggal_generate' => $tanggalGenerate,
-        'tanggal_jatuh_tempo' => $tanggalJatuhTempo,
-        'tanggal_pembayaran' => $statusPembayaran === 'Sudah Dibayar' ? Carbon::now() : null,
-        'jumlah_tagihan' => $prorata,
-        'prorata' => $setting->prorata_enable,
-        'status' => $statusPembayaran === 'Sudah Dibayar' ? 'Lunas' : 'Belum Lunas',
-    ]);
+        // Tentukan prorata jika aktif
+        $prorata = 0;
+        if ($setting->prorata_enable && $pelanggan->tanggal_daftar) {
+            $bulanIni = Carbon::now();
+            $jumlahHariBulanIni = $bulanIni->daysInMonth;
+            $hariMulai = $pelanggan->tanggal_daftar->day;
 
-    // Buat tagihan bulan depan jika prabayar
-    if ($request->input('metode_pembayaran') === 'Prabayar') {
-        $bulanDepan = Carbon::now()->addMonth()->startOfMonth();
-        $tanggalJatuhTempoDepan = $bulanDepan->copy()->addDays($setting->default_jatuh_tempo_hari);
+            if ($hariMulai <= $jumlahHariBulanIni) {
+                $prorata = $paket->harga_paket / $jumlahHariBulanIni * ($jumlahHariBulanIni - $hariMulai + 1);
+                $prorata = round($prorata / 1000) * 1000;
+            }
+        } else {
+            $prorata = round($paket->harga_paket / 1000) * 1000;
+        }
 
+        // Buat tagihan awal dengan prorata
         $pelanggan->tagihan()->create([
             'invoice_id' => $this->generateInvoiceId(),
-            'tanggal_generate' => $bulanDepan,
-            'tanggal_jatuh_tempo' => $tanggalJatuhTempoDepan,
-            'tanggal_pembayaran' => null,
-            'jumlah_tagihan' => $paket->harga_paket,
-            'prorata' => false,
-            'status' => 'Belum Lunas',
+            'tanggal_generate' => $tanggalGenerate,
+            'tanggal_jatuh_tempo' => $tanggalJatuhTempo,
+            'tanggal_pembayaran' => $statusPembayaran === 'Sudah Dibayar' ? Carbon::now() : null,
+            'jumlah_tagihan' => $prorata,
+            'prorata' => $setting->prorata_enable,
+            'status' => $statusPembayaran === 'Sudah Dibayar' ? 'Lunas' : 'Belum Lunas',
         ]);
+
+        // Buat tagihan bulan depan jika prabayar
+        if ($request->input('metode_pembayaran') === 'Prabayar') {
+            $bulanDepan = Carbon::now()->addMonth()->startOfMonth();
+            $tanggalJatuhTempoDepan = $bulanDepan->copy()->addDays($setting->default_jatuh_tempo_hari);
+
+            $pelanggan->tagihan()->create([
+                'invoice_id' => $this->generateInvoiceId(),
+                'tanggal_generate' => $bulanDepan,
+                'tanggal_jatuh_tempo' => $tanggalJatuhTempoDepan,
+                'tanggal_pembayaran' => $bulanDepan,
+                'jumlah_tagihan' => $paket->harga_paket,
+                'prorata' => false,
+                'status' => 'Belum Lunas',
+            ]);
+        }
+
+        // Log aktivitas
+        ActivityLogger::log(
+            'Menambahkan Pelanggan Baru',
+            'Nama Pelanggan : ' . $pelanggan->nama_pelanggan . " Dengan Nomor Tiket PSB : " . $kodePsb
+        );
+
+        return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan.');
     }
-
-    // Log aktivitas
-    ActivityLogger::log(
-        'Menambahkan Pelanggan Baru',
-        'Nama Pelanggan : ' . $pelanggan->nama_pelanggan . " Dengan Nomor Tiket PSB : " . $kodePsb
-    );
-
-    return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan.');
-}
     function generateInvoiceId()
     {
         return 'INV-' . date('Ymd') . strtoupper(Str::random(6));

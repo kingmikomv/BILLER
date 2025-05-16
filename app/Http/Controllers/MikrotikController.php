@@ -430,7 +430,7 @@ public function tambahpaket(Request $request)
         'site' => $site,
         'profile' => $request->profile,
         'harga_paket' => $request->hargaPaket,
-        'nama_paket' => $request->namaPaket . " " . $site, // Tambahkan site ke nama paket
+        'nama_paket' => $request->namaPaket, // Tambahkan site ke nama paket
     ]);
 
     return redirect()->route('member.pppoe')->with('success', 'Paket PPPoE berhasil ditambahkan.');

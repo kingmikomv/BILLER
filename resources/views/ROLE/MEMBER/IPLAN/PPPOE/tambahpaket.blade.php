@@ -166,7 +166,6 @@
 
     </script>
 
-sesuaikan 
     
     <script>
         $(document).ready(function () {

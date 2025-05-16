@@ -43,11 +43,17 @@
                                                 @foreach ($unpaidInvoices as $index => $invoice)
                                                 <tr>
                                                     <td>{{ $index + 1 }}</td>
-                                                    <td>{{ $invoice->invoice_id }}</td>
-                                                    <td>{{ "ID : ". $invoice->pelanggan->pelanggan_id ?? '-' }} | Site : {{ optional($invoice->pelanggan->mikrotik)->site ?? '-' }} | {{ $invoice->pelanggan->nama_pelanggan ?? '-' }} | {{ $invoice->pelanggan->akun_pppoe ?? '-'}}</td>
+  <td>
+                                                            <a href="#" class="text-primary show-unpaid-detail"
+                                                                data-id="{{ $invoice->invoice_id }}" data-toggle="modal"
+                                                                data-target="#invoiceDetailModal">
+                                                                {{ $invoice->invoice_id }}
+                                                            </a>
+                                                        </td>                                                 
+                                                        <td>{{ $invoice->pelanggan->nama_pelanggan ?? '-' }} | {{ "ID : ". $invoice->pelanggan->pelanggan_id ?? '-' }}</td>
                                                     <td>{{ \Carbon\Carbon::parse($invoice->jatuh_tempo)->format('d/m/Y') }}</td>
-                                                    <td>{{ $invoice->bulan ?? '-'}}</td>
-                                                    <td>Rp {{ number_format(optional($invoice->pelanggan->paket)->harga_paket ?? 0, 0, ',', '.') }}</td>
+<td>{{ \Carbon\Carbon::parse($invoice->tanggal_pembayaran)->translatedFormat('F Y') }}
+                                                        </td>                                                    <td>Rp {{ number_format(optional($invoice->pelanggan->paket)->harga_paket ?? 0, 0, ',', '.') }}</td>
                                                     <td>
                                                         <div class="row">
                                                             <div class="col-md-4 mt-1">
@@ -74,7 +80,22 @@
                 </div>
             </section>
         </div>
-
+  <div class="modal fade" id="invoiceDetailModal" tabindex="-1" role="dialog"
+            aria-labelledby="invoiceDetailLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Detail Invoice</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="invoiceDetailContent">
+                        <p class="text-center">Memuat data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
         <x-dhs.footer />
     </div>
 
@@ -157,7 +178,24 @@
         });
     });
 </script>
+ <script>
+        $(document).on('click', '.show-unpaid-detail', function() {
+            const invoiceId = $(this).data('id');
+            $('#invoiceDetailContent').html('<p class="text-center">Memuat data...</p>');
 
+            $.ajax({
+                url: '/home/billing/unpaid/detail/' + invoiceId,
+                type: 'GET',
+                success: function(response) {
+                    $('#invoiceDetailContent').html(response);
+                },
+                error: function() {
+                    $('#invoiceDetailContent').html(
+                        '<p class="text-danger text-center">Gagal memuat data.</p>');
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

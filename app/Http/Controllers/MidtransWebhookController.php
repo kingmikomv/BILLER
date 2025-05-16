@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Helpers\WhatsappHelper;
+use App\Models\DataInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\Tagihan;
@@ -29,6 +31,7 @@ class MidtransWebhookController extends Controller
         }
 
         $tagihan = Tagihan::where('invoice_id', $orderId)->first();
+        $data_invoice = DataInvoice::where('tagihan_id', $tagihan->id)->first();
 
         if (!$tagihan) {
             Log::warning("Tagihan dengan order_id {$orderId} tidak ditemukan.");
@@ -39,11 +42,33 @@ class MidtransWebhookController extends Controller
             case 'settlement':
                 $tagihan->update([
                     'status' => 'Lunas',
+                    'tanggal_pembayaran' => $settlementTime ? Carbon::parse($settlementTime)->toDateString() : Carbon::now()->toDateString(),
                     'payment_method' => $paymentType,
                     'payment_channel' => $paymentChannel,
                     'midtrans_paid_at' => $settlementTime ?? Carbon::now(),
                     'midtrans_transaction_status' => $status,
                 ]);
+                $data_invoice->update([
+                    'status' => 'Lunas'
+                ]);
+
+                $data = [
+                    'full_name' => $data_invoice->pelanggan->nama_pelanggan ?? 'Pelanggan',
+                    'no_invoice' => $data_invoice->tagihan->invoice_id,
+                    'total' => number_format($tagihan->nominal, 0, ',', '.'), // Format Rupiah
+                    'invoice_date' => Carbon::now()->format('d-m-Y'),
+                    'footer' => 'Hubungi CS jika ada pertanyaan.',
+                ];
+
+                WhatsappHelper::sendWaTemplate(
+                    $data_invoice->tagihan->invoice_id ?? null,  // Nomor HP pelanggan
+                    'Payment Paid',                                   // Nama template WA
+                    $data,
+                    $data_invoice->pelanggan->user_id ?? null,        // user_id (posisi ke-4)
+                    $data_invoice->unique_member ?? null              // session_id (posisi ke-5)
+                );
+
+
                 Log::info("Tagihan {$orderId} berhasil dibayar.");
                 break;
 

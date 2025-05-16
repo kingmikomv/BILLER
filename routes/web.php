@@ -192,6 +192,7 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home/network/router'
 Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->controller(BillingController::class)->group(function () {
     
     Route::get('/unpaid', 'unpaid')->name('unpaid');
+Route::get('/unpaid/detail/{id}', 'showUnpaidDetail')->name('billing.unpaid.detail');
     Route::get('/unpaid/invoice/{invoice}/bayar', 'bayar')->name('invoice.bayar');
     Route::get('/billing_setting', 'billingSetting')->name('billing.setting');
     Route::post('/setting-billing', 'store')->name('setting-billing.store');
@@ -199,6 +200,7 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
 
 
     Route::get('/paid', 'paid')->name('paid');
+    Route::get('/paid/detail/{id}',  action: 'showDetail')->name('billing.paid.detail');;
     Route::get('/riwayat', 'riwayatTagihan')->name('riwayat');
     Route::get('/bil_pelanggan', 'bil_pelanggan')->name('bil_pelanggan');
     Route::delete('/bil_pelanggan/hapus-data/{id}', 'hapusData')->name('hapusData');

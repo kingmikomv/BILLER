@@ -29,8 +29,9 @@ class ResetTagihanTable extends Migration
             $table->string('payment_method')->nullable();
             $table->string('payment_channel')->nullable();
             $table->timestamp('midtrans_paid_at')->nullable();
-            $table->string('midtrans_transaction_status')->nullable();
-
+       $table->string('midtrans_transaction_status')->nullable(); // settlement / pending / expire / cancel
+            $table->string('metode')->nullable();
+            $table->string('penagih')->nullable();
             $table->timestamps();
         });
     }

@@ -38,7 +38,7 @@
                                 <div class="card-body">
                                     <form method="POST" action="{{ route('addPelanggan') }}">
                                         @csrf
-                                    
+
                                         <!-- Pilihan Paket -->
                                         <fieldset class="border p-3 mb-3">
                                             <legend class="w-auto px-2">Pilih Paket</legend>
@@ -46,71 +46,85 @@
                                                 <label for="pilihPaket">Pilih Paket</label>
                                                 <select class="form-control" name="kodePaket" required>
                                                     <option value="">Pilih Paket</option>
-                                                    @foreach($paketPPPoEs as $paket)
+                                                    @foreach ($paketPPPoEs as $paket)
                                                         <option value="{{ $paket->kode_paket }}">
-                                                            {{ $paket->nama_paket }} - Rp. {{ number_format($paket->harga_paket, 0, ',', '.') }}
+                                                            {{ $paket->nama_paket }} - Rp.
+                                                            {{ number_format($paket->harga_paket, 0, ',', '.') }} |
+                                                            {{ $paket->mikrotik->site }}
                                                         </option>
                                                     @endforeach
                                                 </select>
                                             </div>
                                             <div class="form-group">
                                                 <label for="akunPppoe">Akun PPPoE</label>
-                                                <input type="text" class="form-control" id="akunPppoe" name="akunPppoe" required placeholder="contoh:akun@123">
+                                                <input type="text" class="form-control" id="akunPppoe"
+                                                    name="akunPppoe" required placeholder="contoh:akun@123">
                                             </div>
                                             <div class="form-group">
                                                 <label for="passwordPppoe">Password PPPoE</label>
-                                                <input type="text" class="form-control" id="passwordPppoe" name="passwordPppoe" required placeholder="Password PPPoE">
+                                                <input type="text" class="form-control" id="passwordPppoe"
+                                                    name="passwordPppoe" required placeholder="Password PPPoE">
                                             </div>
                                             <div class="form-group">
                                                 <label for="passwordPppoe">SSID WiFI</label>
-                                                <input type="text" class="form-control" id="ssid" name="ssid" required placeholder="SSID WiFi">
+                                                <input type="text" class="form-control" id="ssid" name="ssid"
+                                                    required placeholder="SSID WiFi">
                                             </div>
                                             <div class="form-group">
                                                 <label for="passwordPppoe">Password WiFI</label>
-                                                <input type="text" class="form-control" id="passwifi" name="passwifi" required placeholder="Password WiFi">
+                                                <input type="text" class="form-control" id="passwifi"
+                                                    name="passwifi" required placeholder="Password WiFi">
                                             </div>
-                                            
-                                            
-                                            <button type="button" class="btn btn-primary btn-block" id="toggleAdvance">Advance Form</button>
-                                            
+
+
+                                            <button type="button" class="btn btn-primary btn-block"
+                                                id="toggleAdvance">Advance Form</button>
+
                                             <div id="advanceForm" style="display: none;">
                                                 <div class="form-group">
                                                     <label for="passwordPppoe">Serial Number (Optional)</label>
-                                                    <input type="text" class="form-control" id="serial" name="serialnumber" placeholder="Serial Number">
+                                                    <input type="text" class="form-control" id="serial"
+                                                        name="serialnumber" placeholder="Serial Number">
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="passwordPppoe">MAC Address (Optional)</label>
-                                                    <input type="text" class="form-control" id="macaddress" name="macaddress" placeholder="Mac Address">
+                                                    <input type="text" class="form-control" id="macaddress"
+                                                        name="macaddress" placeholder="Mac Address">
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="passwordPppoe">ODP (Optional)</label>
-                                                    <input type="text" class="form-control" id="odp" name="odp" placeholder="ODP">
+                                                    <input type="text" class="form-control" id="odp"
+                                                        name="odp" placeholder="ODP">
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="passwordPppoe">OLT (Optional)</label>
-                                                    <input type="text" class="form-control" id="olt" name="olt" placeholder="OLT">
+                                                    <input type="text" class="form-control" id="olt"
+                                                        name="olt" placeholder="OLT">
                                                 </div>
                                             </div>
-                                            
-                                        
+
+
 
                                         </fieldset>
-                                    
+
                                         <!-- Informasi Pelanggan -->
                                         <fieldset class="border p-3 mb-3">
                                             <legend class="w-auto px-2">Informasi Pelanggan</legend>
                                             <div class="form-group">
                                                 <label for="namaPelanggan">Nama Pelanggan</label>
-                                                <input type="text" class="form-control" id="namaPelanggan" name="namaPelanggan" required placeholder="Nama Pelanggan">
+                                                <input type="text" class="form-control" id="namaPelanggan"
+                                                    name="namaPelanggan" required placeholder="Nama Pelanggan">
                                             </div>
 
                                             <div class="form-group">
                                                 <label for="telepon">Nomor Telepon</label>
-                                                <input type="text" class="form-control" id="telepon" name="telepon" required placeholder="Nomor Telepon">
+                                                <input type="text" class="form-control" id="telepon" name="telepon"
+                                                    required placeholder="Nomor Telepon">
                                             </div>
                                             <div class="form-group">
                                                 <label for="telepon">Tanggal Ingin Pasang</label>
-                                                <input type="date" class="form-control" id="tanggalinginpasang" name="tip" required placeholder="Tanggal Ingin Pasang">
+                                                <input type="date" class="form-control" id="tanggalinginpasang"
+                                                    name="tip" required placeholder="Tanggal Ingin Pasang">
                                             </div>
                                             <div class="form-group">
                                                 <label for="alamat">Alamat</label>
@@ -118,32 +132,50 @@
                                             </div>
                                             <div class="form-group">
                                                 <label for="tipePembayaran">Tipe Pembayaran</label>
-                                                <select class="form-control" id="tipePembayaran" name="metode_pembayaran" required onchange="toggleInvoice()">
+                                                <select class="form-control" id="tipePembayaran"
+                                                    name="metode_pembayaran" required onchange="toggleInvoice()">
                                                     <option value="">Pilih Tipe Pembayaran</option>
                                                     <option value="Prabayar">Prabayar</option>
                                                     <option value="Pascabayar">Pascabayar</option>
                                                 </select>
                                             </div>
                                         </fieldset>
-                                    
+                                      
+                                        <div class="form-group">
+                                            <label for="telepon">PPN ( OPTIONAL )</label>
+                                            <input type="text" class="form-control" name="ppn"
+                                                placeholder="PPN">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="telepon">Diskon ( OPTIONAL )</label>
+                                            <input type="text" class="form-control" name="diskon"
+                                                placeholder="Diskon">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="telepon">Kode Promo ( OPTIONAL )</label>
+                                            <input type="text" class="form-control" name="kode_promo"
+                                                placeholder="Kode PROMO">
+                                        </div>
                                         <!-- Invoice Section (Tampil Jika Prabayar) -->
                                         <fieldset class="border p-3 mb-3 d-none" id="invoiceSection">
                                             <legend class="w-auto px-2">Invoice</legend>
                                             <div class="form-group">
                                                 <label for="invoiceAmount">Jumlah Tagihan</label>
-                                                <input type="text" class="form-control" id="invoiceAmount" name="invoiceAmount" readonly>
+                                                <input type="text" class="form-control" id="invoiceAmount"
+                                                    name="invoiceAmount" readonly>
                                             </div>
                                             <div class="form-group">
                                                 <label for="invoiceDate">Tanggal Invoice</label>
-                                                <input type="date" class="form-control" id="invoiceDate" name="invoiceDate" value="{{ date('Y-m-d') }}" readonly>
+                                                <input type="date" class="form-control" id="invoiceDate"
+                                                    name="invoiceDate" value="{{ date('Y-m-d') }}" readonly>
                                             </div>
                                         </fieldset>
-                                    
+
                                         <button type="submit" class="btn btn-success">Tambah Pelanggan</button>
                                     </form>
-                                    
-                                    
-                                    
+
+
+
                                 </div>
                                 <!-- /.card-body -->
                             </div>
@@ -151,7 +183,7 @@
 
 
 
-                          
+
 
 
                         </div>
@@ -177,15 +209,15 @@
         function toggleInvoice() {
             let tipe = document.getElementById("tipePembayaran").value;
             let invoiceSection = document.getElementById("invoiceSection");
-    
+
             if (tipe === "prabayar") {
                 invoiceSection.classList.remove("d-none");
-                
+
                 // Ambil harga dari paket yang dipilih
                 let paketSelect = document.querySelector("[name='kodePaket']");
                 let selectedOption = paketSelect.options[paketSelect.selectedIndex].text;
                 let harga = selectedOption.match(/Rp\. ([\d.]+)/);
-                
+
                 if (harga) {
                     document.getElementById("invoiceAmount").value = harga[1].replace('.', '');
                 }
@@ -194,7 +226,7 @@
             }
         }
     </script>
-     <script>
+    <script>
         $(document).ready(function() {
             $("#toggleAdvance").click(function() {
                 $("#advanceForm").slideToggle();

@@ -17,8 +17,14 @@ use App\Http\Controllers\MidtransWebhookController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::post('/midtrans/webhook', [MidtransWebhookController::class, 'handle']);
-Route::get('/invoice/{invoice_id}', [BillingController::class, 'cariInvoice'])->name('invoice.cari');
+Route::post('/midtrans/webhook', [MidtransWebhookController::class, 'handle'])->withoutMiddleware(['throttle:api']);
+Route::get('/invoice/success', [BillingController::class, 'success'])->withoutMiddleware(['throttle:api'])->name('invoice.success');
+
+Route::get('/invoice/{invoice_id}', [BillingController::class, 'cariInvoice'])->withoutMiddleware(['throttle:api'])->name('invoice.cari');
+Route::get('/invoice/success', [BillingController::class, 'success'])->withoutMiddleware(['throttle:api'])->name('invoice.success');
+
+
+
 Route::post('/saveAdminNumber', [WhatsappController::class, 'saveAdminNumber']);
 
 

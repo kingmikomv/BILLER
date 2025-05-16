@@ -12,11 +12,6 @@ class Pelanggan extends Model
     protected $table = 'pelanggan';
     protected $guarded = [];
 
-    public function paket()
-    {
-        return $this->belongsTo(PaketPppoe::class, 'kode_paket', 'kode_paket');
-    }
-
     /**
      * Update status pembayaran setelah pembayaran berhasil.
      */
@@ -46,10 +41,10 @@ class Pelanggan extends Model
         Http::withHeaders([
             'Authorization' => 'g3ZXCoCHeR1y75j4xJoz'
         ])->post('https://api.fonnte.com/send', [
-            'target' => $nomor,
-            'message' => $pesan,
-            'countryCode' => '62',
-        ]);
+                    'target' => $nomor,
+                    'message' => $pesan,
+                    'countryCode' => '62',
+                ]);
     }
 
     public function mikrotik()
@@ -72,8 +67,12 @@ class Pelanggan extends Model
         return $this->hasMany(UnpaidInvoice::class);
     }
     public function tagihan()
-{
-    return $this->hasMany(Tagihan::class);
-}
+    {
+        return $this->hasMany(Tagihan::class);
+    }
 
+    public function paket()
+    {
+        return $this->belongsTo(PaketPppoe::class, 'paketpppoe_id');
+    }
 }
