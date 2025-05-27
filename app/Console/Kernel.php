@@ -2,28 +2,37 @@
 
 namespace App\Console;
 
-use Carbon\Carbon;
-use Xendit\Xendit;
-use Xendit\Invoice;
-use App\Models\Tagihan;
-use App\Models\Pelanggan;
-use Illuminate\Support\Str;
-use App\Models\BillingSeting;
-use App\Helpers\WhatsappHelper;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-
+use App\Console\CheckLogin;
 
 class Kernel extends ConsoleKernel
 {
-  
-    
-     protected function schedule(Schedule $schedule){
-    $schedule->command('generate:invoice')->dailyAt('00:00');
-        $schedule->command('kirim:invoice-wa')->dailyAt('01:48'); // Kirim 30 menit setelah generate
+    /**
+     * Define the application's command schedule.
+     */
+    protected function schedule(Schedule $schedule): void
+    {
+        // Schedule generate invoice harian
+        $schedule->command('generate:invoice')->dailyAt('00:00');
 
-     }
+        // Kirim invoice via WA, 30 menit setelah generate
+        $schedule->command('kirim:invoice-wa')->dailyAt('01:48');
+
+        // Jalankan pengecekan voucher login setiap menit
+        $schedule->call(function () {
+        try {
+            CheckLogin::handle();
+            \Log::info('CheckLogin::handle() sukses jalan.');
+        } catch (\Throwable $e) {
+            \Log::error('Error di CheckLogin: ' . $e->getMessage());
+        }
+    })->everyMinute();
+    }
+
+    /**
+     * Register the commands for the application.
+     */
     protected function commands(): void
     {
         $this->load(__DIR__ . '/Commands');

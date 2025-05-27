@@ -64,10 +64,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function findForPassport($identifier)
     {
         return $this->where('email', $identifier)
-                    ->orWhere('username', $identifier)
-                    ->first();
+            ->orWhere('username', $identifier)
+            ->first();
     }
-    public function profilPerusahaan() {
+    public function profilPerusahaan()
+    {
         return $this->hasOne(ProfilPerusahaan::class, 'user_id');
     }
 
@@ -81,15 +82,31 @@ class User extends Authenticatable implements MustVerifyEmail
     }
     public function pelanggan()
     {
-    return $this->hasManyThrough(Pelanggan::class, Mikrotik::class, 'user_id', 'mikrotik_id');
+        return $this->hasManyThrough(Pelanggan::class, Mikrotik::class, 'user_id', 'mikrotik_id');
     }
     public function messageTemplates()
     {
-    return $this->hasMany(MessageTemplate::class);
+        return $this->hasMany(MessageTemplate::class);
     }
     public function vpnRadius()
     {
-    return $this->hasMany(VpnRadius::class);
+        return $this->hasMany(VpnRadius::class);
+    }
+    public function nas()
+    {
+        return $this->hasMany(NAS::class);
+    }
+    public function pppoeAccounts()
+    {
+        return $this->hasMany(PPPoEAccount::class);
+    }
+    public function vouchers()
+    {
+        return $this->hasMany(Voucher::class);
+    }
+    public function hotspotProfiles()
+    {
+        return $this->hasMany(HotspotProfile::class);
     }
 
 

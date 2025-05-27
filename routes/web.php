@@ -1,6 +1,7 @@
 <?php
 
 use App\Helpers\WhatsappHelper;
+use App\Http\Controllers\HotspotController;
 use App\Http\Controllers\RadiusController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -119,12 +120,34 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
             Route::post('/add', 'store')->name('member.router.tambah');
             Route::get('/cek-koneksi/{routerId}', 'cekKoneksi')->name('cek-koneksi');
         });
-         Route::prefix('radius')->controller(RadiusController::class)->group(function () {
+        Route::prefix('radius')->controller(RadiusController::class)->group(function () {
             Route::get('/', 'index')->name('member.radius');
-            Route::post('/tambahVpnRadius', 'tambahVpnRadius')->name('radius.tambahVpnRadius');
+            Route::delete('/vpn-users/{id}', 'hapusVpnRadius')->name('radius.hapusVpnRadius');
+            Route::delete('/nas/{id}', 'hapusNasRadius')->name('radius.hapusNasRadius');
 
+            Route::post('/tambahVpnRadius', 'tambahVpnRadius')->name('radius.tambahVpnRadius');
+            Route::post('/tambahNasRadius', 'tambahNasRadius')->name('radius.tambahNasRadius');
         });
     });
+
+
+
+    Route::middleware(['role:member,teknisi'])->prefix('hotspot')->controller(HotspotController::class)->group(function () {
+        Route::get('/userHotspot', 'userHotspot')->name('hotspot.userHotspot');
+        Route::post('/userHotspot/tambahVoucher', 'tambahVoucher')->name('hotspot.tambahVoucher');
+        Route::get('/profileHotspot', 'profileHotspot')->name('hotspot.profileHotspot');
+        Route::post('/profileHotspot/uploadProfile', 'uploadProfile')->name('hotspot.uploadProfile');
+
+    });
+
+
+
+
+
+
+
+
+
 
     // SIDEBAR MENU INTERNET PLAN
     Route::middleware(['role:member,teknisi'])->prefix('iplan')->group(function () {

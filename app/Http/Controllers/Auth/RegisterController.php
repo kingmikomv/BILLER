@@ -65,6 +65,8 @@ class RegisterController extends Controller
             'phone' => $data['phone'],
             'role' => 'member',
             'coin' => 5,
+            'max_pppoe_accounts' => 500,
+            'max_vouchers' => 2000,
         ]);
     }
 }

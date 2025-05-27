@@ -110,6 +110,66 @@
             </a>
           </li>
           @endif
+
+
+  <li class="nav-item">
+            <a href="#" class="nav-link ">
+              <i class="nav-icon fas fa-wifi"></i>
+              <p>
+                Hotspot
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{route('hotspot.userHotspot')}}" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>User</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{route('hotspot.profileHotspot')}}" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Profile</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="pages/UI/icons.html" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Online</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="pages/UI/icons.html" class="nav-link">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Template</p>
+                </a>
+              </li>
+              
+            </ul>
+          </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
           @if(in_array(auth()->user()->role, ['member', 'cs', 'penagih']))
           <!-- TAGIHAN -->
           <li class="nav-item {{ request()->routeIs('bil_pelanggan') ? 'menu-open' : '' }}">
