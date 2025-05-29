@@ -21,13 +21,14 @@ class Kernel extends ConsoleKernel
 
         // Jalankan pengecekan voucher login setiap menit
         $schedule->call(function () {
-        try {
-            CheckLogin::handle();
-            \Log::info('CheckLogin::handle() sukses jalan.');
-        } catch (\Throwable $e) {
-            \Log::error('Error di CheckLogin: ' . $e->getMessage());
-        }
-    })->everyMinute();
+            try {
+                CheckLogin::handle();
+                \Log::info('CheckLogin::handle() sukses jalan.');
+            } catch (\Throwable $e) {
+                \Log::error('Error di CheckLogin: ' . $e->getMessage());
+            }
+        })->everyMinute();
+        
     }
 
     /**

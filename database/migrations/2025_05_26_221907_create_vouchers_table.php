@@ -16,7 +16,8 @@ return new class extends Migration
             
             $table->foreignId('user_id')->constrained()->onDelete('cascade');  // user pembuat voucher
             $table->foreignId('hotspot_profile_id')->constrained('hotspot_profiles')->onDelete('cascade'); // profile yg dipakai
-            
+            $table->string('nas')->nullable();
+
             $table->string('username')->unique();
             $table->string('password');
             
@@ -26,7 +27,10 @@ return new class extends Migration
             $table->string('prefix')->nullable();
 
             $table->enum('status', ['active', 'used', 'expired'])->default('active');
+            $table->timestamp('login_at')->nullable();
             $table->timestamp('expired_at')->nullable();
+            $table->timestamp('delete_at')->nullable();
+
 
             $table->timestamps();
         });

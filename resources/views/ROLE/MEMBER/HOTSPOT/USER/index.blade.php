@@ -44,8 +44,8 @@
                                         <thead class="thead-light">
                                             <tr>
                                                 <th>#</th>
+                                                <th>NAS</th>
                                                 <th>Username</th>
-                                                <th>Password</th>
                                                 <th>Profile</th>
                                                 <th>Masa Aktif</th>
                                                 <th>Batas Waktu</th>
@@ -57,15 +57,15 @@
                                             @foreach ($vouchers as $index => $voucher)
                                                 <tr>
                                                     <td>{{ $index + 1 }}</td>
+                                                    <td>{{ $voucher->nas ?? '-'}}</td>
                                                     <td>{{ $voucher->username }}</td>
-                                                    <td>{{ $voucher->password }}</td>
                                                     <td>{{ $voucher->hotspotProfile->name ?? '-' }}</td>
                                                     <!-- Tampilkan Session Timeout dalam format HH:MM:SS -->
                                                     <td>
-                                                        @if ($voucher->hotspotProfile && $voucher->hotspotProfile->validity && $voucher->created_at)
-                                                            {{ \Carbon\Carbon::parse($voucher->created_at)->addDays($voucher->hotspotProfile->validity)->format('d M Y H:i') }}
-                                                        @else
+                                                        @if ($voucher->expired_at == null)
                                                             -
+                                                        @else
+                                                            {{ \Carbon\Carbon::parse($voucher->login_at)->format('d/m/Y H:i') }} S.d. {{ \Carbon\Carbon::parse($voucher->expired_at)->format('d/m/Y H:i') }}
                                                         @endif
                                                     </td>
                                                     <td>
@@ -98,10 +98,13 @@
 
 
                                                     <td>
-                                                        @if ($voucher->status === 'used')
-                                                            <span class="badge badge-danger">Terpakai</span>
+                                                        @if ($voucher->status === 'active')
+                                                            <span class="badge badge-primary">Aktif</span>
+                                                        @elseif ($voucher->status === 'used')
+                                                            <span class="badge badge-success">Online</span>
                                                         @else
-                                                            <span class="badge badge-success">Aktif</span>
+                                                            <span class="badge badge-danger">Expired</span>
+
                                                         @endif
                                                     </td>
                                                     <td>{{ $voucher->created_at->format('d M Y H:i') }}</td>
@@ -145,52 +148,126 @@
                         </div>
                         <div class="modal-body">
 
-                            <div class="form-group mb-3">
-                                <label for="quantity">Jumlah Voucher</label>
-                                <input type="number" name="quantity" id="quantity" class="form-control" min="1"
-                                    max="1000" value="50" required>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="nas_id">Pilih NAS</label>
+                                        <select name="nas_id" id="nas_id" class="form-control" required>
+                                            <option value="" disabled selected>-- Pilih NAS --</option>
+                                            <option value="all">Semua NAS</option>
+                                            @foreach ($nasList as $nas)
+                                                <option value="{{ $nas->remote_address }}">{{ $nas->username }} -
+                                                    {{ $nas->remote_address }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+
+                                    <div class="form-group mb-3">
+                                        <label for="quantity">Jumlah Voucher</label>
+                                        <input type="number" name="quantity" id="quantity" class="form-control"
+                                            min="1" max="1000" value="0" required>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="hotspot_profile_id">Pilih Profile</label>
+                                        <select name="hotspot_profile_id" id="hotspot_profile_id" class="form-control"
+                                            required>
+                                            <option value="" disabled selected>-- Pilih Hotspot Profile --
+                                            </option>
+                                            @foreach ($profiles as $profile)
+                                                <option value="{{ $profile->id }}" data-price="{{ $profile->price }}"
+                                                    data-reseller="{{ $profile->reseller_price ?? 0 }}">
+                                                    {{ $profile->name }} - Rp
+                                                    {{ number_format($profile->price, 0, ',', '.') }}
+                                                </option>
+                                            @endforeach
+
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="user_model">Model Password</label>
+                                        <select name="user_model" id="user_model" class="form-control" required>
+                                            <option value="" disabled selected>-- Pilih Model Password --
+                                            </option>
+                                            <option value="username_equals_password">Username = Password</option>
+                                            <option value="username_plus_password">Username + Password</option>
+                                        </select>
+                                    </div>
+
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="char_type">Karakter Voucher</label>
+                                        <select name="char_type" id="char_type" class="form-control" required>
+                                            <option value="" disabled selected>-- Pilih Karakter --</option>
+                                            <option value="uppercase">Huruf Besar (A-Z)</option>
+                                            <option value="lowercase">Huruf Kecil (a-z)</option>
+                                            <option value="numbers">Angka (0-9)</option>
+                                            <option value="uppercase_numbers">Huruf Besar + Angka</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="prefix">Prefix Username (opsional)</label>
+                                        <input type="text" name="prefix" id="prefix" class="form-control"
+                                            placeholder="Misal: CMI">
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+
+                                    <div class="form-group mb-3">
+                                        <label for="length">Panjang Karakter</label>
+                                        <select name="length" id="length" class="form-control" required>
+                                            <option value="" disabled selected>-- Pilih Panjang Karakter --
+                                            </option>
+                                            @for ($i = 4; $i <= 12; $i++)
+                                                <option value="{{ $i }}">{{ $i }} Karakter
+                                                </option>
+                                            @endfor
+                                        </select>
+                                    </div>
+
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="price">Harga Voucher</label>
+                                        <input type="number" name="price" id="price" class="form-control"
+                                            placeholder="Harga Voucher Otomatis" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="reseller_price">Harga Reseller</label>
+                                        <input type="number" name="reseller_price" id="reseller_price"
+                                            class="form-control" placeholder="Harga Reseller Otomatis" readonly>
+                                    </div>
+                                </div>
+
                             </div>
 
-                            <div class="form-group mb-3">
-                                <label for="user_model">User Model</label>
-                                <select name="user_model" id="user_model" class="form-control" required>
-                                    <option value="username_equals_password">Username = Password</option>
-                                    <option value="username_plus_password">Username + Password</option>
-                                </select>
-                            </div>
 
-                            <div class="form-group mb-3">
-                                <label for="char_type">Karakter Username</label>
-                                <select name="char_type" id="char_type" class="form-control" required>
-                                    <option value="uppercase">Huruf Besar (A-Z)</option>
-                                    <option value="lowercase">Huruf Kecil (a-z)</option>
-                                    <option value="numbers">Angka (0-9)</option>
-                                    <option value="uppercase_numbers">Huruf Besar + Angka</option>
-                                </select>
-                            </div>
 
-                            <div class="form-group mb-3">
-                                <label for="hotspot_profile_id">Pilih Profile</label>
-                                <select name="hotspot_profile_id" id="hotspot_profile_id" class="form-control" required>
-                                    <option value="" disabled selected>-- Pilih Hotspot Profile --</option>
-                                    @foreach ($profiles as $profile)
-                                        <option value="{{ $profile->id }}">
-                                            {{ $profile->name }} - Rp {{ number_format($profile->price, 0, ',', '.') }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
 
-                            <div class="form-group mb-3">
-                                <label for="prefix">Prefix Username (opsional)</label>
-                                <input type="text" name="prefix" id="prefix" class="form-control"
-                                    placeholder="Misal: CMI">
-                            </div>
-                            <div class="form-group mb-3">
-                                <label for="length">Panjang Karakter</label>
-                                <input type="number" name="length" id="length" class="form-control" value="6"
-                                    min="4" max="12" required>
-                            </div>
+
+
+
+
+
+
+
+
+
+
+
 
                         </div>
                         <div class="modal-footer border-top">
@@ -216,6 +293,18 @@
                 "order": [
                     [0, "asc"]
                 ]
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('#hotspot_profile_id').on('change', function() {
+                const selected = $(this).find('option:selected');
+                const price = selected.data('price') || 0;
+                const reseller = selected.data('reseller') || 0;
+
+                $('#price').val(price);
+                $('#reseller_price').val(reseller);
             });
         });
     </script>

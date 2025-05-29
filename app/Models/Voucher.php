@@ -12,12 +12,15 @@ class Voucher extends Model
 
     protected $fillable = [
         'hotspot_profile_id',
+        'nas',
         'username',
         'password',
         'price',
         'uptime',
         'status',
         'expired_at',
+        'login_at',
+        'delete_at',
     ];
 
     protected $dates = ['expired_at'];
