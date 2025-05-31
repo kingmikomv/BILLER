@@ -20,7 +20,7 @@ class Kernel extends ConsoleKernel
   
     
      protected function schedule(Schedule $schedule){
-    $schedule->command('generate:invoice')->dailyAt('01:48');
+    $schedule->command('generate:invoice')->dailyAt('00:00');
         $schedule->command('kirim:invoice-wa')->dailyAt('01:48'); // Kirim 30 menit setelah generate
 
      }

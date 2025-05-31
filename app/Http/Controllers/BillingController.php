@@ -426,54 +426,160 @@ class BillingController extends Controller
     {
         return view('ROLE.MEMBER.BILLING.success');
     }
-   public function confirmBayar(Request $request)
-{
-       
-    \Log::info($request);
-    try {
-     
+    public function confirmBayar(Request $request)
+    {
 
-        // Ambil data tagihan berdasarkan ID
-        $tagihan = Tagihan::with(['pelanggan'])->findOrFail($request->id);
-        $data_invoice = DataInvoice::where('tagihan_id', $tagihan->id)->first();
+        \Log::info($request);
+        try {
 
-        // Update status tagihan
-        $tagihan->update([
-            'status' => 'Lunas',
-            'metode' => $request->metode,
-            'penagih' => auth()->user()->name,
-            'tanggal_dibayar' => Carbon::now(),
-        ]);
-        $data_invoice->update(
-            [
+
+            // Ambil data tagihan berdasarkan ID
+            $tagihan = Tagihan::with(['pelanggan'])->findOrFail($request->id);
+            $data_invoice = DataInvoice::where('tagihan_id', $tagihan->id)->first();
+
+            // Update status tagihan
+            $tagihan->update([
                 'status' => 'Lunas',
-            ]
+                'metode' => $request->metode,
+                'penagih' => auth()->user()->name,
+                'tanggal_dibayar' => Carbon::now(),
+            ]);
+            $data_invoice->update(
+                [
+                    'status' => 'Lunas',
+                ]
             );
 
-        // Siapkan data WA
-        $data = [
-            'full_name' => $tagihan->pelanggan->nama_pelanggan ?? 'Pelanggan',
-            'no_invoice' => $tagihan->invoice_id,
-            'total' => number_format($tagihan->jumlah_tagihan, 0, ',', '.'),
-            'invoice_date' => Carbon::now()->format('d-m-Y'),
-            'footer' => 'Hubungi CS jika ada pertanyaan.',
-        ];
+            // Siapkan data WA
+            $data = [
+                'full_name' => $tagihan->pelanggan->nama_pelanggan ?? 'Pelanggan',
+                'no_invoice' => $tagihan->invoice_id,
+                'total' => number_format($tagihan->jumlah_tagihan, 0, ',', '.'),
+                'invoice_date' => Carbon::now()->format('d-m-Y'),
+                'footer' => 'Hubungi CS jika ada pertanyaan.',
+            ];
 
-        // Kirim pesan WA jika ada pelanggan
-        if ($tagihan->pelanggan) {
-            WhatsappHelper::sendWaTemplate(
-                $tagihan->pelanggan->nomor_telepon,
-                'Payment Paid',
-                $data,
-                $tagihan->pelanggan->user_id ?? null,
-                $data_invoice->unique_member
-            );
+            // Kirim pesan WA jika ada pelanggan
+            if ($tagihan->pelanggan) {
+                WhatsappHelper::sendWaTemplate(
+                    $tagihan->pelanggan->nomor_telepon,
+                    'Payment Paid',
+                    $data,
+                    $tagihan->pelanggan->user_id ?? null,
+                    $data_invoice->unique_member
+                );
+            }
+
+            return response()->json(['message' => 'Pembayaran berhasil dikonfirmasi.']);
+        } catch (\Exception $e) {
+            \Log::error('❌ Konfirmasi bayar gagal: ' . $e->getMessage());
+            return response()->json(['message' => 'Terjadi kesalahan saat memproses pembayaran.'], 500);
+        }
+    }
+
+
+
+
+    public function kirimWhatsapp(Request $request)
+    {
+        // Ambil data invoice berdasarkan tagihan_id dari request
+        $datainvoice = DataInvoice::where('tagihan_id', $request->id)->first();
+
+        if (!$datainvoice) {
+            return response()->json(['message' => 'Data invoice tidak ditemukan.'], 404);
         }
 
-        return response()->json(['message' => 'Pembayaran berhasil dikonfirmasi.']);
-    } catch (\Exception $e) {
-        \Log::error('❌ Konfirmasi bayar gagal: ' . $e->getMessage());
-        return response()->json(['message' => 'Terjadi kesalahan saat memproses pembayaran.'], 500);
+        // Ambil data tagihan lengkap
+        $invoice = Tagihan::with('pelanggan.paket')->find($datainvoice->tagihan_id);
+
+        if (!$invoice || !$invoice->pelanggan) {
+            return response()->json(['message' => 'Tagihan atau pelanggan tidak valid.'], 404);
+        }
+
+        $pelanggan = $invoice->pelanggan;
+
+        // Siapkan data untuk dikirim ke template WhatsApp
+        $data = [
+            'full_name' => $pelanggan->nama_pelanggan ?? 'Pelanggan',
+            'uid' => $pelanggan->pelanggan_id ?? '-',
+            'pppoe_user' => $pelanggan->akun_pppoe ?? '-',
+            'pppoe_pass' => $pelanggan->password_pppoe ?? '-',
+            'pppoe_profile' => $pelanggan->paket_pppoe ?? '-',
+            'no_invoice' => $invoice->invoice_id ?? '-',
+            'invoice_date' => Carbon::parse($invoice->tanggal_generate)->format('d-m-Y'),
+            'amount' => number_format($invoice->jumlah_tagihan, 0, ',', '.'),
+            'ppn' => number_format($invoice->ppn ?? 0, 0, ',', '.'),
+            'discount' => number_format($invoice->diskon ?? 0, 0, ',', '.'),
+            'total' => number_format(
+                ($invoice->jumlah_tagihan ?? 0) + ($invoice->ppn ?? 0) - ($invoice->diskon ?? 0),
+                0,
+                ',',
+                '.'
+            ),
+            'period' => Carbon::parse($invoice->tanggal_generate)->isoFormat('MMMM Y'),
+            'due_date' => Carbon::parse($pelanggan->tanggal_jatuh_tempo)->format('d-m-Y'),
+            'payment_gateway' => route('invoice.cari', ['invoice_id' => $invoice->invoice_id ?? '-']),
+            'payment_mutasi' => $pelanggan->metode_pembayaran ?? '-',
+            'footer' => 'Terima kasih telah menggunakan layanan kami.',
+        ];
+
+        // Kirim pesan WhatsApp via helper
+        WhatsappHelper::sendWaTemplate(
+            $pelanggan->nomor_telepon,      // Nomor tujuan
+            'Invoice Reminder',               // Nama template WA
+            $data,                          // Data yang digunakan dalam template
+            $pelanggan->user_id ?? null,    // Optional user_id
+            $datainvoice->unique_member       // Optional session_id
+        );
+
+        return response()->json(['message' => 'Pesan WhatsApp berhasil dikirim.']);
     }
+    public function updateTagihan(Request $request)
+{
+    $request->validate([
+        'id'      => 'required|exists:tagihan,id',
+        'nominal'=> 'required|numeric|min:0',
+        'diskon' => 'nullable|numeric|min:0|max:100',
+        'ppn'    => 'nullable|numeric|min:0|max:100',
+    ]);
+
+    $tagihan = Tagihan::findOrFail($request->id);
+    
+$datainvoices = DataInvoice::where('tagihan_id', $tagihan->id)->first();
+    $nominal        = $request->nominal;
+    $diskon_percent = $request->diskon ?? $tagihan->pelanggan->diskon;
+    $ppn_percent    = $request->ppn ?? $tagihan->pelanggan->ppn;
+
+    // Hitung nominal diskon & ppn dalam rupiah
+    $diskon_rupiah = $nominal * ($diskon_percent / 100);
+    $ppn_rupiah    = $nominal * ($ppn_percent / 100);
+
+    $jumlah_tagihan = max(($nominal - $diskon_rupiah) + $ppn_rupiah, 0);
+
+    // Simpan ke tabel tagihan
+   
+    $tagihan->jumlah_tagihan  = $jumlah_tagihan;
+    $tagihan->save();
+
+    // Update juga ke data_invoice jika ditemukan
+    if ($datainvoices) {
+        $datainvoices->nominal = $jumlah_tagihan;
+        $datainvoices->save();
+    }
+
+    return response()->json([
+        'message' => 'Tagihan dan invoice berhasil diperbarui.',
+        'data' => [
+            'nominal'         => $nominal,
+            'diskon_percent'  => $diskon_percent,
+            'ppn_percent'     => $ppn_percent,
+            'diskon_rupiah'   => round($diskon_rupiah),
+            'ppn_rupiah'      => round($ppn_rupiah),
+            'jumlah_tagihan'  => round($jumlah_tagihan),
+        ]
+    ]);
 }
+
+
+
 }

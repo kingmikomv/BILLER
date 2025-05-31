@@ -68,7 +68,7 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
         Route::get('/whatsapp/template', [WhatsappController::class, 'template'])->name('whatsapp.template');
         Route::post('/whatsapp/template', [WhatsappController::class, 'store'])->name('whatsapp.store');
 
-       // Route::post('/send-whatsapp', [WhatsappHelper::class, 'sendMessage'])->name('send.whatsapp');
+        // Route::post('/send-whatsapp', [WhatsappHelper::class, 'sendMessage'])->name('send.whatsapp');
     });
 
 
@@ -100,7 +100,7 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
 
     // SIdebar SALES member
 
-    Route::middleware(['role:member,teknisi,cs'])->prefix('sales')->group(function(){
+    Route::middleware(['role:member,teknisi,cs'])->prefix('sales')->group(function () {
 
         Route::get('/data_sales', [SalesController::class, 'data_sales'])->name('data_sales');
         Route::get('/data_sales/{id}/acc', [SalesController::class, 'acc'])->name('acc');
@@ -134,7 +134,7 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
 
     // SIDEBAR MENU OLT
     Route::middleware(['role:member,teknisi'])->prefix('olt')->group(function () {
-       // EPON
+        // EPON
         Route::prefix('olt')->controller(OLTController::class)->group(function () {
             Route::get('/epon', 'epon')->name('olt.epon');
             Route::post('/tambah-epon', 'tambah_epon')->name('tambah.olt.epon');
@@ -149,20 +149,20 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
 
     Route::middleware(['role:member'])->prefix('company')->controller(MemberController::class)->group(function () {
         Route::get('/', 'company')->name('company');
-        Route::put('/profil-perusahaan/{id}/up',  'updateCompany')->name('updateCompany');
-    
+        Route::put('/profil-perusahaan/{id}/up', 'updateCompany')->name('updateCompany');
+
     });
 
 
- // usaha
+    // usaha
     Route::middleware(['auth', 'role:member'])->group(function () {
         Route::get('/profil-usaha', [UsahaController::class, 'index'])->name('profil.usaha');
         Route::post('/profil/usaha/store-or-update', [UsahaController::class, 'storeOrUpdate'])
-        ->name('profil.usaha.storeOrUpdate');
-        });
+            ->name('profil.usaha.storeOrUpdate');
+    });
 
 
-        
+
 });
 
 
@@ -190,11 +190,13 @@ Route::middleware(['auth', 'role:member,teknisi'])->prefix('home/network/router'
 
 //BUAT MEMBER DAN PENAGIH 
 Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->controller(BillingController::class)->group(function () {
-    
-    Route::get('/unpaid', 'unpaid')->name('unpaid');
-Route::post('/unpaid/confirm-bayar', 'confirmBayar')->name('tagihan.confirmBayar');
 
-Route::get('/unpaid/detail/{id}', 'showUnpaidDetail')->name('billing.unpaid.detail');
+    Route::get('/unpaid', 'unpaid')->name('unpaid');
+    Route::post('/unpaid/confirm-bayar', 'confirmBayar')->name('tagihan.confirmBayar');
+    Route::post('/tagihan/kirim-wa', 'kirimWhatsapp')->name('tagihan.kirimWa');
+Route::post('/tagihan/update', 'updateTagihan')->name('tagihan.update');
+
+    Route::get('/unpaid/detail/{id}', 'showUnpaidDetail')->name('billing.unpaid.detail');
     Route::get('/unpaid/invoice/{invoice}/bayar', 'bayar')->name('invoice.bayar');
 
 
@@ -204,7 +206,8 @@ Route::get('/unpaid/detail/{id}', 'showUnpaidDetail')->name('billing.unpaid.deta
 
 
     Route::get('/paid', 'paid')->name('paid');
-    Route::get('/paid/detail/{id}',  action: 'showDetail')->name('billing.paid.detail');;
+    Route::get('/paid/detail/{id}', action: 'showDetail')->name('billing.paid.detail');
+    ;
     Route::get('/riwayat', 'riwayatTagihan')->name('riwayat');
     Route::get('/bil_pelanggan', 'bil_pelanggan')->name('bil_pelanggan');
     Route::delete('/bil_pelanggan/hapus-data/{id}', 'hapusData')->name('hapusData');

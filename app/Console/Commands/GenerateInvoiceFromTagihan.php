@@ -36,66 +36,86 @@ class GenerateInvoiceFromTagihan extends Command
                 Log::warning("❌ Pelanggan ID {$tagihan->pelanggan_id} tidak ditemukan.");
                 continue;
             }
-$user = optional($pelanggan->mikrotik)->user;
+            $user = optional($pelanggan->mikrotik)->user;
 
-if (!$user || $user->role !== 'member') {
-    Log::warning("❌ User tidak ditemukan atau bukan member untuk pelanggan ID {$pelanggan->id}.");
-    continue;
+            if (!$user || $user->role !== 'member') {
+                Log::warning("❌ User tidak ditemukan atau bukan member untuk pelanggan ID {$pelanggan->id}.");
+                continue;
+            }
+
+
+// Ambil data diskon dan ppn
+$diskon = $pelanggan->diskon ?? 0;
+$ppn = $pelanggan->ppn ?? 0;
+
+// Hitung jumlah tagihan final
+$jumlahTagihanFinal = $tagihan->jumlah_tagihan;
+
+if ($diskon > 0) {
+    $jumlahTagihanFinal -= ($jumlahTagihanFinal * ($diskon / 100));
 }
 
-            // ✅ Simpan ke data_invoices (untuk WA Scheduler) meskipun belum lunas
-            DataInvoice::updateOrCreate(
-                ['unique_member' => $user->unique_member],
+if ($ppn > 0) {
+    $jumlahTagihanFinal += ($jumlahTagihanFinal * ($ppn / 100));
+}
+
+$jumlahTagihanFinal = round($jumlahTagihanFinal);
+
+// ✅ Simpan ke data_invoices (untuk WA Scheduler) meskipun belum lunas
+DataInvoice::updateOrCreate(
+    ['unique_member' => $user->unique_member],
     [
-        'pelanggan_id'   => $pelanggan->id,
-        'tagihan_id'     => $tagihan->id,
+        'pelanggan_id' => $pelanggan->id,
+        'tagihan_id' => $tagihan->id,
         'tanggal_generate' => $tagihan->tanggal_generate,
-        'nomor_telepon'  => $pelanggan->nomor_telepon,
-        'nominal'        => $tagihan->jumlah_tagihan,
-        'status'         => $tagihan->status,
-        'status_wa'      => 'pending',
+        'nomor_telepon' => $pelanggan->nomor_telepon,
+        'nominal' => $jumlahTagihanFinal, // gunakan hasil perhitungan
+        'status' => $tagihan->status,
+        'status_wa' => 'pending',
     ]
-            );
+);
 
-            // ✅ Buat tagihan bulan depan jika tagihan saat ini sudah Lunas dan Prabayar
-            if ($pelanggan->metode_pembayaran === 'Prabayar' && $tagihan->status === 'Lunas') {
-                $bulanDepan = $today->copy()->addMonth()->startOfMonth();
+// ✅ Buat tagihan bulan depan jika tagihan saat ini sudah Lunas dan Prabayar
+if ($pelanggan->metode_pembayaran === 'Prabayar' && $tagihan->status === 'Lunas') {
+    $bulanDepan = $today->copy()->addMonth()->startOfMonth();
 
-                $existingNextMonthTagihan = Tagihan::where('pelanggan_id', $pelanggan->id)
-                    ->whereMonth('tanggal_generate', $bulanDepan->month)
-                    ->whereYear('tanggal_generate', $bulanDepan->year)
-                    ->first();
+    $existingNextMonthTagihan = Tagihan::where('pelanggan_id', $pelanggan->id)
+        ->whereMonth('tanggal_generate', $bulanDepan->month)
+        ->whereYear('tanggal_generate', $bulanDepan->year)
+        ->first();
 
-                if (!$existingNextMonthTagihan) {
-                    $invoiceId = 'INV-' . date('Ymd') . strtoupper(Str::random(6));
+    if (!$existingNextMonthTagihan) {
+        $invoiceId = 'INV-' . date('Ymd') . strtoupper(Str::random(6));
 
-                    $newTagihan = Tagihan::create([
-                        'invoice_id' => $invoiceId,
-                        'pelanggan_id' => $pelanggan->id,
-                        'tanggal_generate' => $bulanDepan,
-                        'tanggal_jatuh_tempo' => $bulanDepan->copy()->addMonth(),
-                        'jumlah_tagihan' => $tagihan->jumlah_tagihan,
-                        'status' => 'Lunas',
-                    ]);
+        $newTagihan = Tagihan::create([
+            'invoice_id' => $invoiceId,
+            'pelanggan_id' => $pelanggan->id,
+            'tanggal_generate' => $bulanDepan,
+            'tanggal_jatuh_tempo' => $bulanDepan->copy()->addMonth(),
+            'jumlah_tagihan' => $jumlahTagihanFinal, // tagihan baru ikut jumlah final
+            'status' => 'Lunas',
+        ]);
 
-                    DataInvoice::updateOrCreate(
-                         ['unique_member' => $user->unique_member],
-    [
-        'pelanggan_id'   => $pelanggan->id,
-        'tagihan_id'     => $tagihan->id,
-        'tanggal_generate' => $tagihan->tanggal_generate,
-        'nomor_telepon'  => $pelanggan->nomor_telepon,
-        'nominal'        => $tagihan->jumlah_tagihan,
-        'status'         => $tagihan->status,
-        'status_wa'      => 'pending',
-    ]
-                    );
+        // Optional: Buat juga DataInvoice untuk tagihan bulan depan (opsional tergantung kebutuhan)
+        DataInvoice::updateOrCreate(
+            ['unique_member' => $user->unique_member],
+            [
+                'pelanggan_id' => $pelanggan->id,
+                'tagihan_id' => $newTagihan->id, // gunakan tagihan bulan depan
+                'tanggal_generate' => $newTagihan->tanggal_generate,
+                'nomor_telepon' => $pelanggan->nomor_telepon,
+                'nominal' => $jumlahTagihanFinal,
+                'status' => $newTagihan->status,
+                'status_wa' => 'pending',
+            ]
+        );
 
-                    Log::info("✅ Tagihan bulan depan dibuat untuk pelanggan ID {$pelanggan->id}.");
-                } else {
-                    Log::info("✅ Pelanggan ID {$pelanggan->id} sudah memiliki tagihan bulan depan.");
-                }
-            }
+        Log::info("✅ Tagihan bulan depan dibuat untuk pelanggan ID {$pelanggan->id}.");
+    } else {
+        Log::info("✅ Pelanggan ID {$pelanggan->id} sudah memiliki tagihan bulan depan.");
+    }
+}
+
 
             // ✅ Buat link pembayaran Midtrans jika belum lunas
             if (
@@ -118,7 +138,7 @@ if (!$user || $user->role !== 'member') {
                             'phone' => $pelanggan->nomor_telepon,
                         ],
                         'callbacks' => [
-                            'finish' => config('app.url'). '/api/invoice/success',
+                            'finish' => config('app.url') . '/api/invoice/success',
                         ],
                     ];
 
