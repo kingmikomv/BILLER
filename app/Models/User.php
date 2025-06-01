@@ -87,6 +87,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
     return $this->hasMany(MessageTemplate::class);
     }
+    public function vpnRadius()
+    {
+    return $this->hasMany(VpnRadius::class);
+    }
 
 
 }

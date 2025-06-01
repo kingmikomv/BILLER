@@ -11,17 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('message_templates', function (Blueprint $table) {
+         Schema::create('vpn_radius', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('name');
-            $table->string('tipe');
-            $table->text('content');
+            $table->string('username')->unique();
+            $table->string('password');
+            $table->string('profile')->nullable();
+            $table->string('nas');
+            $table->string('local_address')->nullable();
+            $table->string('remote_address')->nullable();
             $table->timestamps();
-        
-            $table->unique(['user_id', 'name']); // agar satu user tidak punya template dengan nama yang sama
         });
-        
     }
 
     /**
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('message_templates');
+        Schema::dropIfExists('vpn_radius');
     }
 };

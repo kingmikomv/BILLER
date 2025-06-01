@@ -5,11 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class MessageTemplate extends Model
+class VpnRadius extends Model
 {
     use HasFactory;
+     protected $table = 'vpn_radius';
 
-    protected $fillable = ['user_id', 'name', 'content', 'tipe'];
+    protected $guarded = [
+       
+    ];
 
     public function user()
     {

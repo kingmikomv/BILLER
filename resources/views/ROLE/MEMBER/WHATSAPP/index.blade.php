@@ -42,8 +42,11 @@
                                             <div class="mt-3" id="qr-code"></div>
                                         </div>
                                         <div class="col-md-6">
-                                            <a href="{{ route('whatsapp.template') }}" class="btn btn-secondary btn-block">
-                                                <i class="fab fa-whatsapp"></i> Template WA
+                                            <a href="{{ route('whatsapp.template') }}" class="btn btn-primary btn-block">
+                                                <i class="fab fa-whatsapp"></i> Template WA Invoice
+                                            </a>
+                                             <a href="{{ route('whatsapp.template') }}" class="btn btn-success btn-block">
+                                                <i class="fab fa-whatsapp"></i> Template WA CS
                                             </a>
                                         </div>
                                     </div>

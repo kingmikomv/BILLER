@@ -1,6 +1,7 @@
 <?php
 
 use App\Helpers\WhatsappHelper;
+use App\Http\Controllers\RadiusController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OLTController;
@@ -65,12 +66,11 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
 
     Route::middleware(['role:member'])->prefix('whatsapp')->group(function () {
         Route::get('/whatsapp', [WhatsappController::class, 'index'])->name('whatsapp');
-        Route::get('/whatsapp/template', [WhatsappController::class, 'template'])->name('whatsapp.template');
-        Route::post('/whatsapp/template', [WhatsappController::class, 'store'])->name('whatsapp.store');
-
+        Route::get('/template/invoice', [WhatsappController::class, 'template'])->name('whatsapp.template');
+        Route::post('/template/invoice', [WhatsappController::class, 'store'])->name('whatsapp.store');
+        Route::post('/template/bulk-store', [WhatsappController::class, 'bulkStore'])->name('whatsapp.bulkStore');
         // Route::post('/send-whatsapp', [WhatsappHelper::class, 'sendMessage'])->name('send.whatsapp');
     });
-
 
     // SIDEBAR MENU DATA PELANGGAN
     Route::middleware(['role:member,teknisi,cs'])->prefix('pelanggan')->controller(PelangganController::class)->group(function () {
@@ -118,6 +118,11 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
             Route::get('/', 'router')->name('member.router');
             Route::post('/add', 'store')->name('member.router.tambah');
             Route::get('/cek-koneksi/{routerId}', 'cekKoneksi')->name('cek-koneksi');
+        });
+         Route::prefix('radius')->controller(RadiusController::class)->group(function () {
+            Route::get('/', 'index')->name('member.radius');
+            Route::post('/tambahVpnRadius', 'tambahVpnRadius')->name('radius.tambahVpnRadius');
+
         });
     });
 
@@ -194,7 +199,7 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
     Route::get('/unpaid', 'unpaid')->name('unpaid');
     Route::post('/unpaid/confirm-bayar', 'confirmBayar')->name('tagihan.confirmBayar');
     Route::post('/tagihan/kirim-wa', 'kirimWhatsapp')->name('tagihan.kirimWa');
-Route::post('/tagihan/update', 'updateTagihan')->name('tagihan.update');
+    Route::post('/tagihan/update', 'updateTagihan')->name('tagihan.update');
 
     Route::get('/unpaid/detail/{id}', 'showUnpaidDetail')->name('billing.unpaid.detail');
     Route::get('/unpaid/invoice/{invoice}/bayar', 'bayar')->name('invoice.bayar');

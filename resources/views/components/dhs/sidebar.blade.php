@@ -203,7 +203,7 @@
               @if(in_array(auth()->user()->role, ['member']))
 
               <li class="nav-item">
-                <a href="pages/forms/editors.html" class="nav-link">
+                <a href="{{route("member.radius")}}" class="nav-link">
                   <i class="far fa-circle nav-icon"></i>
                   <p>RADIUS</p>
                 </a>
