@@ -89,137 +89,140 @@ class HotspotController extends Controller
 
 
 
-   public function tambahVoucher(Request $request)
-{
-    try {
-        \Log::info('Mulai tambahVoucher', [
-            'request' => $request->all()
-        ]);
+    public function tambahVoucher(Request $request)
+    {
+        try {
+            \Log::info('Mulai tambahVoucher', [
+                'request' => $request->all()
+            ]);
 
-        $nasId = $request->nas_id;
-        $hotspotProfileId = $request->hotspot_profile_id;
-        $quantity = (int) $request->quantity;
-        $userModel = $request->user_model;
-        $charType = $request->char_type;
-        $prefix = $request->prefix ?? '';
-        $length = (int) $request->length;
+            $nasId = $request->nas_id;
+            $hotspotProfileId = $request->hotspot_profile_id;
+            $quantity = (int) $request->quantity;
+            $userModel = $request->user_model;
+            $charType = $request->char_type;
+            $prefix = $request->prefix ?? '';
+            $length = (int) $request->length;
 
-        \Log::info('Parameter sudah diambil', compact('nasId', 'hotspotProfileId', 'quantity', 'userModel', 'charType', 'prefix', 'length'));
+            \Log::info('Parameter sudah diambil', compact('nasId', 'hotspotProfileId', 'quantity', 'userModel', 'charType', 'prefix', 'length'));
 
-        $profile = HotspotProfile::findOrFail($hotspotProfileId);
+            $profile = HotspotProfile::findOrFail($hotspotProfileId);
 
-        \Log::info('Profile hotspot ditemukan', ['profile' => $profile]);
+            \Log::info('Profile hotspot ditemukan', ['profile' => $profile]);
 
-        $vouchers = [];
-        $radcheckInsert = [];
-        $radusergroupInsert = [];
-        $radreplyInsert = [];
+            $vouchers = [];
+            $radcheckInsert = [];
+            $radusergroupInsert = [];
+            $radreplyInsert = [];
 
-        // Jika bukan all, ambil NAS dari database freeradius
-        $nas = null;
-        if ($nasId !== 'all') {
-            $nas = DB::connection('freeradius')->table('nas')->where('nasname', $nasId)->first();
-            if (!$nas) {
-                \Log::error("NAS dengan ID $nasId tidak ditemukan di database FreeRADIUS.");
-                return back()->withErrors("NAS dengan ID $nasId tidak ditemukan di database FreeRADIUS.");
-            }
-            \Log::info('NAS ditemukan', ['nas' => $nas]);
-        }
-
-        for ($i = 0; $i < $quantity; $i++) {
-            $randomStr = $this->generateRandomString($charType, $length);
-            $username = $prefix . $randomStr;
-            $password = ($userModel === 'username_equals_password') ? $username : $randomStr;
-
-            // $expiredAt = null;
-            // if ($profile->validity) {
-            //     $expiredAt = now()->addDays($profile->validity);
-            // } elseif ($profile->uptime) {
-            //     $expiredAt = now()->addHours($profile->uptime);
-            // }
-
-            $remoteAddress = ($nasId === 'all') ? null : $nas->nasname;
-
-            $vouchers[] = [
-                'user_id' => auth()->id(),
-                'hotspot_profile_id' => $profile->id,
-                'nas' => $nasId,
-                'username' => $username,
-                'password' => $password,
-                'user_model' => $userModel,
-                'char_type' => $charType,
-                'prefix' => $prefix,
-                'status' => 'active',
-                'expired_at' => NULL,
-                'login_at' => NULL,
-                'delete_at' => NULL,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-
-            $radcheckInsert[] = [
-                'username' => $username,
-                'attribute' => 'Cleartext-Password',
-                'op' => ':=',
-                'value' => $password,
-            ];
-          
-
+            // Jika bukan all, ambil NAS dari database freeradius
+            $nas = null;
             if ($nasId !== 'all') {
+                $nas = DB::connection('freeradius')->table('nas')->where('nasname', $nasId)->first();
+                if (!$nas) {
+                    \Log::error("NAS dengan ID $nasId tidak ditemukan di database FreeRADIUS.");
+                    return back()->withErrors("NAS dengan ID $nasId tidak ditemukan di database FreeRADIUS.");
+                }
+                \Log::info('NAS ditemukan', ['nas' => $nas]);
+            }
+
+            $dataNASRemote = VpnRadius::with('user')
+                ->where('remote_address', $nasId)
+                ->first();
+            for ($i = 0; $i < $quantity; $i++) {
+                $randomStr = $this->generateRandomString($charType, $length);
+                $username = $prefix . $randomStr;
+                $password = ($userModel === 'username_equals_password') ? $username : $randomStr;
+
+                // $expiredAt = null;
+                // if ($profile->validity) {
+                //     $expiredAt = now()->addDays($profile->validity);
+                // } elseif ($profile->uptime) {
+                //     $expiredAt = now()->addHours($profile->uptime);
+                // }
+
+                $remoteAddress = ($nasId === 'all') ? null : $nas->nasname;
+
+                $vouchers[] = [
+                    'user_id' => auth()->id(),
+                    'hotspot_profile_id' => $profile->id,
+                    'nas' => $dataNASRemote->username,
+                    'username' => $username,
+                    'password' => $password,
+                    'user_model' => $userModel,
+                    'char_type' => $charType,
+                    'prefix' => $prefix,
+                    'status' => 'active',
+                    'expired_at' => NULL,
+                    'login_at' => NULL,
+                    'delete_at' => NULL,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
                 $radcheckInsert[] = [
                     'username' => $username,
-                    'attribute' => 'NAS-IP-Address',
+                    'attribute' => 'Cleartext-Password',
                     'op' => ':=',
-                    'value' => $nas->nasname,
+                    'value' => $password,
                 ];
-            }
 
-            $radusergroupInsert[] = [
-                'username' => $username,
-                'groupname' => $profile->groupname,
-                'priority' => 1,
-            ];
 
-            if ($profile->uptime) {
-                $timeoutInSeconds = $profile->uptime * 3600;
-                $radreplyInsert[] = [
+                if ($nasId !== 'all') {
+                    $radcheckInsert[] = [
+                        'username' => $username,
+                        'attribute' => 'NAS-IP-Address',
+                        'op' => ':=',
+                        'value' => $nas->nasname,
+                    ];
+                }
+
+                $radusergroupInsert[] = [
                     'username' => $username,
-                    'attribute' => 'Session-Timeout',
-                    'op' => ':=',
-                    'value' => $timeoutInSeconds,
+                    'groupname' => $profile->groupname,
+                    'priority' => 1,
                 ];
+
+                if ($profile->uptime) {
+                    $timeoutInSeconds = $profile->uptime * 3600;
+                    $radreplyInsert[] = [
+                        'username' => $username,
+                        'attribute' => 'Session-Timeout',
+                        'op' => ':=',
+                        'value' => $timeoutInSeconds,
+                    ];
+                }
             }
+
+            \Log::info('Data voucher dan radcheck sudah siap', [
+                'vouchers_count' => count($vouchers),
+                'radcheck_count' => count($radcheckInsert),
+                'radusergroup_count' => count($radusergroupInsert),
+                'radreply_count' => count($radreplyInsert),
+            ]);
+
+            DB::table('vouchers')->insert($vouchers);
+            DB::connection('freeradius')->table('radcheck')->insert($radcheckInsert);
+            DB::connection('freeradius')->table('radusergroup')->insert($radusergroupInsert);
+
+            if (!empty($radreplyInsert)) {
+                DB::connection('freeradius')->table('radreply')->insert($radreplyInsert);
+            }
+
+            \Log::info('Voucher berhasil disimpan');
+
+            return redirect()->back()->with('success', "$quantity voucher berhasil dibuat dan disimpan di FreeRADIUS.");
+        } catch (\Throwable $e) {
+            \Log::error('Gagal membuat voucher', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->withErrors('Terjadi kesalahan saat membuat voucher. Cek log untuk detail.');
         }
-
-        \Log::info('Data voucher dan radcheck sudah siap', [
-            'vouchers_count' => count($vouchers),
-            'radcheck_count' => count($radcheckInsert),
-            'radusergroup_count' => count($radusergroupInsert),
-            'radreply_count' => count($radreplyInsert),
-        ]);
-
-        DB::table('vouchers')->insert($vouchers);
-        DB::connection('freeradius')->table('radcheck')->insert($radcheckInsert);
-        DB::connection('freeradius')->table('radusergroup')->insert($radusergroupInsert);
-
-        if (!empty($radreplyInsert)) {
-            DB::connection('freeradius')->table('radreply')->insert($radreplyInsert);
-        }
-
-        \Log::info('Voucher berhasil disimpan');
-
-        return redirect()->back()->with('success', "$quantity voucher berhasil dibuat dan disimpan di FreeRADIUS.");
-    } catch (\Throwable $e) {
-        \Log::error('Gagal membuat voucher', [
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-
-        return back()->withErrors('Terjadi kesalahan saat membuat voucher. Cek log untuk detail.');
     }
-}
 
 
 
