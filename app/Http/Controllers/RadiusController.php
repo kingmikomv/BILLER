@@ -27,7 +27,7 @@ class RadiusController extends Controller
         try {
             $mikrotik = [
                 'host' => 'id-2.aqtnetwork.my.id',
-                'port_api' => 8728,
+                'port_api' => 9595,
                 'username' => 'teknisi1922',
                 'password' => 'teknisi1922',
             ];

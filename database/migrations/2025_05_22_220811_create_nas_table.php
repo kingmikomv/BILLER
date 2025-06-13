@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('description')->nullable();
 
             // Tambahan Laravel: relasi user (tanpa FK constraint karena beda DB)
-            $table->unsignedBigInteger('user_id')->nullable()->after('id');
+$table->unsignedBigInteger('user_id')->nullable();
         });
 
     }

@@ -34,7 +34,8 @@
                                 <!-- /.card-header -->
                                 <div class="card-body table-responsive">
                                     <!-- Tombol New Profile -->
-                                    <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#newUser">
+                                    <button class="btn btn-primary mb-3" data-toggle="modal"
+                                        data-target="#modalTambahVoucher">
                                         + New User
                                     </button>
                                     <div class="row mb-3">
@@ -83,7 +84,8 @@
                                     <table id="user-hotspot-table" class="table table-hover text-white">
                                         <thead>
                                             <tr>
-                                                <th><input type="checkbox" id="selectAllUsers" aria-label="Select all users" /></th>
+                                                <th><input type="checkbox" id="selectAllUsers"
+                                                        aria-label="Select all users" /></th>
                                                 <th>#</th>
                                                 <th>Username</th>
                                                 <th>Password</th>
@@ -98,7 +100,8 @@
                                         <tbody>
                                             @foreach ($vouchers as $index => $voucher)
                                                 <tr>
-                                                    <td><input type="checkbox" class="user-checkbox" aria-label="Select user {{ $voucher->username }}" /></td>
+                                                    <td><input type="checkbox" class="user-checkbox"
+                                                            aria-label="Select user {{ $voucher->username }}" /></td>
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>{{ $voucher->username }}</td>
                                                     <td>{{ $voucher->password ?? '-' }}</td>
@@ -113,7 +116,8 @@
                                                         @elseif ($voucher->status === 'used')
                                                             <span class="badge badge-success">Used</span>
                                                         @else
-                                                            <span class="badge badge-danger">{{ $voucher->status }}</span>
+                                                            <span
+                                                                class="badge badge-danger">{{ $voucher->status }}</span>
                                                         @endif
                                                     </td>
                                                 </tr>
@@ -136,33 +140,91 @@
         </div>
 
         <!-- Modal Generate Voucher Hotspot -->
-        <div class="modal fade" id="newUser" tabindex="-1" role="dialog" aria-labelledby="newUserLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-lg" role="document">
-                <form method="POST" action="{{ route('hotspot.tambahVoucher') }}">
-                    @csrf
-                    <div class="modal-content bg-dark text-white">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="newUserLabel">Generate Hotspot Voucher</h5>
-                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <!-- Form fields here (tidak berubah) -->
-                            <div class="row">
-                                <!-- NAS, Quantity, Profile, dll... -->
-                                <!-- Sama seperti kode kamu sebelumnya -->
-                            </div>
-                        </div>
-                        <div class="modal-footer border-top">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-success">Generate Voucher</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+       <!-- Modal Tambah Voucher -->
+<div class="modal fade" id="modalTambahVoucher" tabindex="-1" role="dialog" aria-labelledby="modalTambahVoucherLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form action="{{route('hotspot.tambahVoucher')}}" method="POST">
+      @csrf
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Tambah Voucher</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
+        
+        <div class="modal-body">
+          {{-- NAS ID --}}
+          <div class="form-group">
+            <label for="nas_id">Pilih NAS</label>
+            <select name="nas_id" class="form-control" required>
+              <option value="all">Semua NAS</option>
+              @foreach($nasList as $nas)
+                <option value="{{ $nas->remote_address }}">{{ $nas->username }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          {{-- Hotspot Profile ID --}}
+          <div class="form-group">
+            <label for="hotspot_profile_id">Hotspot Profile</label>
+            <select name="hotspot_profile_id" class="form-control" required>
+              @foreach($profiles as $profile)
+                <option value="{{ $profile->id }}">{{ $profile->name }}</option>
+              @endforeach
+            </select>
+          </div>
+
+          {{-- Quantity --}}
+          <div class="form-group">
+            <label for="quantity">Jumlah Voucher</label>
+            <input type="number" name="quantity" class="form-control" min="1" value="1" required>
+          </div>
+
+          {{-- User Model --}}
+          <div class="form-group">
+            <label for="user_model">Model Username/Password</label>
+            <select name="user_model" class="form-control" required>
+              <option value="username_equals_password">Username = Password</option>
+              <option value="username_plus_password">Username + Password (Random)</option>
+            </select>
+          </div>
+
+          {{-- Character Type --}}
+          <div class="form-group">
+            <label for="char_type">Tipe Karakter</label>
+            <select name="char_type" class="form-control" required>
+              <option value="uppercase">Huruf Besar</option>
+              <option value="lowercase">Huruf Kecil</option>
+              <option value="numbers">Angka</option>
+              <option value="uppercase_numbers">Huruf Besar + Angka</option>
+              <option value="lowercase_numbers">Huruf Kecil + Angka</option>
+              <option value="all">Semua Karakter</option>
+            </select>
+          </div>
+
+          {{-- Prefix --}}
+          <div class="form-group">
+            <label for="prefix">Prefix (Opsional)</label>
+            <input type="text" name="prefix" class="form-control" placeholder="Contoh: VCR_">
+          </div>
+
+          {{-- Length --}}
+          <div class="form-group">
+            <label for="length">Panjang Karakter</label>
+            <input type="number" name="length" class="form-control" min="4" max="32" value="8" required>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Buat Voucher</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 
         <x-dhs.footer />
     </div>
@@ -173,7 +235,9 @@
             // Init DataTable
             var table = $('#user-hotspot-table').DataTable({
                 responsive: true,
-                order: [[1, 'asc']],
+                order: [
+                    [1, 'asc']
+                ],
                 columnDefs: [{
                     orderable: false,
                     targets: 0
@@ -205,11 +269,11 @@
                 var profileVal = $('#profileFilter').val();
                 var createdVal = $('#createdFilter').val();
 
-                var nas = data[5];       // Nas
-                var owner = data[8];     // Owner
-                var status = data[9].toLowerCase();  // Status
-                var profile = data[4];   // Profile
-                var created = data[7];   // Created (format: H:i:s d/m/Y)
+                var nas = data[5]; // Nas
+                var owner = data[8]; // Owner
+                var status = data[9].toLowerCase(); // Status
+                var profile = data[4]; // Profile
+                var created = data[7]; // Created (format: H:i:s d/m/Y)
 
                 // Filter Nas
                 if (nasVal && nas !== nasVal) {
@@ -231,7 +295,8 @@
                 if (createdVal) {
                     // Ambil bagian tanggal: d/m/Y dari created string
                     var createdDateParts = created.split(' ')[1].split('/');
-                    var createdDateFormatted = createdDateParts[2] + '-' + createdDateParts[1] + '-' + createdDateParts[0];
+                    var createdDateFormatted = createdDateParts[2] + '-' + createdDateParts[1] + '-' +
+                        createdDateParts[0];
                     if (createdDateFormatted !== createdVal) {
                         return false;
                     }

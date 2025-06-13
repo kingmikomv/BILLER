@@ -97,6 +97,7 @@ class HotspotController extends Controller
             ]);
 
             $nasId = $request->nas_id;
+            //dd($nasId);
             $hotspotProfileId = $request->hotspot_profile_id;
             $quantity = (int) $request->quantity;
             $userModel = $request->user_model;
@@ -169,13 +170,14 @@ class HotspotController extends Controller
 
 
                 if ($nasId !== 'all') {
-                    $radcheckInsert[] = [
-                        'username' => $username,
-                        'attribute' => 'NAS-IP-Address',
-                        'op' => ':=',
-                        'value' => $nas->nasname,
-                    ];
-                }
+    $radcheckInsert[] = [
+        'username' => $username,
+        'attribute' => 'NAS-IP-Address',
+        'op' => ':=',
+        'value' => $nas->nasname,
+    ];
+}
+
 
                 $radusergroupInsert[] = [
                     'username' => $username,
