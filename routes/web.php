@@ -67,8 +67,15 @@ Route::middleware(['auth', 'role:member,teknisi,cs'])->prefix('home')->group(fun
 
     Route::middleware(['role:member'])->prefix('whatsapp')->group(function () {
         Route::get('/whatsapp', [WhatsappController::class, 'index'])->name('whatsapp');
+        Route::get('/whatsapp/status', [WhatsappController::class, 'getStatus'])->name('wa.status');
+    Route::get('/whatsapp/qr', [WhatsappController::class, 'getQRCode'])->name('wa.qr');
+    Route::get('/whatsapp/start', [WhatsappController::class, 'startSession'])->name('wa.start');
+    Route::get('/whatsapp/disconnect', [WhatsappController::class, 'disconnectSession'])->name('wa.disconnect');
+
+
+
         Route::get('/template/invoice', [WhatsappController::class, 'template'])->name('whatsapp.template');
-        Route::post('/template/invoice', [WhatsappController::class, 'store'])->name('whatsapp.store');
+        Route::post('/template/invoice', action: [WhatsappController::class, 'store'])->name('whatsapp.store');
         Route::post('/template/bulk-store', [WhatsappController::class, 'bulkStore'])->name('whatsapp.bulkStore');
         // Route::post('/send-whatsapp', [WhatsappHelper::class, 'sendMessage'])->name('send.whatsapp');
     });

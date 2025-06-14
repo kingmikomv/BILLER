@@ -1,5 +1,4 @@
 <x-dhs.head />
-
 <body class="hold-transition dark-mode sidebar-mini layout-fixed layout-navbar-fixed layout-footer-fixed">
     <div class="wrapper">
         <x-dhs.preload />
@@ -45,7 +44,7 @@
                                             <a href="{{ route('whatsapp.template') }}" class="btn btn-primary btn-block">
                                                 <i class="fab fa-whatsapp"></i> Template WA Invoice
                                             </a>
-                                             <a href="{{ route('whatsapp.template') }}" class="btn btn-success btn-block">
+                                            <a href="{{ route('whatsapp.template') }}" class="btn btn-success btn-block">
                                                 <i class="fab fa-whatsapp"></i> Template WA CS
                                             </a>
                                         </div>
@@ -65,7 +64,6 @@
 
     <script>
         const sessionId = "{{ auth()->user()->unique_member }}";
-        const API_BASE_URL = "http://103.160.63.163:3000";
 
         let pollingQRInterval = null;
         let pollingStatusInterval = null;
@@ -75,7 +73,6 @@
 
             document.getElementById('wa-action-btn').addEventListener('click', () => {
                 const currentAction = document.getElementById('wa-action-btn').dataset.action;
-
                 if (currentAction === 'start') {
                     mulaiSesi();
                 } else if (currentAction === 'disconnect') {
@@ -88,22 +85,21 @@
             updateStatus('Memulai sesi...');
             updateButton('Menunggu QR...', 'wait');
 
-            fetch(`${API_BASE_URL}/api/start?session_id=${sessionId}`)
+            fetch(`{{ route('wa.start') }}`)
                 .then(res => res.json())
                 .then(() => {
                     pollingQRInterval = setInterval(ambilQRCode, 5000);
                     pollingStatusInterval = setInterval(ambilStatus, 5000);
                     ambilQRCode();
                 })
-                .catch(err => {
-                    console.error(err);
+                .catch(() => {
                     alert('Gagal memulai sesi.');
                     resetButton();
                 });
         }
 
         function ambilQRCode() {
-            fetch(`${API_BASE_URL}/api/qr?session_id=${sessionId}`)
+            fetch(`{{ route('wa.qr') }}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'scan' && data.qrImage) {
@@ -116,42 +112,31 @@
                         updateStatus(data.message || 'QR tidak tersedia');
                         document.getElementById('qr-code').innerHTML = '';
                     }
-                })
-                .catch(err => {
-                    console.error(err);
-                    updateStatus('Gagal ambil QR');
                 });
         }
 
         function ambilStatus() {
-            fetch(`${API_BASE_URL}/api/status?session_id=${sessionId}`)
+            fetch(`{{ route('wa.status') }}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data?.status) {
                         tampilkanStatusTerhubung(data);
                         stopPolling();
                     }
-                })
-                .catch(err => {
-                    console.error(err);
                 });
         }
 
         function disconnectSesi() {
-            fetch(`${API_BASE_URL}/api/disconnect?session_id=${sessionId}`)
+            fetch(`{{ route('wa.disconnect') }}`)
                 .then(res => res.json())
                 .then(() => {
                     updateStatus('Disconnected');
                     resetButton();
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert('Gagal disconnect.');
                 });
         }
 
         function cekStatusAwal() {
-            fetch(`${API_BASE_URL}/api/status?session_id=${sessionId}`)
+            fetch(`{{ route('wa.status') }}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data?.status) {
@@ -160,11 +145,6 @@
                         updateStatus('No Instance');
                         resetButton();
                     }
-                })
-                .catch(err => {
-                    console.error(err);
-                    updateStatus('Gagal cek status');
-                    resetButton();
                 });
         }
 
@@ -174,7 +154,6 @@
             document.getElementById('wa-name').innerText = data.user?.name || '-';
             document.getElementById('wa-battery').innerText = data.user?.battery || '-';
             document.getElementById('qr-code').innerHTML = '';
-
             updateButton('Disconnect', 'disconnect');
         }
 

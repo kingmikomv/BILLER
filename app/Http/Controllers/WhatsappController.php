@@ -11,12 +11,62 @@ use Illuminate\Support\Facades\Http;
 
 class WhatsappController extends Controller
 {
-    //
+    //private $apiBase = 'http://103.160.63.163:3000/api';
+private $apiBase = 'http://103.160.63.163:3000/api';
+
 
     public function index()
     {
         return view('ROLE.MEMBER.WHATSAPP.index');
     }
+
+
+
+    public function getStatus(Request $request)
+    {
+        $sessionId = auth()->user()->unique_member;
+        $response = Http::get("{$this->apiBase}/status", ['session_id' => $sessionId]);
+        return response()->json($response->json());
+    }
+
+    public function getQRCode(Request $request)
+    {
+        $sessionId = auth()->user()->unique_member;
+        $response = Http::get("{$this->apiBase}/qr", ['session_id' => $sessionId]);
+        return response()->json($response->json());
+    }
+
+    public function startSession(Request $request)
+    {
+        $sessionId = auth()->user()->unique_member;
+        $response = Http::get("{$this->apiBase}/start", ['session_id' => $sessionId]);
+        return response()->json($response->json());
+    }
+
+    public function disconnectSession(Request $request)
+    {
+        $sessionId = auth()->user()->unique_member;
+        $response = Http::get("{$this->apiBase}/disconnect", ['session_id' => $sessionId]);
+        return response()->json($response->json());
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public function template()
     {
         $templates = \App\Models\MessageTemplate::all()->keyBy('name');
