@@ -65,7 +65,7 @@
 
     <script>
         const sessionId = "{{ auth()->user()->unique_member }}";
-        const API_BASE_URL = "http://wa.aqtnetwork.my.id:3000";
+        const API_BASE_URL = "http://103.160.63.163:3000";
 
         let pollingQRInterval = null;
         let pollingStatusInterval = null;
