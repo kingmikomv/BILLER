@@ -62,123 +62,148 @@
 
     <x-dhs.scripts />
 
-    <script>
-        const sessionId = "{{ auth()->user()->unique_member }}";
+   <script>
+    const sessionId = "{{ auth()->user()->unique_member }}";
 
-        let pollingQRInterval = null;
-        let pollingStatusInterval = null;
+    let pollingQRInterval = null;
+    let pollingStatusInterval = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            cekStatusAwal();
+    document.addEventListener('DOMContentLoaded', () => {
+        cekStatusAwal();
 
-            document.getElementById('wa-action-btn').addEventListener('click', () => {
-                const currentAction = document.getElementById('wa-action-btn').dataset.action;
-                if (currentAction === 'start') {
-                    mulaiSesi();
-                } else if (currentAction === 'disconnect') {
-                    disconnectSesi();
-                }
-            });
+        document.getElementById('wa-action-btn').addEventListener('click', () => {
+            const currentAction = document.getElementById('wa-action-btn').dataset.action;
+            if (currentAction === 'start') {
+                mulaiSesi();
+            } else if (currentAction === 'disconnect') {
+                disconnectSesi();
+            }
         });
 
-        function mulaiSesi() {
-            updateStatus('Memulai sesi...');
-            updateButton('Menunggu QR...', 'wait');
-
-            fetch(`{{ route('wa.start') }}`)
-                .then(res => res.json())
-                .then(() => {
-                    pollingQRInterval = setInterval(ambilQRCode, 5000);
-                    pollingStatusInterval = setInterval(ambilStatus, 5000);
-                    ambilQRCode();
-                })
-                .catch(() => {
-                    alert('Gagal memulai sesi.');
-                    resetButton();
-                });
-        }
-
-        function ambilQRCode() {
-            fetch(`{{ route('wa.qr') }}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'scan' && data.qrImage) {
-                        updateStatus('Menunggu Scan...');
-                        document.getElementById('qr-code').innerHTML = `<img src="${data.qrImage}" style="max-width:200px;" />`;
-                    } else if (data.status === 'connected') {
-                        ambilStatus();
-                        stopPolling();
-                    } else {
-                        updateStatus(data.message || 'QR tidak tersedia');
-                        document.getElementById('qr-code').innerHTML = '';
-                    }
-                });
-        }
-
-        function ambilStatus() {
+        // Auto mulai sesi jika belum tersambung
+        setTimeout(() => {
             fetch(`{{ route('wa.status') }}`)
                 .then(res => res.json())
                 .then(data => {
-                    if (data?.status) {
-                        tampilkanStatusTerhubung(data);
-                        stopPolling();
+                    if (!data?.status) {
+                        mulaiSesi();
                     }
                 });
-        }
+        }, 1000);
+    });
 
-        function disconnectSesi() {
-            fetch(`{{ route('wa.disconnect') }}`)
-                .then(res => res.json())
-                .then(() => {
-                    updateStatus('Disconnected');
-                    resetButton();
-                });
-        }
+    function mulaiSesi() {
+        updateStatus('Cek status...');
+        fetch(`{{ route('wa.status') }}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data?.status) {
+                    tampilkanStatusTerhubung(data);
+                    return; // Sudah connect, tidak perlu lanjut
+                }
 
-        function cekStatusAwal() {
-            fetch(`{{ route('wa.status') }}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data?.status) {
-                        tampilkanStatusTerhubung(data);
-                    } else {
-                        updateStatus('No Instance');
+                updateStatus('Memulai sesi...');
+                updateButton('Menunggu QR...', 'wait');
+
+                fetch(`{{ route('wa.start') }}`)
+                    .then(res => res.json())
+                    .then(() => {
+                        pollingQRInterval = setInterval(ambilQRCode, 3000);
+                        pollingStatusInterval = setInterval(ambilStatus, 3000);
+                        ambilQRCode();
+                    })
+                    .catch(() => {
+                        alert('Gagal memulai sesi.');
                         resetButton();
-                    }
-                });
-        }
+                    });
+            });
+    }
 
-        function tampilkanStatusTerhubung(data) {
-            updateStatus('✅ Terhubung');
-            document.getElementById('wa-id').innerText = data.user?.id || '-';
-            document.getElementById('wa-name').innerText = data.user?.name || '-';
-            document.getElementById('wa-battery').innerText = data.user?.battery || '-';
-            document.getElementById('qr-code').innerHTML = '';
-            updateButton('Disconnect', 'disconnect');
-        }
+    function ambilQRCode() {
+        fetch(`{{ route('wa.qr') }}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'scan' && data.qrImage) {
+                    updateStatus('Menunggu Scan...');
+                    document.getElementById('qr-code').innerHTML = `<img src="${data.qrImage}" style="max-width:200px;" />`;
+                } else if (data.status === 'connected') {
+                    ambilStatus();
+                    stopPolling();
+                } else if (data.status === 'initializing') {
+                    updateStatus('Sedang menyiapkan QR...');
+                    document.getElementById('qr-code').innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
+                } else {
+                    updateStatus(data.message || 'QR tidak tersedia');
+                    document.getElementById('qr-code').innerHTML = '';
+                }
+            });
+    }
 
-        function updateStatus(text) {
-            document.getElementById('wa-status').innerText = text;
-        }
+    function ambilStatus() {
+        fetch(`{{ route('wa.status') }}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data?.status) {
+                    tampilkanStatusTerhubung(data);
+                    stopPolling();
+                }
+            });
+    }
 
-        function updateButton(text, action) {
-            const btn = document.getElementById('wa-action-btn');
-            btn.innerText = text;
-            btn.dataset.action = action;
-        }
+    function disconnectSesi() {
+        fetch(`{{ route('wa.disconnect') }}`)
+            .then(res => res.json())
+            .then(() => {
+                updateStatus('Disconnected');
+                resetButton();
+            });
+    }
 
-        function resetButton() {
-            updateButton('Generate QR Code', 'start');
-            document.getElementById('qr-code').innerHTML = '';
-            document.getElementById('wa-id').innerText = '-';
-            document.getElementById('wa-name').innerText = '-';
-            document.getElementById('wa-battery').innerText = '-';
-        }
+    function cekStatusAwal() {
+        fetch(`{{ route('wa.status') }}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data?.status) {
+                    tampilkanStatusTerhubung(data);
+                } else {
+                    updateStatus('No Instance');
+                    resetButton();
+                }
+            });
+    }
 
-        function stopPolling() {
-            clearInterval(pollingQRInterval);
-            clearInterval(pollingStatusInterval);
-        }
-    </script>
+    function tampilkanStatusTerhubung(data) {
+        updateStatus('✅ Terhubung');
+        document.getElementById('wa-id').innerText = data.user?.id || '-';
+        document.getElementById('wa-name').innerText = data.user?.name || '-';
+        document.getElementById('wa-battery').innerText = data.user?.battery || '-';
+        document.getElementById('qr-code').innerHTML = '';
+        updateButton('Disconnect', 'disconnect');
+    }
+
+    function updateStatus(text) {
+        document.getElementById('wa-status').innerText = text;
+    }
+
+    function updateButton(text, action) {
+        const btn = document.getElementById('wa-action-btn');
+        btn.innerText = text;
+        btn.dataset.action = action;
+    }
+
+    function resetButton() {
+        updateButton('Generate QR Code', 'start');
+        document.getElementById('qr-code').innerHTML = '';
+        document.getElementById('wa-id').innerText = '-';
+        document.getElementById('wa-name').innerText = '-';
+        document.getElementById('wa-battery').innerText = '-';
+    }
+
+    function stopPolling() {
+        clearInterval(pollingQRInterval);
+        clearInterval(pollingStatusInterval);
+    }
+</script>
+
 </body>
 </html>
