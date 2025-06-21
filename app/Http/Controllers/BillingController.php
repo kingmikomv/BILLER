@@ -289,7 +289,7 @@ class BillingController extends Controller
         'id'              => 'required|exists:pelanggan,id',
         'nama_pelanggan'  => 'required|string|max:255',
         'nomor_telepon'   => 'required|string|max:20',
-        'paket'           => 'required|string|max:100',
+        'paketpppoe_id'           => 'required',
     ]);
 
     $pelanggan = Pelanggan::find($request->id);
