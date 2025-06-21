@@ -13,6 +13,7 @@ use App\Models\PaketPppoe;
 
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Models\BillingSeting;
 use Illuminate\Foundation\Mix;
 use App\Helpers\ActivityLogger;
 use Illuminate\Support\Facades\DB;
@@ -163,6 +164,8 @@ class PelangganController extends Controller
     {
         $user = auth()->user();
         $userId = $user->id;
+        $billset = BillingSeting::first();
+        if($billset){
 
         // Ambil data paket
         $kodePaket = $request->input('kodePaket');
@@ -241,7 +244,7 @@ class PelangganController extends Controller
             'status_tiket' => 'Belum Dikonfirmasi',
             'serialnumber' => $request->input('serialnumber'),
             'pelanggan_id' => $pelanggan->id,
-            'parent_id' => $user->parent_id,
+            'parent_id' => $user->id,
             'mikrotik_id' => $mikrotik->id,
             'router_username' => $mikrotik->username,
             'paket_id' => $paket->id,
@@ -323,6 +326,11 @@ class PelangganController extends Controller
         );
 
         return redirect()->back()->with('success', 'Pelanggan berhasil ditambahkan.');
+    }
+    else{
+        return redirect()->back()->with('error', 'Setting Dulu Billingnya Ya !');
+
+    }
     }
     function generateInvoiceId()
     {

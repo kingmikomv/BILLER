@@ -310,7 +310,7 @@ class BillingController extends Controller
             // Kirim request POST ke server WhatsApp API dengan Content-Type: application/json
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-            ])->post('http://wa.aqtnetwork.my.id:3000/api/send', [
+            ])->post('http://whatsapp.aqtnetwork.my.id:3000/api/send', [
                         'session_id' => $session_id,
                         'number' => $nomor,
                         'message' => $pesan,
@@ -318,6 +318,7 @@ class BillingController extends Controller
 
             // Log response dari server
             \Log::info('Response dari server WhatsApp:', [
+                'session_id' => $session_id,
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);

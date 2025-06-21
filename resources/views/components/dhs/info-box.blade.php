@@ -1,143 +1,30 @@
-
 @if(auth()->user()->role == 'member')
 <div class="row">
-    <div class="col-12 col-sm-6 col-md-4">
-      <div class="info-box">
-        <span class="info-box-icon bg-info elevation-1"><i class="fas fa-users"></i></span>
+    @php
+        $infoBoxes = [
+            ['icon' => 'fas fa-users', 'color' => 'info', 'label' => 'Pelanggan', 'value' => $totalPelanggan],
+            ['icon' => 'fas fa-thumbs-up', 'color' => 'success', 'label' => 'Online', 'value' => $totalOnline],
+            ['icon' => 'fas fa-thumbs-down', 'color' => 'danger', 'label' => 'Offline', 'value' => $totalOffline],
+            ['icon' => 'fas fa-dizzy', 'color' => 'warning', 'label' => 'Isolir', 'value' => $totalIsolir],
+            ['icon' => 'fas fa-network-wired', 'color' => 'secondary', 'label' => 'Router', 'value' => $totalRouter],
+            ['icon' => 'fas fa-server', 'color' => 'secondary', 'label' => 'Radius', 'value' => '-'],
+            ['icon' => 'fas fa-microchip', 'color' => 'success', 'label' => 'OLT', 'value' => '41,410'],
+            ['icon' => 'fas fa-id-card', 'color' => 'danger', 'label' => 'Voucher', 'value' => '2,000'],
+        ];
+    @endphp
 
-        <div class="info-box-content">
-          <span class="info-box-text">Pelanggan</span>
-          <span class="info-box-number">
-            {{ $totalPelanggan }}
-          </span>
+    @foreach($infoBoxes as $box)
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
+            <div class="info-box h-100">
+                <span class="info-box-icon bg-{{ $box['color'] }} elevation-1">
+                    <i class="{{ $box['icon'] }}"></i>
+                </span>
+                <div class="info-box-content">
+                    <span class="info-box-text">{{ $box['label'] }}</span>
+                    <span class="info-box-number">{{ $box['value'] }}</span>
+                </div>
+            </div>
         </div>
-        <!-- /.info-box-content -->
-      </div>
-      <!-- /.info-box -->
-    </div>
-    <!-- /.col -->
-    <div class="col-12 col-sm-6 col-md-4">
-      <div class="info-box mb-3">
-        <span class="info-box-icon bg-success elevation-1"><i class="fas fa-thumbs-up"></i></span>
-
-        <div class="info-box-content">
-          <span class="info-box-text">Online</span>
-          <span class="info-box-number">{{ $totalOnline }}</span>
-        </div>
-        <!-- /.info-box-content -->
-      </div>
-      <!-- /.info-box -->
-    </div>
-    <!-- /.col -->
-
-    <!-- fix for small devices only -->
-    <div class="clearfix hidden-md-up"></div>
-
-    <div class="col-12 col-sm-6 col-md-4">
-      <div class="info-box mb-3">
-        <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-thumbs-down"></i></span>
-
-        <div class="info-box-content">
-          <span class="info-box-text">Offline</span>
-          <span class="info-box-number">{{ $totalOffline }}</span>
-        </div>
-        <!-- /.info-box-content -->
-      </div>
-      <!-- /.info-box -->
-    </div>
-    <!-- /.col -->
-    <div class="col-12 col-sm-6 col-md-2">
-      <div class="info-box mb-3">
-        <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-dizzy"></i></span>
-
-        <div class="info-box-content">
-          <span class="info-box-text">Isolir</span>
-          <span class="info-box-number">{{ $totalIsolir }}</span>
-        </div>
-        <!-- /.info-box-content -->
-      </div>
-      <!-- /.info-box -->
-    </div>
-    <!-- /.col -->
-
-
-
-
-
-
-
-
-
-
-    <div class="col-12 col-sm-6 col-md-2">
-      <div class="info-box">
-        <span class="info-box-icon bg-secondary elevation-1"><i class="fas fa-network-wired"></i></span>
-
-        <div class="info-box-content">
-          <span class="info-box-text">Router</span>
-          <span class="info-box-number">
-            {{$totalRouter}}
-          </span>
-        </div>
-        <!-- /.info-box-content -->
-      </div>
-      <!-- /.info-box -->
-    </div>
-    <!-- /.col -->
-    <div class="col-12 col-sm-6 col-md-2">
-      <div class="info-box mb-3">
-        <span class="info-box-icon bg-primary elevation-1"><i class="fas fa-server"></i></span>
-
-        <div class="info-box-content">
-          <span class="info-box-text">VPN</span>
-          <span class="info-box-number">-</span>
-        </div>
-        <!-- /.info-box-content -->
-      </div>
-      <!-- /.info-box -->
-    </div>
-    <div class="col-12 col-sm-6 col-md-2">
-      <div class="info-box mb-3">
-        <span class="info-box-icon bg-secondary elevation-1"><i class="fas fa-server"></i></span>
-
-        <div class="info-box-content">
-          <span class="info-box-text">Radius</span>
-          <span class="info-box-number">-</span>
-        </div>
-        <!-- /.info-box-content -->
-      </div>
-      <!-- /.info-box -->
-    </div>
-    <!-- /.col -->
-
-    <!-- fix for small devices only -->
-    <div class="clearfix hidden-md-up"></div>
-
-    <div class="col-12 col-sm-6 col-md-2">
-      <div class="info-box mb-3">
-        <span class="info-box-icon bg-success elevation-1"><i class="fas fa-microchip"></i></span>
-
-        <div class="info-box-content">
-          <span class="info-box-text">OLT</span>
-          <span class="info-box-number">41,410</span>
-        </div>
-        <!-- /.info-box-content -->
-      </div>
-      <!-- /.info-box -->
-    </div>
-    <!-- /.col -->
-    <div class="col-12 col-sm-6 col-md-2">
-      <div class="info-box mb-3">
-        <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-id-card"></i></span>
-
-        <div class="info-box-content">
-          <span class="info-box-text">Voucher</span>
-          <span class="info-box-number">2,000</span>
-        </div>
-        <!-- /.info-box-content -->
-      </div>
-      <!-- /.info-box -->
-    </div>
-  </div>
-
-  @endif
+    @endforeach
+</div>
+@endif
