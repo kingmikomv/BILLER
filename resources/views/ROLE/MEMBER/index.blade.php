@@ -24,7 +24,7 @@
                     <!-- Info boxes -->
                     <x-dhs.info-box :totalPelanggan="$totalPelanggan" :totalPelangganAktif="$totalPelangganAktif"
                         :totalOnline="$totalOnline" :totalOffline="$totalOffline" :totalIsolir="$totalIsolir"
-                        :totalRouter="$totalRouter" />
+                        :totalRouter="$totalRouter" :totalOlt="$totalOlt"/>
 
                     <div class="row">
 

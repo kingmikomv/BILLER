@@ -8,7 +8,7 @@
             ['icon' => 'fas fa-dizzy', 'color' => 'warning', 'label' => 'Isolir', 'value' => $totalIsolir],
             ['icon' => 'fas fa-network-wired', 'color' => 'secondary', 'label' => 'Router', 'value' => $totalRouter],
             ['icon' => 'fas fa-server', 'color' => 'secondary', 'label' => 'Radius', 'value' => '-'],
-            ['icon' => 'fas fa-microchip', 'color' => 'success', 'label' => 'OLT', 'value' => '41,410'],
+            ['icon' => 'fas fa-microchip', 'color' => 'success', 'label' => 'OLT', 'value' => $totalOlt],
             ['icon' => 'fas fa-id-card', 'color' => 'danger', 'label' => 'Voucher', 'value' => '2,000'],
         ];
     @endphp

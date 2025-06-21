@@ -58,8 +58,8 @@ class TeknisiController extends Controller
         // Cari data berdasarkan nomor tiket
         $psb = TiketPsb::where('no_tiket', $tid)->first();
         $plg = Pelanggan::where('no_tiket', $tid)->first();
-        $harga = PaketPppoe::where('kode_paket', $plg->kode_paket)->first();
-
+        $harga = PaketPppoe::where('id', $psb->paket_id)->first();
+        
         if($psb->no_tiket == $tid || $plg->no_tiket == $tid){
             $psb->tanggal_terpasang = now();
             $psb->status_tiket = 'Sudah Dikonfirmasi';

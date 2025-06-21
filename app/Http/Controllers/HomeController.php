@@ -17,7 +17,7 @@ class HomeController extends Controller
      */
     public function __construct()
     {
-        $this->middleware(['auth','verified']);
+        $this->middleware(['auth', 'verified']);
     }
 
     /**
@@ -26,100 +26,104 @@ class HomeController extends Controller
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function index()
-    {
-        $user = auth()->user();
-    
-        // Ambil semua router yang dimiliki oleh user berdasarkan router_id
-        $routerIds = $user->routers ? $user->routers->pluck('router_id') : collect();
-        $mikrotikRouters = Mikrotik::whereIn('router_id', $routerIds)->get();
-    
-        // Ambil semua pelanggan terkait router yang dimiliki user
-        $plg = Pelanggan::whereIn('router_id', $routerIds)->with('paket')->get();
-    
-        // Inisialisasi array untuk menyimpan status pelanggan
-        $onlineStatus = [];
-    
-        foreach ($mikrotikRouters as $mikrotik) {
-            try {
-                // Buat koneksi ke MikroTik API
-                $client = new Client([
-                    'host' => 'id-1.aqtnetwork.my.id:' . $mikrotik->port_api,
-                    'user' => $mikrotik->username,
-                    'pass' => $mikrotik->password,
-                ]);
-    
-                // Ambil daftar active connections
-                $query = new Query('/ppp/active/print');
-                $activeConnections = collect($client->query($query)->read());
-    
-                // Proses setiap pelanggan di router ini
-                foreach ($plg->where('router_id', $mikrotik->router_id) as $pelanggan) {
-                    // Cari koneksi aktif berdasarkan akun PPPoE
-                    $activeConnection = $activeConnections->firstWhere('name', $pelanggan->akun_pppoe);
-                    $isOnline = !is_null($activeConnection);
-    
-                    // Ambil IP pelanggan dari koneksi aktif (jika ada)
-                    $ipAddress = $activeConnection['address'] ?? null;
-    
-                    // Cek apakah IP pelanggan dimulai dengan '172' (Isolir)
-                    $isIsolir = $ipAddress && str_starts_with($ipAddress, '172');
-    
-                    // Tentukan status pelanggan
-                    $onlineStatus[$pelanggan->akun_pppoe] = $isIsolir ? 'Isolir' : ($isOnline ? 'Online' : 'Offline');
-                }
-            } catch (\Exception $e) {
-                // Jika gagal koneksi, tandai semua pelanggan pada router ini offline
-                foreach ($plg->where('router_id', $mikrotik->router_id) as $pelanggan) {
-                    $onlineStatus[$pelanggan->akun_pppoe] = 'Offline';
-                }
+{
+    $user = auth()->user();
+
+    // Ambil Mikrotik milik user + user, pelanggan, paket, dan OLT-nya
+    $mikrotikRouters = Mikrotik::with(['user', 'pelanggan.paket', 'olt'])
+        ->where('user_id', $user->id)
+        ->get();
+
+    $onlineStatus = collect();
+    $allPelanggans = collect();
+
+    foreach ($mikrotikRouters as $router) {
+        $routerPelanggans = $router->pelanggan ?? collect();
+        $allPelanggans = $allPelanggans->merge($routerPelanggans);
+
+        try {
+            $client = new Client([
+                'host' => 'id-1.aqtnetwork.my.id:' . $router->port_api,
+                'user' => $router->username,
+                'pass' => $router->password,
+            ]);
+
+            $query = new Query('/ppp/active/print');
+            $activeConnections = collect($client->query($query)->read());
+
+            foreach ($routerPelanggans as $pelanggan) {
+                $active = $activeConnections->firstWhere('name', $pelanggan->akun_pppoe);
+                $ip = $active['address'] ?? null;
+                $isOnline = !is_null($active);
+                $isIsolir = $ip && str_starts_with($ip, '172');
+
+                $status = $isIsolir ? 'Isolir' : ($isOnline ? 'Online' : 'Offline');
+                $onlineStatus[$pelanggan->akun_pppoe] = $status;
+            }
+        } catch (\Exception $e) {
+            foreach ($routerPelanggans as $pelanggan) {
+                $onlineStatus[$pelanggan->akun_pppoe] = 'Offline';
             }
         }
-    
-        // Gabungkan data pelanggan dengan status online
-        foreach ($plg as $pelanggan) {
-            $pelanggan->status = $onlineStatus[$pelanggan->akun_pppoe] ?? 'Offline';
-        }
-    
-        // Hitung jumlah pelanggan Online, Offline, dan Isolir
-        $totalOnline = collect($onlineStatus)->filter(fn($status) => $status === 'Online')->count();
-        $totalOffline = collect($onlineStatus)->filter(fn($status) => $status === 'Offline')->count();
-        $totalIsolir = collect($onlineStatus)->filter(fn($status) => $status === 'Isolir')->count();
-    
-        // Check user role dan kirim data ke view sesuai peran pengguna
-        if ($user->hasRole('superadmin')) {
-
-
-            return view('ROLE.SUMIN.index');
-            
-        } elseif ($user->hasRole('member')) {
-            $totalPelanggan = $plg->count();
-            $totalPelangganAktif = $plg->where('status', 'Aktif')->count();
-            $riwayatPemasangan = $plg->where('status_terpasang', 'Sudah Dipasang')->sortByDesc('tanggal_terpasang');
-            $totalRouter = $mikrotikRouters->count();
-    
-            return view('ROLE.MEMBER.index', compact(
-                'riwayatPemasangan', 'totalPelanggan', 'totalPelangganAktif',
-                'totalOnline', 'totalOffline', 'totalIsolir', 'totalRouter'
-            ));
-        } elseif ($user->hasRole('teknisi')) {
-            return view('ROLE.PEKERJA.index');
-        } elseif ($user->hasRole('penagih')) {
-            return response()->json(['message' => 'penagih']);
-        } elseif ($user->hasRole('cs')) {
-
-            return view('ROLE.CS.index');
-
-            // return response()->json(['message' => 'cs']);
-        } elseif($user->hasRole('sales')){
-            return view('ROLE.SALES.index');
-
-        }
-    
-        // Default view jika peran tidak terdefinisi
-        return redirect()->route('home');
     }
-    
 
-    
+    foreach ($allPelanggans as $pelanggan) {
+        $pelanggan->status = $onlineStatus[$pelanggan->akun_pppoe] ?? 'Offline';
+    }
+
+    // Statistik
+    $totalOnline = $onlineStatus->filter(fn($status) => $status === 'Online')->count();
+    $totalOffline = $onlineStatus->filter(fn($status) => $status === 'Offline')->count();
+    $totalIsolir = $onlineStatus->filter(fn($status) => $status === 'Isolir')->count();
+
+    // 🔧 Ambil OLT
+    $allOlts = $mikrotikRouters->pluck('olt')->filter()->unique('id');
+    $totalOlt = $allOlts->count();
+
+    // View superadmin
+    if ($user->hasRole('superadmin')) {
+        return view('ROLE.SUMIN.index', compact('totalOlt', 'allOlts'));
+    }
+
+    // View member
+    if ($user->hasRole('member')) {
+        $totalPelanggan = $allPelanggans->count();
+        $totalPelangganAktif = $allPelanggans->where('status', 'Aktif')->count();
+        $riwayatPemasangan = $allPelanggans->where('status_terpasang', 'Sudah Dipasang')
+                                           ->sortByDesc('tanggal_terpasang');
+        $totalRouter = $mikrotikRouters->count();
+
+        return view('ROLE.MEMBER.index', compact(
+            'riwayatPemasangan',
+            'totalPelanggan',
+            'totalPelangganAktif',
+            'totalOnline',
+            'totalOffline',
+            'totalIsolir',
+            'totalRouter',
+            'totalOlt',
+            'allOlts'
+        ));
+    }
+
+    if ($user->hasRole('teknisi')) {
+        return view('ROLE.PEKERJA.index');
+    }
+
+    if ($user->hasRole('penagih')) {
+        return response()->json(['message' => 'penagih']);
+    }
+
+    if ($user->hasRole('cs')) {
+        return view('ROLE.CS.index');
+    }
+
+    if ($user->hasRole('sales')) {
+        return view('ROLE.SALES.index');
+    }
+
+    return redirect()->route('home');
+}
+
     
 }
