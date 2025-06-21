@@ -288,7 +288,7 @@ class BillingController extends Controller
     $request->validate([
         'id'              => 'required|exists:pelanggan,id',
         'nama_pelanggan'  => 'required|string|max:255',
-        'nomor_telepon'   => 'required|string|max:20',
+        'nomor_telepon'   => 'required',
         'paketpppoe_id'           => 'required',
     ]);
 
