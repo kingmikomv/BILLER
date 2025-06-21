@@ -285,13 +285,7 @@ class BillingController extends Controller
 
     public function updatePelanggan(Request $request)
 {
-    $request->validate([
-        'id'              => 'required|exists:pelanggan,id',
-        'nama_pelanggan'  => 'required|string|max:255',
-        'nomor_telepon'   => 'required',
-        'paketpppoe_id'           => 'required',
-    ]);
-
+   
     $pelanggan = Pelanggan::find($request->id);
 
     $pelanggan->update([
