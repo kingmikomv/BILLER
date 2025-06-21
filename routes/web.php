@@ -237,7 +237,7 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
 
     Route::get('/billing_setting', 'billingSetting')->name('billing.setting');
     Route::post('/setting-billing', 'store')->name('setting-billing.store');
-
+    
 
 
     Route::get('/paid', 'paid')->name('paid');
@@ -245,9 +245,11 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
     ;
     Route::get('/riwayat', 'riwayatTagihan')->name('riwayat');
     Route::get('/bil_pelanggan', 'bil_pelanggan')->name('bil_pelanggan');
+
     Route::delete('/bil_pelanggan/hapus-data/{id}', 'hapusData')->name('hapusData');
 
     Route::post('/send-whatsapp', 'kirimwa')->name('send.whatsapp');
+    Route::post('/bil_pelanggan/updatePelanggan', 'updatePelanggan')->name('updatePelanggan');
 
     Route::get('/bcwa', 'bcwa')->name('bcwa');
 

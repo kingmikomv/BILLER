@@ -283,6 +283,25 @@ class BillingController extends Controller
     }
 
 
+    public function updatePelanggan(Request $request)
+{
+    $request->validate([
+        'id'              => 'required|exists:pelanggan,id',
+        'nama_pelanggan'  => 'required|string|max:255',
+        'nomor_telepon'   => 'required|string|max:20',
+        'paket'           => 'required|string|max:100',
+    ]);
+
+    $pelanggan = Pelanggan::find($request->id);
+
+    $pelanggan->update([
+        'nama_pelanggan'  => $request->nama_pelanggan,
+        'nomor_telepon'   => $request->nomor_telepon,
+        'paket'           => $request->paket,
+    ]);
+
+    return redirect()->back()->with('success', 'Data pelanggan berhasil diperbarui.');
+}
 
     public function kirimwa(Request $request)
     {

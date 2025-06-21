@@ -221,7 +221,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form id="editForm" method="POST" action="">
+                        <form id="editForm" method="POST" action="{{route('updatePelanggan')}}">
                             @csrf
                             <input type="hidden" name="id" id="edit_id">
                             <div class="form-group">
