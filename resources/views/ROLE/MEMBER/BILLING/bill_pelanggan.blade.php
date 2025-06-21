@@ -238,7 +238,7 @@
                                 <label for="edit_paket">Paket</label>
                                 <select class="form-control" id="edit_paket" name="paket">
                                     @foreach ($paketpppoe as $paket)
-                                        <option value="{{ $paket->kode_paket }}">{{ $paket->nama_paket }}</option>
+                                        <option value="{{ $paket->id }}">{{ $paket->nama_paket }}</option>
                                     @endforeach
 
                                 </select>

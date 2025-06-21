@@ -297,7 +297,7 @@ class BillingController extends Controller
     $pelanggan->update([
         'nama_pelanggan'  => $request->nama_pelanggan,
         'nomor_telepon'   => $request->nomor_telepon,
-        'paket'           => $request->paket,
+        'paketpppoe_id'           => $request->paket,
     ]);
 
     return redirect()->back()->with('success', 'Data pelanggan berhasil diperbarui.');
