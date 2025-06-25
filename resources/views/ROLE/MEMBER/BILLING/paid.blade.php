@@ -73,8 +73,8 @@
                                                                     class="btn btn-sm btn-success">
                                                                     <i class="fab fa-whatsapp"></i> WA
                                                                 </a>
-
-                                                                <a href="" target="_blank"
+                                                                
+                                                                <a href="{{route('billing.paid.cetak', $invoice->invoice_id)}}" 
                                                                     class="btn btn-sm btn-primary">
                                                                     <i class="fas fa-print"></i> Cetak
                                                                 </a>

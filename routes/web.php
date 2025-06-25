@@ -241,8 +241,8 @@ Route::middleware(['auth', 'role:member,penagih'])->prefix('home/billing')->cont
 
 
     Route::get('/paid', 'paid')->name('paid');
-    Route::get('/paid/detail/{id}', action: 'showDetail')->name('billing.paid.detail');
-    ;
+    Route::get('/paid/detail/{id}', 'showDetail')->name('billing.paid.detail');
+    Route::get('/paid/{id}/cetak', 'cetakInvoice')->name('billing.paid.cetak');
     Route::get('/riwayat', 'riwayatTagihan')->name('riwayat');
     Route::get('/bil_pelanggan', 'bil_pelanggan')->name('bil_pelanggan');
 
