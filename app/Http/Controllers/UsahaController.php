@@ -32,13 +32,7 @@ public function storeOrUpdate(Request $request)
     $user = auth()->user();
 
     // Validasi Input
-    $request->validate([
-        'nama_usaha' => 'required|string|max:255',
-        'alamat_usaha' => 'required|string',
-        'telepon_usaha' => 'nullable|string|max:15',
-        'deskripsi_usaha' => 'nullable|string',
-        'logo_usaha' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-    ]);
+   
 
     $usaha = $user->usaha()->first();
     $data = $request->except('logo_usaha');
