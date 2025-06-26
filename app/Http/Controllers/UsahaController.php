@@ -84,7 +84,7 @@ class UsahaController extends Controller
             }
     
             // Buat nama file unik dan simpan sebagai JPEG
-            $filename = 'Logo.jpg';
+            $filename = 'Logo.jpeg';
             $fullPath = $uploadPath . $filename;
     
             if (!imagejpeg($src, $fullPath, 85)) { // 85 = kualitas jpeg (0-100)
