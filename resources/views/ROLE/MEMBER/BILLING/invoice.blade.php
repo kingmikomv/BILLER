@@ -24,7 +24,7 @@
   <!-- HEADER -->
   <div class="invoice-header">
     <div class="logo">
-      <img src="{{ public_path('usaha_logos/Logo.jpeg') }}" alt="Logo Perusahaan">
+      <img src="{{ public_path('usaha_logos/Logo.png') }}" alt="Logo Perusahaan">
     </div>
     <div class="text-right">
       <h4 class="mb-1"><i class="fas fa-file-invoice"></i> INVOICE</h4>
