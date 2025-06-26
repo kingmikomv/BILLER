@@ -27,7 +27,7 @@
                             <div class="card card-primary card-outline">
                                 <div class="card-body box-profile">
                                 <div class="text-center">
-                                    @if (!empty($usaha?->logo_usaha) && file_exists(public_path('usaha_logos/' . $usaha->logo_usaha)))
+                                    @if (!empty($usaha->logo_usaha) && file_exists(public_path('usaha_logos/' . $usaha->logo_usaha)))
                                     <img class="profile-user-img img-fluid img-circle"
                                          src="{{ asset('usaha_logos/' . $usaha->logo_usaha) }}?v={{ filemtime(public_path('usaha_logos/' . $usaha->logo_usaha)) }}"
                                          alt="Logo Usaha"
