@@ -24,7 +24,11 @@
   <!-- HEADER -->
   <div class="invoice-header">
     <div class="logo">
-      <img src="{{ public_path('usaha_logos/Logo.png') }}" alt="Logo Perusahaan">
+      @if(isset($usaha->logo_usaha))
+        <img src="{{ asset('usaha_logos/' . $usaha->logo_usaha) }}" alt="Logo Perusahaan">
+      @else
+        Gambar Tidak ada
+      @endif
     </div>
     <div class="text-right">
       <h4 class="mb-1"><i class="fas fa-file-invoice"></i> INVOICE</h4>
