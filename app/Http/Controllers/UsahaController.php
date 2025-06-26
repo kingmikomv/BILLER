@@ -45,7 +45,7 @@ class UsahaController extends Controller
     $data = $request->except('logo_usaha');
 
     if ($request->hasFile('logo_usaha')) {
-        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . 'usaha_logos/';
+        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/usaha_logos/';
 
         // Buat folder jika belum ada
         if (!File::exists($uploadPath)) {
