@@ -27,19 +27,17 @@
                             <div class="card card-primary card-outline">
                                 <div class="card-body box-profile">
                                 <div class="text-center">
-                                    @if (!empty($usaha->logo_usaha) && file_exists(public_path('usaha_logos/' . $usaha->logo_usaha)))
-                                    <img class="profile-user-img img-fluid img-circle"
-                                         src="{{ asset('usaha_logos/' . $usaha->logo_usaha) }}?v={{ filemtime(public_path('usaha_logos/' . $usaha->logo_usaha)) }}"
-                                         alt="Logo Usaha"
-                                         style="width: 128px; height: 128px; object-fit: cover;">
-                                @else
-                                    <img class="profile-user-img img-fluid img-circle"
-                                         src="{{ asset('dist/img/default-profile.png') }}"
-                                         alt="Default Profile"
-                                         style="width: 128px; height: 128px; object-fit: cover;">
-                                @endif
-                                
-                            </div>
+    @if(isset($usaha->logo_usaha))
+        <img class="profile-user-img img-fluid img-circle"
+            src="{{ asset('usaha_logos/' . $usaha->logo_usaha) }}" 
+            alt="Logo Usaha" style="width: 128px; height: 128px; object-fit: cover;">
+    @else
+        <!-- Gambar Default Jika Tidak Ada Logo -->
+        <img class="profile-user-img img-fluid img-circle"
+            src="{{ asset('dist/img/default-profile.png') }}" 
+            alt="Default Profile" style="width: 128px; height: 128px; object-fit: cover;">
+    @endif
+</div>
 
 
                                     <h3 class="profile-username text-center">{{$usaha->nama_usaha ?? '-'}}</h3>
