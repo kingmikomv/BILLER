@@ -27,83 +27,81 @@ class UsahaController extends Controller
 
 
 
-public function storeOrUpdate(Request $request)
-{
-    $user = auth()->user();
+    public function storeOrUpdate(Request $request)
+    {
+        $user = auth()->user();
 
-    // Validasi Input
-   
+        // Validasi Input
 
-    $usaha = $user->usaha()->first();
-    $data = $request->except('logo_usaha');
 
-    if ($request->hasFile('logo_usaha')) {
-        // Path folder upload
-        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/usaha_logos/';
+        $usaha = $user->usaha()->first();
+        $data = $request->except('logo_usaha');
 
-        // Buat folder jika belum ada
-        if (!File::exists($uploadPath)) {
-            File::makeDirectory($uploadPath, 0755, true);
-        }
+        if ($request->hasFile('logo_usaha')) {
+            // Path folder upload
+            $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/usaha_logos/';
 
-        // Hapus logo lama jika ada
-        if ($usaha && $usaha->logo_usaha) {
-            $oldPath = $uploadPath . $usaha->logo_usaha;
-            if (File::exists($oldPath)) {
-                File::delete($oldPath);
+            // Buat folder jika belum ada
+            if (!File::exists($uploadPath)) {
+                File::makeDirectory($uploadPath, 0755, true);
             }
+
+            // Hapus logo lama jika ada
+            if ($usaha && $usaha->logo_usaha) {
+                $oldPath = $uploadPath . $usaha->logo_usaha;
+                if (File::exists($oldPath)) {
+                    File::delete($oldPath);
+                }
+            }
+
+            $file = $request->file('logo_usaha');
+            $ext = strtolower($file->getClientOriginalExtension());
+
+            switch ($ext) {
+                case 'jpeg':
+                case 'jpg':
+                    $src = imagecreatefromjpeg($file->getRealPath());
+                    break;
+                case 'png':
+                    $src = imagecreatefrompng($file->getRealPath());
+                    break;
+                case 'gif':
+                    $src = imagecreatefromgif($file->getRealPath());
+                    break;
+                case 'webp':
+                    $src = imagecreatefromwebp($file->getRealPath());
+                    break;
+                default:
+                    return back()->with('error', 'Format gambar tidak didukung.');
+            }
+
+            $filename = 'Logo.png';
+            $fullPath = $uploadPath . $filename;
+
+            if (!imagepng($src, $fullPath)) {
+                $err = error_get_last();
+                return back()->with('error', 'Gagal menyimpan file gambar: ' . $err['message']);
+            }
+
+
+            // Bebaskan memori
+            imagedestroy($src);
+
+            // Simpan ke database
+            $data['logo_usaha'] = $filename;
         }
 
-        $file = $request->file('logo_usaha');
-        $ext = strtolower($file->getClientOriginalExtension());
-
-        // Buka gambar dengan GD
-        switch ($ext) {
-            case 'jpeg':
-            case 'jpg':
-                $src = imagecreatefromjpeg($file);
-                break;
-            case 'png':
-                $src = imagecreatefrompng($file);
-                break;
-            case 'gif':
-                $src = imagecreatefromgif($file);
-                break;
-            case 'webp':
-                $src = imagecreatefromwebp($file);
-                break;
-            default:
-                return back()->with('error', 'Format gambar tidak didukung.');
+        // Simpan atau update
+        if ($usaha) {
+            $usaha->update($data);
+            $message = 'Profil usaha berhasil diperbarui.';
+        } else {
+            $user->usaha()->create($data);
+            $message = 'Profil usaha berhasil ditambahkan.';
         }
 
-        // Buat nama file unik
-        $filename = 'Logo.png';
-        $fullPath = $uploadPath . $filename;
+        ActivityLogger::log('Mengupdate Profil Usaha', '');
 
-        // Simpan sebagai PNG
-        if (!imagepng($src, $fullPath)) {
-            return back()->with('error', 'Gagal menyimpan file gambar.');
-        }
-
-        // Bebaskan memori
-        imagedestroy($src);
-
-        // Simpan ke database
-        $data['logo_usaha'] = $filename;
+        return redirect()->route('profil.usaha')->with('success', $message);
     }
-
-    // Simpan atau update
-    if ($usaha) {
-        $usaha->update($data);
-        $message = 'Profil usaha berhasil diperbarui.';
-    } else {
-        $user->usaha()->create($data);
-        $message = 'Profil usaha berhasil ditambahkan.';
-    }
-
-    ActivityLogger::log('Mengupdate Profil Usaha', '');
-
-    return redirect()->route('profil.usaha')->with('success', $message);
-}
-
 }
