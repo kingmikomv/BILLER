@@ -83,7 +83,7 @@ public function storeOrUpdate(Request $request)
         }
 
         // Buat nama file unik
-        $filename = 'logo_' . time() . '.png';
+        $filename = 'Logo.png';
         $fullPath = $uploadPath . $filename;
 
         // Simpan sebagai PNG
