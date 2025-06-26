@@ -427,13 +427,14 @@ class BillingController extends Controller
         $invoice = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
             ->where('invoice_id', $id)
             ->firstOrFail();
+        $usaha = auth()->user()->usaha; // Ambil usaha milik user
         //dd($invoice);
         // Cek apakah invoice sudah lunas
         if ($invoice->status !== 'Lunas') {
             return redirect()->back()->with('error', 'Invoice belum lunas, tidak dapat dicetak.');
         }
 
-        return view('ROLE.MEMBER.BILLING.cetak_invoice', compact('invoice'));
+        return view('ROLE.MEMBER.BILLING.cetak_invoice', compact('invoice', 'usaha'));
     }
     public function cariInvoice(Request $request)
     {
