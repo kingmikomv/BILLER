@@ -9,8 +9,6 @@ use Illuminate\Http\Request;
 use Intervention\Image\Image;
 use App\Helpers\ActivityLogger;
 use Illuminate\Support\Facades\File;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 
 
 class UsahaController extends Controller
@@ -27,6 +25,7 @@ class UsahaController extends Controller
         return view('usaha.create');
     }
 
+   
     public function storeOrUpdate(Request $request)
     {
         $user = auth()->user();
@@ -37,7 +36,7 @@ class UsahaController extends Controller
             'alamat_usaha' => 'required|string',
             'telepon_usaha' => 'nullable|string|max:15',
             'deskripsi_usaha' => 'nullable|string',
-            'logo_usaha' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Maks 2MB
+            'logo_usaha' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Maks 2MB
         ]);
     
         // Ambil data usaha yang sudah ada
@@ -52,18 +51,41 @@ class UsahaController extends Controller
             if ($usaha && $usaha->logo_usaha) {
                 File::delete(public_path('usaha_logos/' . $usaha->logo_usaha));
             }
-        
-            // Buat manager dan proses gambar ke JPEG
-            $manager = new ImageManager(new GdDriver());
-                $image = $manager->read($request->file('logo_usaha'))->toPng(); // encode to JPEG
-        
-            $filename = 'Logo.jpeg';
+    
+            $file = $request->file('logo_usaha');
+            $ext = strtolower($file->getClientOriginalExtension());
+    
+            // Buka gambar dari file
+            switch ($ext) {
+                case 'jpeg':
+                case 'jpg':
+                    $src = imagecreatefromjpeg($file);
+                    break;
+                case 'png':
+                    $src = imagecreatefrompng($file);
+                    break;
+                case 'gif':
+                    $src = imagecreatefromgif($file);
+                    break;
+                case 'webp':
+                    $src = imagecreatefromwebp($file);
+                    break;
+                default:
+                    return back()->with('error', 'Format gambar tidak didukung.');
+            }
+    
+            // Buat nama file acak
+            $filename = 'logo_' . time() . '.png';
             $path = public_path('usaha_logos/' . $filename);
-            $image->save($path);
-        
+    
+            // Simpan sebagai PNG
+            imagepng($src, $path);
+            imagedestroy($src);
+    
             $data['logo_usaha'] = $filename;
         }
-        
+    
+        // Simpan atau perbarui usaha
         if ($usaha) {
             $usaha->update($data);
             $message = 'Profil usaha berhasil diperbarui.';
@@ -71,10 +93,12 @@ class UsahaController extends Controller
             $user->usaha()->create($data);
             $message = 'Profil usaha berhasil ditambahkan.';
         }
+    
         ActivityLogger::log('Mengupdate Profil Usaha', '');
-
+    
         return redirect()->route('profil.usaha')->with('success', $message);
     }
+    
     
     
 
