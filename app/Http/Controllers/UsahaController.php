@@ -29,7 +29,7 @@ class UsahaController extends Controller
 
    
 
-public function storeOrUpdate(Request $request)
+    public function storeOrUpdate(Request $request)
 {
     $user = auth()->user();
 
@@ -45,13 +45,14 @@ public function storeOrUpdate(Request $request)
     $data = $request->except('logo_usaha');
 
     if ($request->hasFile('logo_usaha')) {
-        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/usaha_logos/';
+        $uploadPath = public_path('usaha_logos/');
 
+        // Buat folder jika belum ada
         if (!File::exists($uploadPath)) {
             File::makeDirectory($uploadPath, 0755, true);
         }
 
-        // Hapus logo lama jika ada
+        // Hapus file lama jika ada
         if ($usaha && $usaha->logo_usaha) {
             $oldPath = $uploadPath . $usaha->logo_usaha;
             if (File::exists($oldPath)) {
@@ -60,54 +61,9 @@ public function storeOrUpdate(Request $request)
         }
 
         $file = $request->file('logo_usaha');
-        $ext = strtolower($file->getClientOriginalExtension());
-        $realPath = $file->getRealPath();
-
-        // Buat gambar resource dari input
-        switch ($ext) {
-            case 'jpeg':
-            case 'jpg':
-                $src = imagecreatefromjpeg($realPath);
-                break;
-            case 'png':
-                $src = imagecreatefrompng($realPath);
-                break;
-            case 'gif':
-                $src = imagecreatefromgif($realPath);
-                break;
-            case 'webp':
-                $src = imagecreatefromwebp($realPath);
-                break;
-            default:
-                return back()->with('error', 'Format gambar tidak didukung.');
-        }
-
-        // Cek ukuran asli
-        $width = imagesx($src);
-        $height = imagesy($src);
-
-        // Buat canvas baru dengan transparansi
-        $canvas = imagecreatetruecolor($width, $height);
-        imagealphablending($canvas, false);
-        imagesavealpha($canvas, true);
-        $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
-        imagefill($canvas, 0, 0, $transparent);
-
-        // Copy gambar asli ke canvas
-        imagecopy($canvas, $src, 0, 0, 0, 0, $width, $height);
-        imagedestroy($src);
-
-        // Buat nama file unik dan simpan sebagai PNG
-        $filename = 'Logo.png';
-        $fullPath = $uploadPath . $filename;
-
-        if (!imagepng($canvas, $fullPath)) {
-            imagedestroy($canvas);
-            $err = error_get_last();
-            return back()->with('error', 'Gagal menyimpan gambar: ' . $err['message']);
-        }
-
-        imagedestroy($canvas);
+        $ext = $file->getClientOriginalExtension();
+        $filename = 'logo_' . time() . '.' . $ext;
+        $file->move($uploadPath, $filename);
 
         $data['logo_usaha'] = $filename;
     }
@@ -124,6 +80,6 @@ public function storeOrUpdate(Request $request)
 
     return redirect()->route('profil.usaha')->with('success', $message);
 }
-
+    
     
 }
