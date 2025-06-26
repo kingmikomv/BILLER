@@ -25,81 +25,91 @@ class UsahaController extends Controller
         return view('usaha.create');
     }
 
-   
-    public function storeOrUpdate(Request $request)
-    {
-        $user = auth()->user();
-    
-        // Validasi Input
-        $request->validate([
-            'nama_usaha' => 'required|string|max:255',
-            'alamat_usaha' => 'required|string',
-            'telepon_usaha' => 'nullable|string|max:15',
-            'deskripsi_usaha' => 'nullable|string',
-            'logo_usaha' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Maks 2MB
-        ]);
-    
-        // Ambil data usaha yang sudah ada
-        $usaha = $user->usaha()->first();
-    
-        // Siapkan data kecuali logo
-        $data = $request->except('logo_usaha');
-    
-        // Cek apakah ada file logo yang diunggah
-        if ($request->hasFile('logo_usaha')) {
-            // Hapus logo lama jika ada
-            if ($usaha && $usaha->logo_usaha) {
-                File::delete(public_path('usaha_logos/' . $usaha->logo_usaha));
-            }
-    
-            $file = $request->file('logo_usaha');
-            $ext = strtolower($file->getClientOriginalExtension());
-    
-            // Buka gambar dari file
-            switch ($ext) {
-                case 'jpeg':
-                case 'jpg':
-                    $src = imagecreatefromjpeg($file);
-                    break;
-                case 'png':
-                    $src = imagecreatefrompng($file);
-                    break;
-                case 'gif':
-                    $src = imagecreatefromgif($file);
-                    break;
-                case 'webp':
-                    $src = imagecreatefromwebp($file);
-                    break;
-                default:
-                    return back()->with('error', 'Format gambar tidak didukung.');
-            }
-    
-            // Buat nama file acak
-            $filename = 'logo.png';
-            $path = public_path('usaha_logos/' . $filename);
-    
-            // Simpan sebagai PNG
-            imagepng($src, $path);
-            imagedestroy($src);
-    
-            $data['logo_usaha'] = $filename;
+
+
+public function storeOrUpdate(Request $request)
+{
+    $user = auth()->user();
+
+    // Validasi Input
+    $request->validate([
+        'nama_usaha' => 'required|string|max:255',
+        'alamat_usaha' => 'required|string',
+        'telepon_usaha' => 'nullable|string|max:15',
+        'deskripsi_usaha' => 'nullable|string',
+        'logo_usaha' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+    ]);
+
+    $usaha = $user->usaha()->first();
+    $data = $request->except('logo_usaha');
+
+    if ($request->hasFile('logo_usaha')) {
+        // Path folder upload
+        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . 'biller//usaha_logos/';
+
+        // Buat folder jika belum ada
+        if (!File::exists($uploadPath)) {
+            File::makeDirectory($uploadPath, 0755, true);
         }
-    
-        // Simpan atau perbarui usaha
-        if ($usaha) {
-            $usaha->update($data);
-            $message = 'Profil usaha berhasil diperbarui.';
-        } else {
-            $user->usaha()->create($data);
-            $message = 'Profil usaha berhasil ditambahkan.';
+
+        // Hapus logo lama jika ada
+        if ($usaha && $usaha->logo_usaha) {
+            $oldPath = $uploadPath . $usaha->logo_usaha;
+            if (File::exists($oldPath)) {
+                File::delete($oldPath);
+            }
         }
-    
-        ActivityLogger::log('Mengupdate Profil Usaha', '');
-    
-        return redirect()->route('profil.usaha')->with('success', $message);
+
+        $file = $request->file('logo_usaha');
+        $ext = strtolower($file->getClientOriginalExtension());
+
+        // Buka gambar dengan GD
+        switch ($ext) {
+            case 'jpeg':
+            case 'jpg':
+                $src = imagecreatefromjpeg($file);
+                break;
+            case 'png':
+                $src = imagecreatefrompng($file);
+                break;
+            case 'gif':
+                $src = imagecreatefromgif($file);
+                break;
+            case 'webp':
+                $src = imagecreatefromwebp($file);
+                break;
+            default:
+                return back()->with('error', 'Format gambar tidak didukung.');
+        }
+
+        // Buat nama file unik
+        $filename = 'logo_' . time() . '.png';
+        $fullPath = $uploadPath . $filename;
+
+        // Simpan sebagai PNG
+        if (!imagepng($src, $fullPath)) {
+            return back()->with('error', 'Gagal menyimpan file gambar.');
+        }
+
+        // Bebaskan memori
+        imagedestroy($src);
+
+        // Simpan ke database
+        $data['logo_usaha'] = $filename;
     }
-    
-    
-    
+
+    // Simpan atau update
+    if ($usaha) {
+        $usaha->update($data);
+        $message = 'Profil usaha berhasil diperbarui.';
+    } else {
+        $user->usaha()->create($data);
+        $message = 'Profil usaha berhasil ditambahkan.';
+    }
+
+    ActivityLogger::log('Mengupdate Profil Usaha', '');
+
+    return redirect()->route('profil.usaha')->with('success', $message);
+}
 
 }
