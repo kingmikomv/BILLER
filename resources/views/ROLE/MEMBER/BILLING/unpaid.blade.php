@@ -52,7 +52,7 @@
                                                         </td>
                                                         <td> {{ $invoice->pelanggan->nama_pelanggan ?? '-' }} |
                                                             {{ $invoice->pelanggan->akun_pppoe ?? '-' }}</td>
-                                                        <td>{{ \Carbon\Carbon::parse($invoice->jatuh_tempo)->format('d/m/Y') }}
+                                                        <td>{{ \Carbon\Carbon::parse($invoice->tanggal_jatuh_tempo)->format('d/m/Y') }}
                                                         </td>
                                                         <td>{{ \Carbon\Carbon::parse($invoice->tanggal_pembayaran)->translatedFormat('F Y') }}
                                                         </td>
