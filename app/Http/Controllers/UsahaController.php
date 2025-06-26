@@ -45,7 +45,7 @@ public function storeOrUpdate(Request $request)
 
     if ($request->hasFile('logo_usaha')) {
         // Path folder upload
-        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/biller/usaha_logos/';
+        $uploadPath = $_SERVER['DOCUMENT_ROOT'] . '/usaha_logos/';
 
         // Buat folder jika belum ada
         if (!File::exists($uploadPath)) {
