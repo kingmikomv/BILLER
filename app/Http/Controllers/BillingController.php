@@ -29,8 +29,8 @@ class BillingController extends Controller
 
         $unpaidInvoices = Tagihan::with(['pelanggan.mikrotik', 'pelanggan.paket'])
             ->whereIn('status', ['Belum Lunas', 'Tertunggak'])
-            ->whereMonth('tanggal_jatuh_tempo', $currentMonth)  // Filter berdasarkan bulan sekarang
-            ->whereYear('tanggal_jatuh_tempo', $currentYear)    // Filter berdasarkan tahun sekarang
+            // ->whereMonth('tanggal_jatuh_tempo', $currentMonth)  // Filter berdasarkan bulan sekarang
+            // ->whereYear('tanggal_jatuh_tempo', $currentYear)    // Filter berdasarkan tahun sekarang
             ->latest('tanggal_jatuh_tempo')
             ->get();
 
