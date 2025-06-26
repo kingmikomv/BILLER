@@ -108,10 +108,17 @@
 						<table>
 							<tr>
 								<td class="title">
+
+									@if(isset($usaha->logo_usaha))
+									
 									<img
-										src="{{asset('usaha_logos/Logo.jpeg')}}"
+										src="{{ asset('usaha_logos/' . $usaha->logo_usaha) }}"
 										style="width: 100%; max-width: 300px"
 									/>
+								  @else
+									Gambar Tidak ada
+								  @endif
+									
 								</td>
 
 								<td>
