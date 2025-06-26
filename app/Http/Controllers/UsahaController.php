@@ -75,7 +75,7 @@ class UsahaController extends Controller
             }
     
             // Buat nama file acak
-            $filename = 'logo_' . time() . '.png';
+            $filename = 'logo.png';
             $path = public_path('usaha_logos/' . $filename);
     
             // Simpan sebagai PNG
